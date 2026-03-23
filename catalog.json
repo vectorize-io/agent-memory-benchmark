@@ -1,0 +1,158 @@
+{
+  "datasets": {
+    "lifebench": {
+      "description": "Long-horizon multi-source personalized memory benchmark across 10 users.",
+      "task": "LLM-judged",
+      "splits": [
+        "en"
+      ]
+    },
+    "locomo": {
+      "description": "Multi-session long-term conversations with 1,986 QA pairs.",
+      "task": "LLM-judged",
+      "splits": [
+        "locomo10"
+      ]
+    },
+    "longmemeval": {
+      "description": "Long-term memory evaluation in LLM-based chat assistants.",
+      "task": "LLM-judged",
+      "splits": [
+        "s"
+      ]
+    },
+    "personamem": {
+      "description": "Long-horizon personal preference tracking across conversation sessions.",
+      "task": "MCQ",
+      "splits": [
+        "32k",
+        "128k",
+        "1M"
+      ]
+    },
+    "ama-bench": {
+      "description": "Agent trajectory memory benchmark across Text-to-SQL, Web, Gaming, Embodied AI, SE, and Tool QA domains.",
+      "task": "LLM-judged",
+      "splits": [
+        "test"
+      ]
+    },
+    "memsim": {
+      "description": "Chinese daily-life memory simulation with diverse QA types across 6 question categories.",
+      "task": "MCQ",
+      "splits": [
+        "simple",
+        "conditional",
+        "comparative",
+        "aggregative",
+        "post_processing",
+        "noisy"
+      ]
+    },
+    "membench": {
+      "description": "Agent memory benchmark at different abstraction levels and first/third-person perspectives.",
+      "task": "MCQ",
+      "splits": [
+        "FirstAgentLowLevel",
+        "FirstAgentHighLevel",
+        "ThirdAgentLowLevel",
+        "ThirdAgentHighLevel"
+      ]
+    }
+  },
+  "providers": {
+    "bm25": {
+      "key": "bm25",
+      "description": "Keyword search baseline. No embeddings \u2014 splits docs into chunks and uses BM25 ranking.",
+      "kind": "local",
+      "link": null,
+      "logo": null
+    },
+    "cognee": {
+      "key": "cognee",
+      "description": "Graph-based knowledge extraction with FastEmbed (BAAI/bge-small-en-v1.5) + OpenAI LLM.",
+      "kind": "local",
+      "link": "https://cognee.ai",
+      "logo": "https://www.google.com/s2/favicons?sz=32&domain=cognee.ai"
+    },
+    "hindsight": {
+      "link": "https://hindsight.vectorize.io",
+      "logo": "https://www.google.com/s2/favicons?sz=32&domain=hindsight.vectorize.io",
+      "variants": {
+        "local": {
+          "key": "hindsight",
+          "description": "Embedded Hindsight fact store using gemini-2.5-flash-lite as the extraction model. Recall uses all memory types (world + experience + observation) with no type filter applied.",
+          "kind": "local"
+        },
+        "cloud": {
+          "key": "hindsight-cloud",
+          "description": "Hindsight hosted cloud API. Recall uses all memory types (world + experience + observation) with no type filter applied.",
+          "kind": "cloud"
+        },
+        "http": {
+          "key": "hindsight-http",
+          "description": "Hindsight via a self-hosted HTTP endpoint. Recall uses all memory types (world + experience + observation) with no type filter applied.",
+          "kind": "cloud"
+        }
+      }
+    },
+    "mastra": {
+      "key": "mastra",
+      "description": "Mastra semantic recall with LibSQL store and FastEmbed embeddings. topK=10.",
+      "kind": "local",
+      "link": "https://mastra.ai",
+      "logo": "https://www.google.com/s2/favicons?sz=32&domain=mastra.ai"
+    },
+    "mastra-om": {
+      "key": "mastra-om",
+      "description": "Mastra Observational Memory: observer/reflector pattern with Gemini 2.5 Flash + GPT-4o.",
+      "kind": "local",
+      "link": "https://mastra.ai",
+      "logo": "https://www.google.com/s2/favicons?sz=32&domain=mastra.ai"
+    },
+    "mem0": {
+      "link": "https://mem0.ai",
+      "logo": "https://www.google.com/s2/favicons?sz=32&domain=mem0.ai",
+      "variants": {
+        "local": {
+          "key": "mem0",
+          "description": "Agentic memory with Gemini 2.0 Flash for reflective extraction + local Qdrant store.",
+          "kind": "local"
+        },
+        "cloud": {
+          "key": "mem0-cloud",
+          "description": "Mem0 cloud API. Async indexing \u2014 waits for indexing to complete before eval. k=20.",
+          "kind": "cloud"
+        }
+      }
+    },
+    "qdrant": {
+      "key": "qdrant",
+      "aliases": [
+        "hybrid-search"
+      ],
+      "description": "Hybrid dense + sparse vector search via Qdrant with RRF fusion. Dense: Qwen3-Embedding-0.6B (1024d, asymmetric query/doc encoding). Sparse: BM42 (bm42-all-minilm-l6-v2-attentions). Documents chunked into 512-token windows before indexing. Retrieves top-k=50 chunks (prefetch 100 per branch).",
+      "kind": "local",
+      "link": "https://qdrant.tech",
+      "logo": "https://www.google.com/s2/favicons?sz=32&domain=qdrant.tech"
+    },
+    "supermemory": {
+      "key": "supermemory",
+      "description": "Supermemory cloud API with temporal metadata support.",
+      "kind": "cloud",
+      "link": "https://supermemory.ai",
+      "logo": "https://www.google.com/s2/favicons?sz=32&domain=supermemory.ai"
+    }
+  },
+  "modes": {
+    "rag": {
+      "description": "Default. Provider retrieves top-k documents; they are injected into an LLM prompt as context. Supports both MCQ and open-ended questions."
+    },
+    "agentic-rag": {
+      "description": "The LLM acts as an agent with a recall tool and can make multiple retrieval calls with different queries before finalising its answer."
+    },
+    "agent": {
+      "description": "Bypasses the benchmark retrieval pipeline entirely \u2014 calls the provider's own native direct_answer() for providers that have built-in agentic answering."
+    }
+  }
+}

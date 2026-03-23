@@ -1,0 +1,8 @@
+data/
+outputs/
+.cache/
+.data/
+.datasets/
+logs/
+uv.lock
+.venv/

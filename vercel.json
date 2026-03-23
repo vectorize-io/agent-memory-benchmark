@@ -1,0 +1,10 @@
+{
+  "buildCommand": "",
+  "installCommand": "",
+  "outputDirectory": "ui/dist",
+  "rewrites": [
+    { "source": "/api/:path*",     "destination": "/api/index" },
+    { "source": "/outputs/:path*", "destination": "/api/index" },
+    { "source": "/(.*)",           "destination": "/index.html" }
+  ]
+}

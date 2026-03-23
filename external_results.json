@@ -1,0 +1,852 @@
+{
+  "personamem": {
+    "128k": [
+      {
+        "memory": "Gemini-1.5-Flash",
+        "accuracy": 0.52,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "GPT-4.5",
+        "accuracy": 0.52,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "GPT-4.1",
+        "accuracy": 0.52,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "o1",
+        "accuracy": 0.5,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "Gemini-2.0-Flash",
+        "accuracy": 0.49,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "o4-mini",
+        "accuracy": 0.48,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "Gemini-2.0-Flash-Lite",
+        "accuracy": 0.48,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "GPT-4o",
+        "accuracy": 0.45,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "DeepSeek-R1-671B",
+        "accuracy": 0.45,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "Llama-4-Maverick",
+        "accuracy": 0.43,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "o3-mini",
+        "accuracy": 0.39,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "GPT-4o-mini",
+        "accuracy": 0.39,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "Llama-3.1-405B",
+        "accuracy": 0.31,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "Claude-3.5-Haiku",
+        "accuracy": 0.3,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "Claude-3.7-Sonnet",
+        "accuracy": 0.26,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      }
+    ],
+    "1M": [
+      {
+        "memory": "Gemini-1.5-Flash",
+        "accuracy": 0.45,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "Gemini-2.0-Flash-Lite",
+        "accuracy": 0.38,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "Gemini-2.0-Flash",
+        "accuracy": 0.37,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      },
+      {
+        "memory": "Llama-4-Maverick",
+        "accuracy": 0.28,
+        "source_url": "https://arxiv.org/abs/2504.14225",
+        "source_label": "PersonaMem Paper (arXiv:2504.14225)"
+      }
+    ]
+  },
+  "lifebench": {
+    "en": [
+      {
+        "memory": "MemOS",
+        "accuracy": 0.5522,
+        "source_url": "https://arxiv.org/abs/2603.03781",
+        "source_label": "LifeBench Paper (arXiv:2603.03781)"
+      }
+    ]
+  },
+  "locomo": {
+    "locomo10": [
+      {
+        "memory": "Honcho",
+        "accuracy": 0.899,
+        "source_url": "https://blog.plasticlabs.ai/research/Benchmarking-Honcho",
+        "source_label": "Honcho Benchmarking Blog (Plastic Labs)",
+        "comment": "Self-reported by Plastic Labs. LLM-as-a-judge, deviating from the original paper's F1 methodology; judge model not disclosed. Uses Claude Haiku 4.5 as backbone. Adversarial questions excluded (not mentioned). Scores by category: Single-Hop 84.0%, Multi-Hop 88.2%, Temporal 77.1%, Open-Domain (Commonsense) 93.2%."
+      },
+      {
+        "memory": "MemMachine v0.2 (gpt-4.1-mini)",
+        "accuracy": 0.9169,
+        "source_url": "https://memmachine.ai/blog/2025/12/memmachine-v0.2-delivers-top-scores-and-efficiency-on-locomo-benchmark/",
+        "source_label": "MemMachine v0.2 Blog (Dec 2025)",
+        "comment": "Self-reported by MemMachine. LLM-as-a-judge with GPT-4o-mini. Adversarial questions (cat. 5) excluded. Uses gpt-4.1-mini as backbone \u2014 stronger LLM directly inflates scores vs. gpt-4o-mini entries."
+      },
+      {
+        "memory": "MemMachine v0.2 (gpt-4.1-mini)",
+        "accuracy": 0.9123,
+        "source_url": "https://memmachine.ai/blog/2025/12/memmachine-v0.2-delivers-top-scores-and-efficiency-on-locomo-benchmark/",
+        "source_label": "MemMachine v0.2 Blog (Dec 2025)",
+        "comment": "Self-reported by MemMachine. LLM-as-a-judge with GPT-4o-mini. Adversarial questions (cat. 5) excluded. Uses gpt-4.1-mini as backbone \u2014 stronger LLM directly inflates scores vs. gpt-4o-mini entries."
+      },
+      {
+        "memory": "MemMachine v0.2 (gpt-4o-mini)",
+        "accuracy": 0.8812,
+        "source_url": "https://memmachine.ai/blog/2025/12/memmachine-v0.2-delivers-top-scores-and-efficiency-on-locomo-benchmark/",
+        "source_label": "MemMachine v0.2 Blog (Dec 2025)",
+        "comment": "Self-reported by MemMachine. LLM-as-a-judge with GPT-4o-mini. Adversarial questions (cat. 5) excluded."
+      },
+      {
+        "memory": "MemMachine v0.2 (gpt-4o-mini)",
+        "accuracy": 0.8747,
+        "source_url": "https://memmachine.ai/blog/2025/12/memmachine-v0.2-delivers-top-scores-and-efficiency-on-locomo-benchmark/",
+        "source_label": "MemMachine v0.2 Blog (Dec 2025)",
+        "comment": "Self-reported by MemMachine. LLM-as-a-judge with GPT-4o-mini. Adversarial questions (cat. 5) excluded."
+      },
+      {
+        "memory": "MemMachine",
+        "accuracy": 0.8487,
+        "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
+        "source_label": "MemMachine Blog (Sep 2025)",
+        "comment": "Self-reported by MemMachine. LLM-as-a-judge with GPT-4o-mini. Adversarial questions (cat. 5) excluded."
+      },
+      {
+        "memory": "Mem0 (gpt-4.1-mini)",
+        "accuracy": 0.8,
+        "source_url": "https://memmachine.ai/blog/2025/12/memmachine-v0.2-delivers-top-scores-and-efficiency-on-locomo-benchmark/",
+        "source_label": "MemMachine v0.2 Blog (Dec 2025)",
+        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Uses gpt-4.1-mini backbone \u2014 not comparable to the gpt-4o-mini Mem0 entry below."
+      },
+      {
+        "memory": "Letta",
+        "accuracy": 0.74,
+        "source_url": "https://www.letta.com/blog/benchmarking-ai-agent-memory",
+        "source_label": "Letta Blog: Benchmarking AI Agent Memory",
+        "comment": "Self-reported by Letta. LLM-as-a-judge with GPT-4.1 \u2014 a stronger judge than the GPT-4o-mini used in MemMachine comparisons, making scores not directly comparable. Adversarial questions excluded."
+      },
+      {
+        "memory": "Memobase",
+        "accuracy": 0.7578,
+        "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
+        "source_label": "MemMachine Blog (Sep 2025)",
+        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system \u2014 potential for biased setup or prompt choices."
+      },
+      {
+        "memory": "Zep",
+        "accuracy": 0.7514,
+        "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
+        "source_label": "MemMachine Blog (Sep 2025)",
+        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system \u2014 potential for biased setup or prompt choices."
+      },
+      {
+        "memory": "Mem0",
+        "accuracy": 0.6688,
+        "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
+        "source_label": "MemMachine Blog (Sep 2025)",
+        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system \u2014 potential for biased setup or prompt choices."
+      },
+      {
+        "memory": "LangMem",
+        "accuracy": 0.581,
+        "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
+        "source_label": "MemMachine Blog (Sep 2025)",
+        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system \u2014 potential for biased setup or prompt choices."
+      },
+      {
+        "memory": "OpenAI memory",
+        "accuracy": 0.529,
+        "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
+        "source_label": "MemMachine Blog (Sep 2025)",
+        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system \u2014 potential for biased setup or prompt choices."
+      }
+    ]
+  },
+  "longmemeval": {
+    "s": [
+      {
+        "memory": "Full-context (GPT-4o)",
+        "accuracy": 0.602,
+        "source_url": "https://arxiv.org/abs/2410.10813",
+        "source_label": "LongMemEval Paper (arXiv:2410.10813)",
+        "comment": "Reported by the original LongMemEval authors. GPT-4o is used as both the answering and judging model, which may inflate scores compared to evaluations using a separate judge."
+      },
+      {
+        "memory": "Full-context (GPT-4o-mini)",
+        "accuracy": 0.554,
+        "source_url": "https://arxiv.org/abs/2501.13956",
+        "source_label": "Zep Paper (arXiv:2501.13956)",
+        "comment": "Baseline reported in the Zep paper as a reference point, not by the original benchmark authors. Judge model not specified separately."
+      },
+      {
+        "memory": "MemoryBank",
+        "accuracy": 0.2288,
+        "source_url": "https://arxiv.org/abs/2601.02845",
+        "source_label": "TiMem Paper (arXiv:2601.02845)",
+        "comment": "Older-generation memory system evaluated by a competitor (TiMem). Scores reported by others for MemoryBank are consistently low, suggesting it is not well-suited for this benchmark."
+      },
+      {
+        "memory": "A-MEM",
+        "accuracy": 0.634,
+        "source_url": "https://arxiv.org/abs/2601.02845",
+        "source_label": "TiMem Paper (arXiv:2601.02845)",
+        "comment": "Scores for A-MEM vary widely across papers (55\u201363%), likely due to sensitivity to LLM backbone and judge configuration. Uses GPT-4o backbone here."
+      },
+      {
+        "memory": "MemoryOS",
+        "accuracy": 0.612,
+        "source_url": "https://arxiv.org/abs/2601.02845",
+        "source_label": "TiMem Paper (arXiv:2601.02845)",
+        "comment": "Evaluated by a competitor (TiMem) using GPT-4o as backbone. Only this one paper reports MemoryOS results on LongMemEval."
+      },
+      {
+        "memory": "Mem0",
+        "accuracy": 0.6756,
+        "source_url": "https://arxiv.org/abs/2601.02845",
+        "source_label": "TiMem Paper (arXiv:2601.02845)",
+        "comment": "Scores for Mem0 vary widely across papers (49\u201368%), likely reflecting different LLM backbones, k-retrieval settings, and judge configurations. Uses GPT-4o backbone here."
+      },
+      {
+        "memory": "Zep",
+        "accuracy": 0.712,
+        "source_url": "https://arxiv.org/abs/2501.13956",
+        "source_label": "Zep Paper (arXiv:2501.13956)",
+        "comment": "Self-reported by Zep authors. Uses GPT-4o as backbone. Zep's graph-based memory gives it an advantage on multi-session and knowledge-update questions."
+      },
+      {
+        "memory": "ENGRAM",
+        "accuracy": 0.714,
+        "source_url": "https://arxiv.org/abs/2511.12960",
+        "source_label": "ENGRAM Paper (arXiv:2511.12960)",
+        "comment": "Self-reported by ENGRAM authors. Uses episodic graph-based memory. LLM backbone not clearly specified in the paper."
+      },
+      {
+        "memory": "MemOS",
+        "accuracy": 0.7307,
+        "source_url": "https://arxiv.org/abs/2601.02845",
+        "source_label": "TiMem Paper (arXiv:2601.02845)",
+        "comment": "Evaluated by a competitor (TiMem) using GPT-4o as backbone. MemOS uses an OS-inspired layered memory architecture."
+      },
+      {
+        "memory": "LiCoMemory",
+        "accuracy": 0.738,
+        "source_url": "https://arxiv.org/abs/2511.01448",
+        "source_label": "LiCoMemory Paper (arXiv:2511.01448)",
+        "comment": "Self-reported by LiCoMemory authors. Uses GPT-4o-mini as backbone, making this one of the few mid-range-backbone results in this score tier."
+      },
+      {
+        "memory": "Nemori",
+        "accuracy": 0.746,
+        "source_url": "https://arxiv.org/abs/2508.03341",
+        "source_label": "Nemori Paper (arXiv:2508.03341)",
+        "comment": "Self-reported. Uses GPT-4.1-mini (a newer, more capable model than GPT-4o-mini) as backbone \u2014 scores may be higher than GPT-4o-mini baselines suggest."
+      },
+      {
+        "memory": "HyMem",
+        "accuracy": 0.75,
+        "source_url": "https://arxiv.org/abs/2602.13933",
+        "source_label": "HyMem Paper (arXiv:2602.13933)",
+        "comment": "Self-reported by HyMem authors. Combines multiple memory strategies (hybrid). LLM backbone not clearly specified."
+      },
+      {
+        "memory": "CoM (Chain-of-Memory)",
+        "accuracy": 0.764,
+        "source_url": "https://arxiv.org/abs/2601.14287",
+        "source_label": "CoM Paper (arXiv:2601.14287)",
+        "comment": "Self-reported. Uses Qwen3-32B (open-source) as backbone, which behaves differently from GPT-4o-family models and makes direct comparison harder."
+      },
+      {
+        "memory": "TiMem",
+        "accuracy": 0.7896,
+        "source_url": "https://arxiv.org/abs/2601.02845",
+        "source_label": "TiMem Paper (arXiv:2601.02845)",
+        "comment": "Self-reported by TiMem authors. Uses GPT-4o as backbone and focuses on temporal-aware memory management."
+      },
+      {
+        "memory": "EverMemOS",
+        "accuracy": 0.83,
+        "source_url": "https://arxiv.org/abs/2603.15599",
+        "source_label": "SmartSearch Paper (arXiv:2603.15599)",
+        "comment": "Only reported in the SmartSearch paper. No self-reported or independent evaluation is available for this score."
+      },
+      {
+        "memory": "EMem-G",
+        "accuracy": 0.849,
+        "source_url": "https://arxiv.org/abs/2511.17208",
+        "source_label": "EMem Paper (arXiv:2511.17208)",
+        "comment": "Self-reported. Uses GPT-4.1-mini backbone (newer than GPT-4o-mini). 'G' denotes the graph-enhanced variant of EMem."
+      },
+      {
+        "memory": "Memora",
+        "accuracy": 0.874,
+        "source_url": "https://arxiv.org/abs/2602.03315",
+        "source_label": "Memora Paper (arXiv:2602.03315)",
+        "comment": "Self-reported by Memora authors. Uses GPT-4.1-mini backbone. Best of two reported configurations."
+      },
+      {
+        "memory": "SmartSearch",
+        "accuracy": 0.884,
+        "source_url": "https://arxiv.org/abs/2603.15599",
+        "source_label": "SmartSearch Paper (arXiv:2603.15599)",
+        "comment": "Self-reported. Index-free variant (slightly stronger than the indexed variant at 87.6%). Uses GPT-4.1-mini backbone."
+      },
+      {
+        "memory": "Supermemory",
+        "accuracy": 0.816,
+        "source_url": "https://arxiv.org/abs/2512.12818",
+        "source_label": "Hindsight Paper (arXiv:2512.12818)",
+        "comment": "Evaluated by a competitor (Hindsight/Vectorize). Uses GPT-4o as backbone. Judge: GPT-OSS-120B \u2014 differs from GPT-4o used in the original LongMemEval paper and most other entries here, making direct comparison harder."
+      },
+      {
+        "memory": "Supermemory (Gemini-3)",
+        "accuracy": 0.852,
+        "source_url": "https://arxiv.org/abs/2512.12818",
+        "source_label": "Hindsight Paper (arXiv:2512.12818)",
+        "comment": "Evaluated by a competitor (Hindsight/Vectorize). Uses Gemini-3 Pro Preview as backbone \u2014 stronger than GPT-4o, inflating score. Judge: GPT-OSS-120B."
+      },
+      {
+        "memory": "Honcho",
+        "accuracy": 0.904,
+        "source_url": "https://blog.plasticlabs.ai/research/Benchmarking-Honcho",
+        "source_label": "Honcho Benchmarking Blog (Plastic Labs)",
+        "comment": "Self-reported by Plastic Labs. LongMemEval S split. LLM-as-a-judge with GPT-4o as judge (following the LongMemEval paper's methodology). Uses Claude Haiku 4.5 as backbone. Score on LongMem M (500 questions): 88.8%. Also reported in the Chronos paper (arXiv:2603.16862)."
+      },
+      {
+        "memory": "Mastra",
+        "accuracy": 0.928,
+        "source_url": "https://arxiv.org/abs/2603.16862",
+        "source_label": "Chronos Paper (arXiv:2603.16862)",
+        "comment": "Reported by the Chronos paper, not self-reported. Best of two configurations tested; the GPT-4o configuration achieved 84.8%. The backbone for this configuration is not specified."
+      },
+      {
+        "memory": "Chronos",
+        "accuracy": 0.956,
+        "source_url": "https://arxiv.org/abs/2603.16862",
+        "source_label": "Chronos Paper (arXiv:2603.16862)",
+        "comment": "Self-reported by Chronos authors. Best of two configurations tested; the GPT-4o configuration achieved 92.6%. This configuration uses Claude Opus 4.6 as backbone, which is considerably more capable than the models used by most other entries here."
+      }
+    ]
+  },
+  "ama-bench": {
+    "test": [
+      {
+        "memory": "AMA-agent",
+        "accuracy": 0.5579,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      },
+      {
+        "memory": "Long context",
+        "accuracy": 0.5017,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      },
+      {
+        "memory": "Hipporag2",
+        "accuracy": 0.4348,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      },
+      {
+        "memory": "Memorag",
+        "accuracy": 0.4314,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      },
+      {
+        "memory": "Qwen3-Embedding-4B",
+        "accuracy": 0.4036,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      },
+      {
+        "memory": "Memorybank",
+        "accuracy": 0.3492,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      },
+      {
+        "memory": "GRAPHRAG",
+        "accuracy": 0.3353,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      },
+      {
+        "memory": "Memgpt",
+        "accuracy": 0.3328,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      },
+      {
+        "memory": "Amem",
+        "accuracy": 0.3173,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      },
+      {
+        "memory": "Mem-alpha",
+        "accuracy": 0.3059,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      },
+      {
+        "memory": "Memagent",
+        "accuracy": 0.2719,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      },
+      {
+        "memory": "Mem0",
+        "accuracy": 0.215,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      },
+      {
+        "memory": "Simple mem",
+        "accuracy": 0.172,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      },
+      {
+        "memory": "Mem1",
+        "accuracy": 0.127,
+        "source_url": "https://github.com/AMA-Bench/AMA-Bench",
+        "source_label": "AMA-Bench Leaderboard"
+      }
+    ]
+  },
+  "memsim": {
+    "simple": [
+      {
+        "memory": "FullMem",
+        "accuracy": 0.976,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "OracleMem",
+        "accuracy": 0.966,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "RetrMem",
+        "accuracy": 0.898,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "ReceMem",
+        "accuracy": 0.832,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "NonMem",
+        "accuracy": 0.508,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      }
+    ],
+    "conditional": [
+      {
+        "memory": "OracleMem",
+        "accuracy": 0.988,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "FullMem",
+        "accuracy": 0.982,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "RetrMem",
+        "accuracy": 0.882,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "ReceMem",
+        "accuracy": 0.798,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "NonMem",
+        "accuracy": 0.452,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      }
+    ],
+    "comparative": [
+      {
+        "memory": "OracleMem",
+        "accuracy": 0.91,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "FullMem",
+        "accuracy": 0.859,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "RetrMem",
+        "accuracy": 0.771,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "ReceMem",
+        "accuracy": 0.631,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "NonMem",
+        "accuracy": 0.157,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      }
+    ],
+    "aggregative": [
+      {
+        "memory": "OracleMem",
+        "accuracy": 0.376,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "FullMem",
+        "accuracy": 0.32,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "RetrMem",
+        "accuracy": 0.317,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "ReceMem",
+        "accuracy": 0.257,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "NonMem",
+        "accuracy": 0.254,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      }
+    ],
+    "post_processing": [
+      {
+        "memory": "OracleMem",
+        "accuracy": 0.888,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "FullMem",
+        "accuracy": 0.848,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "RetrMem",
+        "accuracy": 0.8,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "ReceMem",
+        "accuracy": 0.76,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "NonMem",
+        "accuracy": 0.594,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      }
+    ],
+    "noisy": [
+      {
+        "memory": "OracleMem",
+        "accuracy": 0.984,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "FullMem",
+        "accuracy": 0.966,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "RetrMem",
+        "accuracy": 0.786,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "ReceMem",
+        "accuracy": 0.764,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      },
+      {
+        "memory": "NonMem",
+        "accuracy": 0.38,
+        "source_url": "https://arxiv.org/abs/2409.20163",
+        "source_label": "MemSim Paper (vanilla)"
+      }
+    ]
+  },
+  "membench": {
+    "FirstAgentLowLevel": [
+      {
+        "memory": "RetrievalMemory",
+        "accuracy": 0.692,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "FullMemory",
+        "accuracy": 0.647,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "RecentMemory",
+        "accuracy": 0.639,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "MemGPT",
+        "accuracy": 0.455,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "GenerativeAgent",
+        "accuracy": 0.478,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "MemoryBank",
+        "accuracy": 0.442,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "SCMemory",
+        "accuracy": 0.355,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      }
+    ],
+    "FirstAgentHighLevel": [
+      {
+        "memory": "GenerativeAgent",
+        "accuracy": 0.742,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "FullMemory",
+        "accuracy": 0.733,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "MemGPT",
+        "accuracy": 0.733,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "RecentMemory",
+        "accuracy": 0.7,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "RetrievalMemory",
+        "accuracy": 0.692,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "MemoryBank",
+        "accuracy": 0.692,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "SCMemory",
+        "accuracy": 0.542,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      }
+    ],
+    "ThirdAgentLowLevel": [
+      {
+        "memory": "RetrievalMemory",
+        "accuracy": 0.883,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "RecentMemory",
+        "accuracy": 0.8,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "FullMemory",
+        "accuracy": 0.786,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "MemGPT",
+        "accuracy": 0.789,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "GenerativeAgent",
+        "accuracy": 0.779,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "MemoryBank",
+        "accuracy": 0.721,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "SCMemory",
+        "accuracy": 0.529,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      }
+    ],
+    "ThirdAgentHighLevel": [
+      {
+        "memory": "MemoryBank",
+        "accuracy": 0.9,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "RetrievalMemory",
+        "accuracy": 0.883,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "GenerativeAgent",
+        "accuracy": 0.883,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "MemGPT",
+        "accuracy": 0.883,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "FullMemory",
+        "accuracy": 0.883,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "RecentMemory",
+        "accuracy": 0.867,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      },
+      {
+        "memory": "SCMemory",
+        "accuracy": 0.783,
+        "source_url": "https://arxiv.org/abs/2506.21605",
+        "source_label": "MemBench Paper (standard context)"
+      }
+    ]
+  }
+}

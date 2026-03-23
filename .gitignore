@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+outputs/
+!outputs/**/*.json.gz
+outputs/**/_store/
+outputs/**/*.json.bak
+data/*.json
+data/tempo/
+.datasets/
+.data/
+.vercel
+.env*.local
+.blob_manifest.json
