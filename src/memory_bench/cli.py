@@ -205,24 +205,27 @@ def publish_results(
 
     console.rule("Uploading result to Vercel Blob")
     blob_manifest_path = root / ".blob_manifest.json"
-    blob_manifest: dict[str, str] = json.loads(blob_manifest_path.read_text()) if blob_manifest_path.exists() else {}
+    blob_manifest: dict[str, dict] = json.loads(blob_manifest_path.read_text()) if blob_manifest_path.exists() else {}
 
     rel = str(abs_result.relative_to(root))
     sha = hashlib.sha256(abs_result.read_bytes()).hexdigest()
-    if not force and blob_manifest.get(rel) == sha:
+    existing = blob_manifest.get(rel)
+    existing_sha = existing["sha"] if isinstance(existing, dict) else existing
+    if not force and existing_sha == sha and isinstance(existing, dict) and existing.get("url"):
         console.print(f"  [dim]unchanged, skipping upload: {rel}[/dim]")
     else:
-        url = f"https://blob.vercel-storage.com/{rel}?access=public"
-        req = urllib.request.Request(url, data=abs_result.read_bytes(), method="PUT", headers={
+        upload_url = f"https://blob.vercel-storage.com/{rel}?access=public"
+        req = urllib.request.Request(upload_url, data=abs_result.read_bytes(), method="PUT", headers={
             "Authorization": f"Bearer {token}",
             "x-api-version": "7",
             "x-content-type": "application/octet-stream",
             "Content-Type": "application/octet-stream",
         })
         try:
-            with urllib.request.urlopen(req):
-                pass
-            blob_manifest[rel] = sha
+            with urllib.request.urlopen(req) as resp:
+                resp_data = json.loads(resp.read())
+            actual_url = resp_data.get("url", upload_url)
+            blob_manifest[rel] = {"sha": sha, "url": actual_url}
             blob_manifest_path.write_text(json.dumps(blob_manifest, indent=2))
             console.print(f"  [green]✓[/green] uploaded {rel}")
         except Exception as e:

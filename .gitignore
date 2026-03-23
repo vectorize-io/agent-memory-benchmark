@@ -11,4 +11,4 @@ data/tempo/
 .data/
 .vercel
 .env*.local
-.blob_manifest.json
+# .blob_manifest.json is committed (maps blob paths to actual Vercel URLs with hash suffixes)
