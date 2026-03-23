@@ -26,9 +26,11 @@ _BLOB_BASE = os.environ.get(
 )
 
 
-@lru_cache(maxsize=1)
 def _load_blob_manifest() -> dict:
-    """Load .blob_manifest.json (maps relative paths to {sha, url})."""
+    """Load .blob_manifest.json (maps relative paths to {sha, url}).
+
+    Not cached — the file is small and must reflect the latest deployment.
+    """
     path = _root / ".blob_manifest.json"
     if path.exists():
         try:
@@ -49,12 +51,16 @@ def _blob_url(relative_path: str) -> str:
 
 
 def _fetch_blob(relative_path: str) -> bytes:
-    """Fetch a file from Vercel Blob and cache it in /tmp."""
+    """Fetch a file from Vercel Blob and cache it in /tmp, keyed by URL."""
     import urllib.request
-    cache_path = Path(tempfile.gettempdir()) / "omb_blob" / relative_path
+    url = _blob_url(relative_path)
+    # Use a hash of the URL as the cache key so new uploads (new URLs) bypass stale cache
+    import hashlib
+    url_hash = hashlib.md5(url.encode()).hexdigest()[:16]
+    cache_name = Path(relative_path).name + "." + url_hash
+    cache_path = Path(tempfile.gettempdir()) / "omb_blob" / cache_name
     if cache_path.exists():
         return cache_path.read_bytes()
-    url = _blob_url(relative_path)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     with urllib.request.urlopen(url) as resp:
         data = resp.read()
