@@ -107,7 +107,8 @@
 .chart-bar-a { height: 100%; border-radius: 4px; background: linear-gradient(90deg, oklch(0.45 0.17 38), oklch(0.6420 0.1691 38.58)); transition: width 0.4s ease; }
 .chart-bar-r { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #059669, #34d399); transition: width 0.4s ease; }
 .chart-bar-t { height: 100%; border-radius: 4px; background: linear-gradient(90deg, oklch(0.50 0.12 38), oklch(0.72 0.10 55)); transition: width 0.4s ease; }
-.chart-val   { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.45rem; font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.75); pointer-events: none; }
+.chart-val-out { font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif; font-size: 0.7rem; font-weight: 500; color: var(--muted-foreground); white-space: nowrap; min-width: 2.8rem; text-align: right; letter-spacing: -0.01em; }
+.chart-val-out.chart-winner { font-weight: 800; color: var(--primary); }
 
 /* ── Sidebar ─────────────────────────────────────────────────────────── */
 .sidebar { background: var(--card); border-right: 1px solid var(--border); }

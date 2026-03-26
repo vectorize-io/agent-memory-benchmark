@@ -3,7 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import { fetchManifest, fetchSplitStats, fetchExternalResults, fetchDatasetInfo, fetchSplitCategoryBreakdown } from '../api.js'
-import { fmtTokens, accuracyColor } from '../utils.js'
+import { fmtTokens } from '../utils.js'
 import Card from '@/components/ui/card.vue'
 import Badge from '@/components/ui/badge.vue'
 import BarChart from '@/components/ui/bar-chart.vue'
@@ -373,14 +373,14 @@ function hasCategoryData(local, split) {
                 <p class="text-muted-foreground/40 text-xs mb-4">lower is better</p>
                 <BarChart :rows="chartRecall(local).rows"
                           :format="v => Math.round(v) + 'ms'"
-                          variant="recall" />
+                          variant="recall" :lower-better="true" />
               </Card>
               <Card class="p-4">
                 <p class="font-display text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Context tokens</p>
                 <p class="text-muted-foreground/40 text-xs mb-4">lower is better</p>
                 <BarChart :rows="chartTokens(local).rows"
-                          :format="v => Math.round(v).toLocaleString()"
-                          variant="tokens" />
+                          :format="v => v >= 1000 ? (v / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : Math.round(v)"
+                          variant="tokens" :lower-better="true" />
               </Card>
             </div>
 
@@ -415,7 +415,7 @@ function hasCategoryData(local, split) {
                     <TableCell>{{ item.mode }}</TableCell>
                     <TableCell :right="true">{{ item.total_queries ?? '—' }}</TableCell>
                     <TableCell :right="true">{{ item.correct ?? '—' }}</TableCell>
-                    <TableCell :right="true" class="font-semibold" :style="{ color: item.accuracy != null ? accuracyColor(item.accuracy) : '' }">
+                    <TableCell :right="true" class="font-semibold">
                       {{ item.accuracy != null ? (item.accuracy * 100).toFixed(1) + '%' : '—' }}
                     </TableCell>
                     <TableCell :right="true">{{ (item.ingestion_time_ms != null && item.ingested_docs) ? Math.round(item.ingestion_time_ms / item.ingested_docs) + 'ms' : '—' }}</TableCell>
@@ -471,8 +471,7 @@ function hasCategoryData(local, split) {
                         </TableCell>
                         <TableCell>{{ row.mode }}</TableCell>
                         <TableCell v-for="cat in section.cats" :key="cat" :right="true"
-                                   class="font-semibold tabular-nums"
-                                   :style="{ color: row.cats[cat] != null ? accuracyColor(row.cats[cat]) : '' }">
+                                   class="font-semibold tabular-nums">
                           {{ row.cats[cat] != null ? (row.cats[cat] * 100).toFixed(1) + '%' : '—' }}
                         </TableCell>
                       </TableRow>
@@ -511,7 +510,7 @@ function hasCategoryData(local, split) {
                       </div>
                       <div v-if="item.comment" class="text-xs text-muted-foreground/60 mt-0.5">{{ item.comment }}</div>
                     </TableCell>
-                    <TableCell :right="true" class="font-semibold" :style="{ color: item.accuracy != null ? accuracyColor(item.accuracy) : '' }">
+                    <TableCell :right="true" class="font-semibold">
                       {{ item.accuracy != null ? (item.accuracy * 100).toFixed(1) + '%' : '—' }}
                     </TableCell>
                     <TableCell class="text-ca text-xs">

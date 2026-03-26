@@ -6,7 +6,8 @@ const props = defineProps({
   max:        { type: Number,   default: null },    // null = relative to row max; 1 = absolute (accuracy)
   format:     { type: Function, required: true },   // value => display string
   variant:    { type: String,   default: 'accuracy' }, // 'accuracy' | 'recall' | 'tokens'
-  labelWidth: { type: String,   default: 'w-24' },
+  labelWidth:  { type: String,   default: 'w-24' },
+  lowerBetter: { type: Boolean,  default: false },
 })
 
 const barClass = computed(() => ({
@@ -18,6 +19,12 @@ const barClass = computed(() => ({
 const effectiveMax = computed(() =>
   props.max ?? (props.rows.reduce((m, r) => Math.max(m, r.value), 0) || 1)
 )
+
+const winnerValue = computed(() => {
+  if (!props.rows.length) return null
+  const vals = props.rows.map(r => r.value)
+  return props.lowerBetter ? Math.min(...vals) : Math.max(...vals)
+})
 </script>
 
 <template>
@@ -31,8 +38,8 @@ const effectiveMax = computed(() =>
       </div>
       <div class="chart-track flex-1">
         <div :class="barClass" :style="{ width: (row.value / effectiveMax * 100) + '%' }"></div>
-        <div class="chart-val">{{ format(row.value) }}</div>
       </div>
+      <span class="chart-val-out" :class="{ 'chart-winner': row.value === winnerValue }">{{ format(row.value) }}</span>
     </div>
   </div>
 </template>

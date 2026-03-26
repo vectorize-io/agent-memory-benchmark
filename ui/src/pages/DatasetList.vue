@@ -3,11 +3,17 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import { fetchManifest, fetchExternalResults } from '../api.js'
-import { accuracyColor } from '../utils.js'
+
 import Card from '@/components/ui/card.vue'
 import Badge from '@/components/ui/badge.vue'
 import BarChart from '@/components/ui/bar-chart.vue'
 import TopNav from '@/components/ui/top-nav.vue'
+import UiTable from '@/components/ui/table.vue'
+import TableHeader from '@/components/ui/table-header.vue'
+import TableBody from '@/components/ui/table-body.vue'
+import TableRow from '@/components/ui/table-row.vue'
+import TableHead from '@/components/ui/table-head.vue'
+import TableCell from '@/components/ui/table-cell.vue'
 
 useHead({
   title: 'Agent Memory Benchmark — AMB',
@@ -102,6 +108,145 @@ const datasets = computed(() => {
   return Object.values(map).map(ds => ({ ...ds, chart: computeChart(ds.items) }))
 })
 
+// ── Cross-provider comparison table ──────────────────────────────────
+const showUnverified = ref(false)
+const cmpSortCol = ref(null) // null = default (avg accuracy), or "dataset||split" colKey
+const cmpSortDir = ref('desc')
+
+function toggleCmpSort(colKey) {
+  if (cmpSortCol.value === colKey) cmpSortDir.value = cmpSortDir.value === 'asc' ? 'desc' : 'asc'
+  else { cmpSortCol.value = colKey; cmpSortDir.value = 'desc' }
+}
+function cmpSortIcon(colKey) {
+  return cmpSortCol.value === colKey ? (cmpSortDir.value === 'asc' ? ' ↑' : ' ↓') : ''
+}
+
+const comparisonTable = computed(() => {
+  const colSet = new Map()
+  const catalogDatasets = catalog.value.datasets ?? {}
+
+  manifest.value.forEach(item => {
+    const key = item.dataset + '||' + item.split
+    if (!colSet.has(key)) colSet.set(key, { dataset: item.dataset, split: item.split })
+  })
+  if (showUnverified.value) {
+    Object.entries(externalResults.value).forEach(([ds, splitMap]) => {
+      Object.keys(splitMap).forEach(split => {
+        const key = ds + '||' + split
+        if (!colSet.has(key)) colSet.set(key, { dataset: ds, split })
+      })
+    })
+  }
+
+  const columns = [...colSet.values()]
+  columns.sort((a, b) => {
+    const aOrder = Object.keys(catalogDatasets).indexOf(a.dataset)
+    const bOrder = Object.keys(catalogDatasets).indexOf(b.dataset)
+    const ai = aOrder >= 0 ? aOrder : 999
+    const bi = bOrder >= 0 ? bOrder : 999
+    if (ai !== bi) return ai - bi
+    if (a.dataset !== b.dataset) return a.dataset.localeCompare(b.dataset)
+    const splits = catalogDatasets[a.dataset]?.splits ?? []
+    const asi = splits.indexOf(a.split), bsi = splits.indexOf(b.split)
+    if (asi >= 0 && bsi >= 0) return asi - bsi
+    if (asi >= 0) return -1
+    if (bsi >= 0) return 1
+    return a.split.localeCompare(b.split)
+  })
+
+  const providerMap = {}
+
+  const getProviderInfo = (memory) => {
+    const info = providerByKey.value[memory]
+    const label = (info?.family ?? memory) + (info?.variant ? ' · ' + info.variant : '')
+    return { label, logo: info?.logo ?? null }
+  }
+
+  manifest.value.forEach(item => {
+    if (item.accuracy == null) return
+    const { label, logo } = getProviderInfo(item.memory)
+    if (!providerMap[label]) providerMap[label] = { label, logo, cells: {} }
+    const colKey = item.dataset + '||' + item.split
+    const existing = providerMap[label].cells[colKey]
+    if (!existing || item.accuracy > existing.accuracy) {
+      providerMap[label].cells[colKey] = { accuracy: item.accuracy, unverified: false }
+    }
+  })
+
+  if (showUnverified.value) {
+    Object.entries(externalResults.value).forEach(([ds, splitMap]) => {
+      Object.entries(splitMap).forEach(([split, items]) => {
+        const colKey = ds + '||' + split
+        items.forEach(item => {
+          if (item.accuracy == null) return
+          const { label, logo } = getProviderInfo(item.memory)
+          if (!providerMap[label]) providerMap[label] = { label, logo, cells: {} }
+          const existing = providerMap[label].cells[colKey]
+          if (!existing || (existing.unverified && item.accuracy > existing.accuracy)) {
+            providerMap[label].cells[colKey] = {
+              accuracy: item.accuracy, unverified: true,
+              source_url: item.source_url, source_label: item.source_label, comment: item.comment,
+            }
+          }
+        })
+      })
+    })
+  }
+
+  // Sort providers
+  const col = cmpSortCol.value
+  const dir = cmpSortDir.value
+  const providers = Object.values(providerMap).sort((a, b) => {
+    let av, bv
+    if (col === null) {
+      // Default: average accuracy
+      const avgAcc = p => {
+        const vals = Object.values(p.cells).map(c => c.accuracy)
+        return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : 0
+      }
+      av = avgAcc(a); bv = avgAcc(b)
+    } else if (col === 'provider') {
+      av = a.label.toLowerCase(); bv = b.label.toLowerCase()
+      if (av === bv) return 0
+      const cmp = av < bv ? -1 : 1
+      return dir === 'asc' ? cmp : -cmp
+    } else {
+      av = a.cells[col]?.accuracy ?? null
+      bv = b.cells[col]?.accuracy ?? null
+    }
+    if (av == null && bv == null) return 0
+    if (av == null) return 1
+    if (bv == null) return -1
+    return dir === 'asc' ? av - bv : bv - av
+  })
+
+  // Best per column (only among verified if unverified shown)
+  const bestPerCol = {}
+  columns.forEach(c => {
+    const colKey = c.dataset + '||' + c.split
+    let best = -1
+    providers.forEach(p => {
+      const cell = p.cells[colKey]
+      if (cell && cell.accuracy > best) best = cell.accuracy
+    })
+    if (best >= 0) bestPerCol[colKey] = best
+  })
+
+  const datasetGroups = []
+  let current = null
+  columns.forEach(c => {
+    if (!current || current.dataset !== c.dataset) {
+      current = { dataset: c.dataset, splits: [] }
+      datasetGroups.push(current)
+    }
+    current.splits.push(c.split)
+  })
+
+  const hasExternal = Object.keys(externalResults.value).length > 0
+
+  return { columns, providers, bestPerCol, datasetGroups, hasExternal }
+})
+
 function toggleAbout() {
   aboutOpen.value = !aboutOpen.value
   localStorage.setItem(ABOUT_OPEN_KEY, aboutOpen.value)
@@ -142,6 +287,8 @@ const vReveal = {
           <p class="text-base text-muted-foreground leading-relaxed mb-8">
             An open, reproducible benchmark for evaluating memory and retrieval systems on real-world long-context tasks —
             personal conversations, agent trajectories, and time-sensitive knowledge.
+            <a href="https://hindsight.vectorize.io/blog/2026/03/23/agent-memory-benchmark" target="_blank" rel="noopener"
+               class="text-primary hover:text-primary/80 transition-colors whitespace-nowrap">Learn more →</a>
           </p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="inset-section sm:col-span-2">
@@ -213,6 +360,91 @@ const vReveal = {
         </div>
       </section>
 
+      <!-- Comparison table -->
+      <section v-if="!loading && !error && comparisonTable.providers.length">
+        <div class="flex items-center justify-between mb-8">
+          <p class="font-display text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Comparison</p>
+          <label v-if="comparisonTable.hasExternal" class="flex items-center gap-2 cursor-pointer select-none">
+            <span class="text-xs text-muted-foreground">Show unverified</span>
+            <button @click="showUnverified = !showUnverified"
+                    class="relative w-8 h-4 rounded-full transition-colors"
+                    :class="showUnverified ? 'bg-primary' : 'bg-border'">
+              <span class="absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform"
+                    :class="showUnverified ? 'translate-x-4' : ''"></span>
+            </button>
+          </label>
+        </div>
+
+        <Card class="overflow-x-auto">
+          <UiTable>
+            <TableHeader>
+              <!-- Dataset group header -->
+              <TableRow>
+                <TableHead class="border-b-0"></TableHead>
+                <template v-for="group in comparisonTable.datasetGroups" :key="group.dataset">
+                  <TableHead :colspan="group.splits.length" class="text-center border-l border-border/50 border-b-0 text-foreground font-semibold">
+                    {{ group.dataset }}
+                  </TableHead>
+                </template>
+              </TableRow>
+              <!-- Split header (sortable) -->
+              <TableRow>
+                <TableHead :sortable="true" @click="toggleCmpSort('provider')">Provider{{ cmpSortIcon('provider') }}</TableHead>
+                <TableHead v-for="col in comparisonTable.columns" :key="col.dataset + col.split"
+                           :right="true" :sortable="true" class="border-l border-border/50"
+                           @click="toggleCmpSort(col.dataset + '||' + col.split)">
+                  {{ col.split }}{{ cmpSortIcon(col.dataset + '||' + col.split) }}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow v-for="provider in comparisonTable.providers" :key="provider.label">
+                <TableCell :primary="true">
+                  <div class="flex items-center gap-2 whitespace-nowrap">
+                    <img v-if="provider.logo" :src="provider.logo"
+                         class="w-4 h-4 rounded object-contain shrink-0" @error="$event.target.style.display='none'" />
+                    <span>{{ provider.label }}</span>
+                  </div>
+                </TableCell>
+                <TableCell v-for="col in comparisonTable.columns"
+                           :key="col.dataset + col.split"
+                           :right="true"
+                           class="tabular-nums border-l border-border/50"
+                           :class="provider.cells[col.dataset + '||' + col.split]?.accuracy === comparisonTable.bestPerCol[col.dataset + '||' + col.split]
+                             ? 'font-bold text-primary bg-primary/5'
+                             : ''">
+                  <template v-if="provider.cells[col.dataset + '||' + col.split]">
+                    <span class="inline-flex items-center gap-0.5">
+                      {{ (provider.cells[col.dataset + '||' + col.split].accuracy * 100).toFixed(1) + '%' }}
+                      <a v-if="provider.cells[col.dataset + '||' + col.split].unverified && provider.cells[col.dataset + '||' + col.split].source_url"
+                         :href="provider.cells[col.dataset + '||' + col.split].source_url"
+                         target="_blank" rel="noopener" @click.stop
+                         class="text-ca hover:text-ca/80 cursor-pointer"
+                         :title="[provider.cells[col.dataset + '||' + col.split].source_label, provider.cells[col.dataset + '||' + col.split].comment].filter(Boolean).join(' — ')">*</a>
+                      <span v-else-if="provider.cells[col.dataset + '||' + col.split].unverified"
+                            class="text-ca"
+                            :title="provider.cells[col.dataset + '||' + col.split].comment || 'Unverified'">*</span>
+                    </span>
+                  </template>
+                  <template v-else>
+                    <span class="text-muted-foreground/30">—</span>
+                  </template>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </UiTable>
+        </Card>
+
+        <div class="flex items-center justify-between mt-3">
+          <p v-if="showUnverified" class="text-xs text-muted-foreground/50"><span class="text-ca">*</span> Unverified — sourced from external papers, not independently reproduced.</p>
+          <span v-else></span>
+          <a href="https://github.com/vectorize-io/open-memory-benchmark" target="_blank" rel="noopener"
+             class="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            Want to add your memory system? Contribute on GitHub →
+          </a>
+        </div>
+      </section>
+
       <!-- About -->
       <section>
         <button @click="toggleAbout" class="flex items-center gap-2 mb-8 group">
@@ -248,30 +480,6 @@ const vReveal = {
           </div>
 
           <div v-reveal="240">
-            <p class="text-xs font-display font-semibold uppercase tracking-wider text-muted-foreground/60 mb-4">Memory Providers</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div v-for="(p, pName) in catalog.providers" :key="pName" class="inset-section">
-                <div class="flex items-center gap-1.5 mb-2">
-                  <img v-if="p.logo" :src="p.logo" class="w-4 h-4 rounded object-contain shrink-0" @error="$event.target.style.display='none'" />
-                  <span class="text-xs font-semibold text-primary">{{ pName }}</span>
-                  <a v-if="p.link" :href="p.link" target="_blank" rel="noopener" @click.stop class="ml-auto text-muted-foreground/50 hover:text-muted-foreground text-xs">↗</a>
-                </div>
-                <template v-if="!p.variants">
-                  <Badge :variant="p.kind === 'cloud' ? 'cloud' : 'local'" class="mr-1">{{ p.kind }}</Badge>
-                  <span class="text-xs text-muted-foreground">{{ p.description }}</span>
-                </template>
-                <template v-else>
-                  <div v-for="(v, vName) in p.variants" :key="vName" class="mt-2 first:mt-0 flex items-center gap-2">
-                    <span class="text-xs text-muted-foreground/60 w-10 shrink-0">{{ vName }}</span>
-                    <Badge :variant="v.kind === 'cloud' ? 'cloud' : 'local'">{{ v.kind }}</Badge>
-                    <span class="text-xs text-muted-foreground">{{ v.description }}</span>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </div>
-
-          <div v-reveal="320">
             <p class="text-xs font-display font-semibold uppercase tracking-wider text-muted-foreground/60 mb-4">Modes</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div v-for="(m, mName) in catalog.modes" :key="mName" class="inset-section">
