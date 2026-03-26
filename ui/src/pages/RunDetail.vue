@@ -56,9 +56,10 @@ const axisStats = computed(() => {
     Object.entries(r.category_axes ?? {}).forEach(([axis, vals]) => {
       if (!map[axis]) map[axis] = {}
       ;(vals ?? []).forEach(v => {
-        if (!map[axis][v]) map[axis][v] = { correct: 0, total: 0 }
+        if (!map[axis][v]) map[axis][v] = { correct: 0, total: 0, scoreSum: 0, scoreCount: 0 }
         map[axis][v].total++
         if (r.correct) map[axis][v].correct++
+        if (r.score != null) { map[axis][v].scoreSum += r.score; map[axis][v].scoreCount++ }
       })
     })
   })
@@ -94,7 +95,15 @@ const summary = computed(() => {
   if (!data.value) return null
   const pass = results.value.filter(r => r.correct).length
   const total = results.value.length
-  return { pass, total, pct: total ? pass / total : 0 }
+  const hasScores = results.value.some(r => r.score != null)
+  let pct
+  if (hasScores) {
+    const scored = results.value.filter(r => r.score != null)
+    pct = scored.length ? scored.reduce((s, r) => s + r.score, 0) / scored.length : 0
+  } else {
+    pct = total ? pass / total : 0
+  }
+  return { pass, total, pct, hasScores }
 })
 
 const perf = computed(() => {
@@ -177,7 +186,7 @@ function toggleCat(axis, cat) {
           <span class="font-display text-2xl font-bold tracking-tight" :style="{ color: accuracyColor(summary.pct) }">
             {{ (summary.pct * 100).toFixed(1) }}%
           </span>
-          <span class="text-muted-foreground text-xs">{{ summary.pass }} / {{ summary.total }} correct</span>
+          <span class="text-muted-foreground text-xs">{{ summary.hasScores ? 'avg score' : summary.pass + ' / ' + summary.total + ' correct' }}</span>
           <Badge v-if="data?.oracle" variant="default" class="ml-auto">oracle</Badge>
         </div>
 
@@ -199,7 +208,7 @@ function toggleCat(axis, cat) {
       </div>
 
       <!-- Category filters -->
-      <div v-if="allAxes.length" class="sidebar-section shrink-0">
+      <div v-if="allAxes.length" class="sidebar-section overflow-y-auto max-h-[25vh]">
         <div v-for="axis in allAxes" :key="axis" class="px-4 py-2.5 border-b border-border last:border-0">
           <p class="font-display text-xs font-semibold uppercase tracking-wider text-muted-foreground/50 mb-1.5">{{ axis }}</p>
           <table class="w-full text-xs">
@@ -209,8 +218,8 @@ function toggleCat(axis, cat) {
                   :class="catFilter[axis]?.has(cat) ? 'cat-row-active' : 'cat-row'">
                 <td class="py-0.5 pr-2 text-muted-foreground truncate max-w-[110px]">{{ cat }}</td>
                 <td class="py-0.5 pr-2 text-right text-muted-foreground/50 w-10">{{ stats.total }}</td>
-                <td class="py-0.5 text-right font-semibold w-10" :style="{ color: accuracyColor(stats.correct / stats.total) }">
-                  {{ (stats.correct / stats.total * 100).toFixed(1) }}%
+                <td class="py-0.5 text-right font-semibold w-10" :style="{ color: accuracyColor(stats.scoreCount ? stats.scoreSum / stats.scoreCount : stats.correct / stats.total) }">
+                  {{ ((stats.scoreCount ? stats.scoreSum / stats.scoreCount : stats.correct / stats.total) * 100).toFixed(1) }}%
                 </td>
               </tr>
             </tbody>
@@ -248,7 +257,7 @@ function toggleCat(axis, cat) {
                 :class="i === activeIndex ? 'item-active' : 'hover:bg-secondary/30'"
                 class="w-full text-left px-4 py-2.5 border-b border-border/50 last:border-0 transition-colors">
           <div class="flex items-start gap-2">
-            <span :class="r.correct ? 'text-cg' : 'text-cr'" class="font-bold text-xs shrink-0 mt-0.5">{{ r.correct ? '✓' : '✗' }}</span>
+            <span :class="r.correct ? 'text-cg' : 'text-cr'" class="font-bold text-xs shrink-0 mt-0.5">{{ r.score != null ? r.score.toFixed(2) : (r.correct ? '✓' : '✗') }}</span>
             <div class="min-w-0">
               <p class="text-sm text-foreground leading-snug line-clamp-2">{{ (r.query || '').split('\n')[0].trim().slice(0, 80) }}</p>
               <div class="flex items-center gap-1 mt-0.5 flex-wrap">
@@ -314,7 +323,7 @@ function toggleCat(axis, cat) {
           <section>
             <p class="font-display text-xs font-semibold uppercase tracking-wider text-muted-foreground/50 mb-2">Judge verdict</p>
             <div :class="active.correct ? 'verdict-pass' : 'verdict-fail'" class="text-sm">
-              <span class="font-semibold">{{ active.correct ? '✓ Correct' : '✗ Incorrect' }}</span>
+              <span class="font-semibold">{{ active.score != null ? 'Score: ' + active.score.toFixed(3) : (active.correct ? '✓ Correct' : '✗ Incorrect') }}</span>
               <span v-if="active.judge_reason" class="ml-2 opacity-75 font-normal">— {{ active.judge_reason }}</span>
             </div>
           </section>

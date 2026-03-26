@@ -29,16 +29,22 @@ Categories (query-level, 10 memory ability types):
 """
 import ast
 import json
+import logging
 import os
+import re
 import urllib.request
 from pathlib import Path
 
 from rich.console import Console
 from rich.table import Table
+from scipy.stats import kendalltau
 
 from ._cache import dataset_cache_dir
 from .base import Dataset
-from ..models import Document, Query
+from ..models import Document, Query, QueryResult
+from ..llm.base import LLM, Schema
+
+logger = logging.getLogger(__name__)
 
 # HuggingFace split name → our internal name
 _HF_SPLIT_MAP = {
@@ -649,6 +655,170 @@ Respond as JSON: {{"correct": true/false, "reason": "one sentence"}}"""
         if conv:
             axes["Conversation"] = [conv]
         return axes
+
+    # ------------------------------------------------------------------
+    # BEAM paper scoring (continuous 0-1 scores)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _extract_ordered_items(text: str) -> list[str]:
+        """Extract ordered items from a numbered/bulleted list or newline-separated text."""
+        lines = text.strip().splitlines()
+        items = []
+        for line in lines:
+            # Strip numbering like "1.", "1)", "- ", "* ", etc.
+            cleaned = re.sub(r"^\s*(?:\d+[.)]\s*|[-*]\s*)", "", line).strip()
+            if cleaned:
+                items.append(cleaned)
+        return items
+
+    @staticmethod
+    def _llm_equivalence(ref_item: str, sys_item: str, llm: LLM) -> bool:
+        """Use LLM to check if two items refer to the same event/topic."""
+        prompt = f"""Do these two items refer to the same event, topic, or concept? Answer only YES or NO.
+
+Item A: {ref_item}
+Item B: {sys_item}
+
+Answer (YES or NO):"""
+        schema = Schema(
+            properties={"answer": {"type": "string", "description": "YES or NO"}},
+            required=["answer"],
+        )
+        try:
+            result = llm.generate(prompt, schema)
+            return result.get("answer", "").strip().upper().startswith("YES")
+        except Exception:
+            return False
+
+    @staticmethod
+    def _align_with_llm(reference: list[str], system: list[str], llm: LLM) -> tuple[list[str], list[str]]:
+        """Align system items to reference items using LLM equivalence matching.
+
+        Returns (reference_canonical, system_canonical) where matched items share
+        the same string from the reference list.
+        """
+        used: set[int] = set()
+        system_out: list[str] = []
+        for s in system:
+            matched_index = None
+            for index, r in enumerate(reference):
+                if index in used:
+                    continue
+                if BEAMDataset._llm_equivalence(r, s, llm):
+                    matched_index = index
+                    break
+            if matched_index is not None:
+                system_out.append(reference[matched_index])
+                used.add(matched_index)
+            else:
+                system_out.append(s)
+        return reference, system_out
+
+    @staticmethod
+    def _event_ordering_score(reference: list[str], system: list[str], llm: LLM) -> float:
+        """Compute tau_b_norm for event ordering, matching the BEAM paper methodology."""
+        if not reference or not system:
+            return 0.0
+
+        reference_canon, system_canon = BEAMDataset._align_with_llm(reference, system, llm)
+
+        # Build union of items preserving order of first appearance
+        union = list(dict.fromkeys(reference_canon + system_canon))
+        tie_rank = len(union) + 1
+
+        def to_rank(seq: list[str]) -> list[int]:
+            r = {item: i + 1 for i, item in enumerate(seq)}
+            return [r.get(u, tie_rank) for u in union]
+
+        ref_ranks = to_rank(reference_canon)
+        sys_ranks = to_rank(system_canon)
+
+        tau_b, _ = kendalltau(ref_ranks, sys_ranks, variant="b")
+        if tau_b is None or str(tau_b) == "nan":
+            return 0.0
+        return (tau_b + 1) / 2
+
+    @staticmethod
+    def _rubric_item_score(query: str, answer: str, rubric_item: str, llm: LLM) -> float:
+        """Score a single rubric item 0, 0.5, or 1 using the BEAM paper's unified judge prompt."""
+        prompt = f"""You are an expert evaluator tasked with judging whether the LLM's response demonstrates compliance with the specified RUBRIC CRITERION.
+
+## QUESTION:
+{query}
+
+## LLM RESPONSE:
+{answer}
+
+## RUBRIC CRITERION:
+{rubric_item}
+
+## SCORING:
+- **1.0** = Fully satisfied: The response clearly and completely addresses this rubric criterion.
+- **0.5** = Partially satisfied: The response addresses this criterion but is incomplete, vague, or only partially correct.
+- **0.0** = Not satisfied: The response does not address this criterion at all, or is incorrect.
+
+Evaluate the response against ONLY this specific rubric criterion. Provide your score and a brief reason."""
+        schema = Schema(
+            properties={
+                "score": {"type": "number", "description": "Score: 0.0, 0.5, or 1.0"},
+                "reason": {"type": "string"},
+            },
+            required=["score", "reason"],
+        )
+        try:
+            result = llm.generate(prompt, schema)
+            raw = float(result.get("score", 0))
+            # Clamp to nearest valid value
+            if raw >= 0.75:
+                return 1.0
+            elif raw >= 0.25:
+                return 0.5
+            else:
+                return 0.0
+        except Exception as e:
+            logger.warning("Rubric scoring failed: %s", e)
+            return 0.0
+
+    def score_result(self, result: QueryResult, llm: LLM) -> float:
+        """Compute a continuous BEAM paper score (0-1) for a query result.
+
+        For event_ordering: Kendall tau-b normalized score.
+        For all other categories: average rubric item score (each 0/0.5/1).
+        """
+        cat = result.meta.get("question_category", "")
+
+        if cat == "event_ordering":
+            # Reference order comes from rubric or ordering_tested
+            reference = result.meta.get("ordering_tested", [])
+            if not reference and result.gold_answers:
+                reference = self._extract_ordered_items(result.gold_answers[0])
+            system = self._extract_ordered_items(result.answer)
+            if not reference:
+                logger.warning("[%s] No reference ordering found, falling back to 0", result.query_id)
+                return 0.0
+            score = self._event_ordering_score(reference, system, llm)
+            logger.info("[%s] event_ordering tau_b_norm=%.3f", result.query_id, score)
+            return score
+        else:
+            # Rubric-item-level scoring for all other categories
+            rubric = result.meta.get("rubric", [])
+            if not rubric and result.gold_answers:
+                # If no rubric items, treat the gold answer as a single rubric item
+                rubric = [f"LLM response should contain: {result.gold_answers[0]}"]
+            if not rubric:
+                logger.warning("[%s] No rubric found, falling back to 0", result.query_id)
+                return 0.0
+
+            scores = []
+            for item in rubric:
+                s = self._rubric_item_score(result.query, result.answer, item, llm)
+                scores.append(s)
+                logger.info("[%s] rubric item score=%.1f for: %s", result.query_id, s, item[:80])
+
+            avg = sum(scores) / len(scores) if scores else 0.0
+            logger.info("[%s] %s avg_score=%.3f (%d items)", result.query_id, cat, avg, len(scores))
+            return avg
 
     def dataset_stats(self, console: Console, **_) -> None:
         table = Table(title="BEAM dataset stats")

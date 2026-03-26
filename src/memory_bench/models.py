@@ -48,6 +48,7 @@ class QueryResult:
     gold_answers: list[str]
     correct: bool
     judge_reason: str
+    score: float | None = None  # continuous score 0-1 (used by BEAM paper scoring); None means binary only
     meta: dict = field(default_factory=dict)  # propagated from Query.meta
     raw_response: dict | None = None  # raw provider response, free-form
     category_axes: dict[str, list[str]] = field(default_factory=dict)  # axis → values, e.g. {"conversation": ["conv-26"], "question_type": ["temporal"]}

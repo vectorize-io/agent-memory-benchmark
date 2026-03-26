@@ -98,8 +98,20 @@ class _HindsightBase(MemoryProvider):
 
     # ── Bank creation (sync) ──────────────────────────────────────────────────
 
+    _BEAM_RETAIN_MISSION = (
+        "Extract ALL factual claims the user makes about themselves, their project, "
+        "and their experience — including NEGATIVE statements (e.g. 'I have never done X', "
+        "'I don't know Y', 'I haven't used Z'). Negative self-assessments and denials "
+        "are as important as positive ones. Also preserve contradictions: if the user "
+        "says opposite things at different points, extract BOTH statements as separate facts. "
+        "Preserve specific numbers, dates, versions, and quantities exactly as stated."
+    )
+
     def _bank_kwargs(self, bank_id: str | None = None) -> dict:
-        return dict(enable_observations=False)
+        kwargs: dict = dict(enable_observations=False)
+        if self._dataset == "beam":
+            kwargs["retain_mission"] = self._BEAM_RETAIN_MISSION
+        return kwargs
 
     def _create_bank(self, bank_id: str) -> None:
         kwargs = self._bank_kwargs(bank_id=bank_id)
@@ -283,19 +295,26 @@ class _HindsightBase(MemoryProvider):
     def _recall_kwargs(self, query: str, user_id: str | None, query_timestamp: str | None, include_chunks: bool = True, max_chunk_tokens: int | None = None) -> dict:
         is_lifebench = self._dataset == "lifebench"
         is_personamem = self._dataset == "personamem"
+        is_beam = self._dataset == "beam"
         if max_chunk_tokens is None:
             if is_personamem:
                 max_chunk_tokens = 10240
+            elif is_beam:
+                max_chunk_tokens = 8192
             elif is_lifebench:
                 max_chunk_tokens = 16384
             else:
-                max_chunk_tokens = 32768
+                max_chunk_tokens = 16384
         if is_personamem:
             max_tokens = 4096
         elif is_lifebench:
             max_tokens = 16384
+        elif is_beam:
+            max_tokens = 12288
         else:
             max_tokens = 32768
+        if max_chunk_tokens == 0:
+            include_chunks = False
         kwargs: dict = {
             "bank_id": self._bank_id_for(user_id),
             "query": query[:1900],
