@@ -8,6 +8,7 @@ from .mem0 import Mem0MemoryProvider
 from .mem0_cloud import Mem0CloudMemoryProvider
 from .hybrid_search import HybridSearchMemoryProvider
 from .supermemory import SupermemoryMemoryProvider
+from .fastmemory import FastMemoryProvider
 
 REGISTRY: dict[str, type[MemoryProvider]] = {
     "bm25": BM25MemoryProvider,
@@ -22,6 +23,7 @@ REGISTRY: dict[str, type[MemoryProvider]] = {
     "mem0-cloud": Mem0CloudMemoryProvider,
     "qdrant": HybridSearchMemoryProvider,
     "supermemory": SupermemoryMemoryProvider,
+    "fastmemory": FastMemoryProvider,
 }
 
 
