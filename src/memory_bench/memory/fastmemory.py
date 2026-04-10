@@ -1,7 +1,9 @@
+from __future__ import annotations
 import asyncio
 import json
 import logging
 import re
+import os
 import fastmemory
 from pathlib import Path
 from typing import List, Tuple, Dict, Any, Set
@@ -22,13 +24,15 @@ class FastMemoryProvider(MemoryProvider):
     STOP_WORDS = {
         "this", "that", "these", "those", "when", "where", "which", "what", 
         "there", "their", "after", "before", "will", "have", "with", "from",
-        "about", "would", "could", "should", "there", "their", "some", "other"
+        "about", "would", "could", "should", "some", "other"
     }
     
     def __init__(self):
         self.graphs: Dict[str, List[Dict[str, Any]]] = {}  # user_id -> compiled_graph
         self.concepts: Dict[str, Set[str]] = {}           # user_id -> global_concepts
         self.isolation_unit = "conversation"
+        # Enable forensic debug mode if environment variable is set
+        self.debug_mode = os.getenv("FM_DEBUG") == "1"
 
     def prepare(self, store_dir: Path, unit_ids: set[str] | None = None, reset: bool = True) -> None:
         """Prepare local storage if needed. For now, we keep the graph in memory."""
@@ -50,17 +54,30 @@ class FastMemoryProvider(MemoryProvider):
         
         # Combine and unique
         all_concepts = list(set(proper_nouns + concepts))
-        return all_concepts[:5] # Limit to top 5 for dense connectivity
+        return list(all_concepts)[:5] # Limit to top 5 for dense connectivity
+
+    def _sanitize_logic(self, content: str) -> str:
+        """
+        Sanitize content for Action-Topology Format (ATF).
+        Escapes newlines and characters that confuse the Rust parser.
+        """
+        if not content:
+            return ""
+        # Escape newlines to prevent block termination
+        content = content.replace("\r\n", " ").replace("\n", " ")
+        # Escape quotes if necessary (ATF logic is space-delimited usually)
+        content = content.replace('"', '\\"').strip()
+        return content
 
     def _to_atf(self, doc: Document) -> str:
         """
         Convert a standard Document to Ontological ATF format.
         Builds 'Logic Rooms' based on extracted concepts.
         """
-        concepts = self._extract_concepts(doc.content)
+        sanitized_content = self._sanitize_logic(doc.content)
+        concepts = self._extract_concepts(sanitized_content)
         
         # Build Data_Connections (Graph Edges)
-        # We always connect to the user_id and any extracted concepts
         user_id = doc.user_id if doc.user_id else "default_user"
         connections = [f"[{user_id}]"]
         connections.extend([f"[{c}]" for c in concepts])
@@ -74,7 +91,7 @@ class FastMemoryProvider(MemoryProvider):
             f"## [ID: {doc.id}]\n"
             f"**Action:** {action_name}\n"
             f"**Input:** {{Data}}\n"
-            f"**Logic:** {doc.content}\n"
+            f"**Logic:** {sanitized_content}\n"
             f"**Data_Connections:** {', '.join(connections)}\n"
             f"**Access:** Open\n"
             f"**Events:** Search\n\n"
@@ -92,9 +109,24 @@ class FastMemoryProvider(MemoryProvider):
 
         for uid, docs in by_user.items():
             atf_payload = "".join([self._to_atf(d) for d in docs])
+            
+            if self.debug_mode:
+                print(f"\n--- [FM_DEBUG] ATF Payload for {uid} ---")
+                print(atf_payload)
+                print("--- [FM_DEBUG] END Payload ---\n")
+
             try:
                 logger.info(f"Compiling FastMemory graph for user: {uid} ({len(docs)} docs)")
                 json_graph_str = fastmemory.process_markdown(atf_payload)
+                
+                if self.debug_mode:
+                    print(f"--- [FM_DEBUG] Raw Engine Return (len: {len(json_graph_str)}) ---")
+                    print(json_graph_str)
+                    print("--- [FM_DEBUG] END Engine ---\n")
+
+                if json_graph_str == "[]":
+                    logger.warning(f"FastMemory returned empty graph for user {uid}. Check ATF syntax or License.")
+                
                 graph_data = json.loads(json_graph_str)
                 
                 if uid not in self.graphs:
@@ -104,11 +136,15 @@ class FastMemoryProvider(MemoryProvider):
                 self.graphs[uid].extend(graph_data)
             except Exception as e:
                 logger.error(f"FastMemory Ingestion Error for {uid}: {e}")
+                if self.debug_mode:
+                    print(f"!!! [FM_DEBUG] INGESTION ERROR: {e}")
 
     def retrieve(self, query: str, k: int = 10, user_id: str | None = None, query_timestamp: str | None = None) -> Tuple[List[Document], Dict | None]:
         """Retrieve top-k relevant documents using topological search."""
         uid = user_id if user_id else "default_user"
-        if uid not in self.graphs:
+        if uid not in self.graphs or not self.graphs[uid]:
+            if self.debug_mode:
+                print(f"--- [FM_DEBUG] Search failed: Graph for user {uid} is empty. ---")
             return [], None
 
         query_terms = set(query.lower().split())
@@ -151,7 +187,6 @@ class FastMemoryProvider(MemoryProvider):
 
         results = []
         for score, node in top_k:
-            # Map FastMemory node back to Document model
             results.append(Document(
                 id=node.get("id", "unknown"),
                 content=node.get("logic", ""),
