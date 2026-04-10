@@ -27,12 +27,57 @@ class FastMemoryProvider(MemoryProvider):
         "about", "would", "could", "should", "some", "other"
     }
     
-    def __init__(self):
+    def __init__(self, debug_mode: bool = False):
+        super().__init__()
         self.graphs: Dict[str, List[Dict[str, Any]]] = {}  # user_id -> compiled_graph
         self.concepts: Dict[str, Set[str]] = {}           # user_id -> global_concepts
         self.isolation_unit = "conversation"
-        # Enable forensic debug mode if environment variable is set
-        self.debug_mode = os.getenv("FM_DEBUG") == "1"
+        self.debug_mode = debug_mode or os.getenv("FM_DEBUG") == "1"
+        self._engine_verified = False
+        self._verify_engine_health()
+
+    def _verify_engine_health(self):
+        """Internal check to ensure the Rust engine is properly loaded and clustering."""
+        test_atf = "## [ID: health_check]\n**Action:** Audit\n**Input:** {*}\n**Logic:** 1\n**Data_Connections:** [sys]\n**Access:** Open\n**Events:** None\n\n"
+        try:
+            res = fastmemory.process_markdown(test_atf)
+            if res != "[]" and "block_type" in res:
+                self._engine_verified = True
+            else:
+                self._print_engine_panic("Engine Health Check Failed: Empty JSON or Malformed Return.")
+        except Exception as e:
+            self._print_engine_panic(f"Engine Load Failure: {str(e)}")
+
+    def _print_engine_panic(self, detail: str):
+        """Displays a massive, non-ignorable diagnostic error for environment failures."""
+        msg = f"""
+################################################################################
+#                                                                              #
+#             !!! CRITICAL ENGINE FAILURE: FASTMEMORY PROPRIETARY !!!          #
+#                                                                              #
+################################################################################
+
+FAILURE DETAIL: {detail}
+
+DIAGNOSIS:
+The topological clustering engine (Louvain-Optimized Rust Core) failed to 
+initialize in this environment. This is NOT a data error, but a binary 
+incompatibility.
+
+COMMON CAUSES:
+1. Architecture Mismatch: Running Intel (x86_64) wheels on Apple Silicon (M1/M2).
+2. Dynamic Linker Error: Missing macOS system libraries required for Rust FFI.
+3. Python Version Divergence: mismatch between fastmemory.so and Python 3.9/3.10.
+
+REMEDY:
+- Verify your environment with: `scripts/verify_fastmemory.py`
+- Run: `python3 -m pip install --force-reinstall fastmemory==0.4.0`
+- Check for system updates or provide your system stats in the PR thread.
+
+################################################################################
+"""
+        print(msg, file=sys.stderr)
+        logger.critical(msg)
 
     def prepare(self, store_dir: Path, unit_ids: set[str] | None = None, reset: bool = True) -> None:
         """Prepare local storage if needed. For now, we keep the graph in memory."""
@@ -119,13 +164,17 @@ class FastMemoryProvider(MemoryProvider):
                 logger.info(f"Compiling FastMemory graph for user: {uid} ({len(docs)} docs)")
                 json_graph_str = fastmemory.process_markdown(atf_payload)
                 
-                if self.debug_mode:
-                    print(f"--- [FM_DEBUG] Raw Engine Return (len: {len(json_graph_str)}) ---")
-                    print(json_graph_str)
-                    print("--- [FM_DEBUG] END Engine ---\n")
+                if os.environ.get("FM_DEBUG") == "1":
+                    print(f"\n--- [FM_DEBUG] ATF Payload for {uid} ---\n{atf_payload}\n--- [FM_DEBUG] END Payload ---")
+                    print(f"\n--- [FM_DEBUG] Raw Engine Return (len: {len(json_graph_str)}) ---\n{json_graph_str}\n--- [FM_DEBUG] END Engine ---")
+                    if "Louvain" in json_graph_str:
+                        print("--- [FM_DEBUG] Louvain clustering detected in engine output ---")
 
                 if json_graph_str == "[]":
-                    logger.warning(f"FastMemory returned empty graph for user {uid}. Check ATF syntax or License.")
+                    logger.error(f"FastMemory engine returned an empty graph for user {uid}.")
+                    logger.error("DIAGNOSTIC: If you do not see '[Louvain]' logs above, the Rust engine failed to initialize.")
+                    logger.error("Possible causes: (1) Python 3.9/3.10 binary mismatch (2) Missing macOS system libraries (3) Malformed ATF structure.")
+                    continue
                 
                 graph_data = json.loads(json_graph_str)
                 
