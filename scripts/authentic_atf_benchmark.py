@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import re
 import string
 import pandas as pd
@@ -8,6 +9,7 @@ import fastmemory
 import nltk
 from nltk.tokenize import word_tokenize
 from nltk.tag import pos_tag
+from huggingface_hub import hf_hub_download
 
 # Ensure required NLTK packages are available
 try:
@@ -16,116 +18,165 @@ try:
     nltk.download('averaged_perceptron_tagger', quiet=True)
     nltk.download('averaged_perceptron_tagger_eng', quiet=True)
 except Exception as e:
-    print(f"Warning: NLTK download issues (possible offline): {e}")
+    print(f"Warning: NLTK download issues: {e}")
 
-STOP_WORDS = {"this", "that", "these", "those", "when", "where", "which", "what", "there", "their", "after", "before", "will", "have", "with", "from"}
+STOP_WORDS = {"this", "that", "these", "those", "when", "where", "which", "what", "there", "their", "after", "before", "will", "have", "with", "from", "assistant", "user"}
 
-def extract_nouns(sentence):
-    """Basic noun extraction fallback."""
-    words = sentence.translate(str.maketrans('', '', string.punctuation)).split()
-    return [w.lower() for w in words if len(w) > 4 and w.lower() not in STOP_WORDS]
+def extract_concepts(text):
+    """Entity/Concept extraction for topological linking."""
+    try:
+        tokens = word_tokenize(text)
+        tagged = pos_tag(tokens)
+        nouns = [word.lower() for (word, pos) in tagged if pos.startswith('NN') and word.lower() not in STOP_WORDS]
+        proper_nouns = [word for (word, pos) in tagged if pos == 'NNP']
+        return list(set(nouns[:3] + proper_nouns[:2]))
+    except:
+        words = text.translate(str.maketrans('', '', string.punctuation)).split()
+        return [w.lower() for w in words if len(w) > 5 and w.lower() not in STOP_WORDS][:5]
 
-def generate_atfs(sentences):
-    """Generates complex ATFs with conceptual linkage across sentences."""
+def generate_atfs(segments, conversation_id):
+    """Generates ATFs from conversational segments."""
     atfs = []
-    for i, s in enumerate(sentences):
-        # We try to use NLTK for better entity extraction if available
-        try:
-            tokens = word_tokenize(s)
-            tagged = pos_tag(tokens)
-            nouns = [word.lower() for (word, pos) in tagged if pos.startswith('NN') and word.lower() not in STOP_WORDS]
-        except:
-            nouns = extract_nouns(s)
-            
-        my_id = f"REF_{i}"
-        action = f"Logic_Process_{nouns[0].title()}" if nouns else f"Standard_Parse_{i}"
-        connections = ", ".join([f"[{n}]" for n in nouns[:3]]) if nouns else "[Standard]"
+    for i, seg in enumerate(segments):
+        logic_text = seg.strip()
+        if not logic_text: continue
         
-        logic_content = s.replace('\\', '\\\\').replace('\"', '\\\"')
+        concepts = extract_concepts(logic_text)
+        my_id = f"{conversation_id}_{i}"
+        
+        # Action is based on the role/type
+        role = "Assistant" if "assistant:" in logic_text.lower() else "User"
+        action = f"Logic_{role}_{concepts[0].title()}" if concepts else f"Dialogue_{role}_{i}"
+        
+        # Connections (Edges)
+        connections = [f"[{conversation_id}]"]
+        connections.extend([f"[{c}]" for c in concepts])
+        
+        # Sanitize for Rust
+        sanitized_logic = logic_text.replace('\\', '\\\\').replace('\"', '\\\"').replace('\n', ' ')
+        
         atf = (
             f"## [ID: {my_id}]\n"
             f"**Action:** {action}\n"
-            f"**Input:** {{Context}}\n"
-            f"**Logic:** {logic_content}\n"
-            f"**Data_Connections:** {connections}\n"
+            f"**Input:** {{Data}}\n"
+            f"**Logic:** {sanitized_logic}\n"
+            f"**Data_Connections:** {', '.join(connections)}\n"
             f"**Access:** Open\n"
-            f"**Events:** Trigger_Audit\n\n"
+            f"**Events:** Ingest\n\n"
         )
         atfs.append(atf)
     return "".join(atfs)
 
-def run_authentic_test(dataset_name, split, text_col, limit=20):
-    print(f"\n🚀 Initiating Authentic Audit: {dataset_name} ({split})...")
-    
+def run_beam_audit(limit=10):
+    print("\n🚀 Initiating BEAM Forensic Audit (Mohammadta/BEAM 100K)...")
     try:
-        ds = load_dataset(dataset_name, split=split)
+        ds = load_dataset("Mohammadta/BEAM", split="100K")
     except Exception as e:
-        print(f"Error loading {dataset_name}: {e}. Skipping.")
-        return None
+        print(f"Error loading BEAM: {e}")
+        return []
 
-    # Sample data
-    samples = ds.select(range(min(limit, len(ds))))
     results = []
-
-    for i, row in enumerate(samples):
-        text = str(row.get(text_col, ""))
-        if not text: continue
+    samples = list(ds)[:limit]
+    
+    for row in samples:
+        conv_id = row.get("conversation_id", "unknown")
+        chat = row.get("chat", [])
         
-        # Split into logic segments
-        sentences = [s.strip() for s in re.split(r'(?<=[.!?]) +', text) if len(s) > 10]
-        if not sentences: continue
+        # Flatten turns (Mocking AMB _iter_turns)
+        turns = []
+        for session in chat:
+            if isinstance(session, list):
+                for turn in session:
+                    role = turn.get("role", "unknown").capitalize()
+                    content = turn.get("content", "")
+                    turns.append(f"{role}: {content}")
         
-        atf_markdown = generate_atfs(sentences)
+        if not turns: continue
+        
+        atf_markdown = generate_atfs(turns, conv_id)
         
         start_time = time.time()
-        try:
-            json_graph = fastmemory.process_markdown(atf_markdown)
-            latency = time.time() - start_time
-            
-            # Metric Derivation
-            node_count = len(sentences)
-            # Count clusters in JSON
-            cluster_count = json_graph.count('"block_type"')
-            
-            results.append({
-                "Sample_ID": i,
-                "Nodes": node_count,
-                "Clusters": cluster_count,
-                "Latency_ms": latency * 1000,
-                "Tokens": len(text.split()) * 1.3 # Rough approximation
-            })
-            print(f"[{dataset_name}] Processed sample {i}: {node_count} nodes -> {cluster_count} clusters in {latency*1000:.2f}ms")
-            
-        except Exception as e:
-            print(f"FastMemory Error on sample {i}: {e}")
+        json_graph = fastmemory.process_markdown(atf_markdown)
+        latency = (time.time() - start_time) * 1000
+        
+        cluster_count = json_graph.count('"block_type"')
+        results.append({
+            "Dataset": "BEAM-100K",
+            "Sample_ID": conv_id,
+            "Nodes": len(turns),
+            "Clusters": cluster_count,
+            "Latency_ms": latency
+        })
+        print(f"[BEAM] Processed {conv_id}: {len(turns)} turns -> {cluster_count} clusters in {latency:.2f}ms")
+        
+    return results
 
+def run_personamem_audit(limit=10):
+    print("\n🚀 Initiating PersonaMem Forensic Audit (bowen-upenn/PersonaMem)...")
+    try:
+        # PersonaMem contexts are in jsonl files in the hub
+        local_path = hf_hub_download(repo_id="bowen-upenn/PersonaMem", filename="shared_contexts_32k.jsonl", repo_type="dataset")
+        contexts = []
+        with open(local_path, "r") as f:
+            for line in f:
+                entry = json.loads(line)
+                ctx_id, turns = next(iter(entry.items()))
+                contexts.append((ctx_id, turns))
+                if len(contexts) >= limit: break
+    except Exception as e:
+        print(f"Error loading PersonaMem: {e}")
+        return []
+
+    results = []
+    for ctx_id, turns in contexts:
+        segments = []
+        for t in turns:
+            role = t.get("role", "unknown")
+            content = t.get("content", "")
+            segments.append(f"[{role}] {content}")
+            
+        atf_markdown = generate_atfs(segments, ctx_id)
+        
+        start_time = time.time()
+        json_graph = fastmemory.process_markdown(atf_markdown)
+        latency = (time.time() - start_time) * 1000
+        
+        cluster_count = json_graph.count('"block_type"')
+        results.append({
+            "Dataset": "PersonaMem-32K",
+            "Sample_ID": ctx_id,
+            "Nodes": len(turns),
+            "Clusters": cluster_count,
+            "Latency_ms": latency
+        })
+        print(f"[PersonaMem] Processed {ctx_id}: {len(turns)} segments -> {cluster_count} clusters in {latency:.2f}ms")
+        
     return results
 
 def main():
-    print("--- FASTMEMORY AUTHENTIC REAL-WORLD BENCHMARK ---")
-    
+    print("--- FASTMEMORY AUTHENTIC BEAM SOTA AUDIT ---")
     all_metrics = []
     
-    # Test 1: FinanceBench (Dense Financial Texts)
-    fb_results = run_authentic_test("PatronusAI/financebench", "train", "evidence", limit=10)
-    if fb_results: all_metrics.extend(fb_results)
+    # Run BEAM Audit (The primary correction)
+    beam_results = run_beam_audit(limit=15)
+    all_metrics.extend(beam_results)
     
-    # Test 2: Google FRAMES (Multi-Doc Synthesis data - proxy)
-    frames_results = run_authentic_test("google/frames-benchmark", "test", "Prompt", limit=10)
-    if frames_results: all_metrics.extend(frames_results)
+    # Run PersonaMem Audit
+    pm_results = run_personamem_audit(limit=10)
+    all_metrics.extend(pm_results)
     
     if all_metrics:
         df = pd.DataFrame(all_metrics)
         df.to_csv("authentic_fastmemory_metrics.csv", index=False)
-        print("\n✅ AUTHENTIC AUDIT COMPLETE.")
-        print("-" * 40)
-        print(f"Total Logic Nodes Processed: {df['Nodes'].sum()}")
+        print("\n✅ CORRECTED BEAM AUDIT COMPLETE.")
+        print("-" * 50)
+        print(f"Total Logic Nodes: {df['Nodes'].sum()}")
         print(f"Avg Indexing Latency: {df['Latency_ms'].mean():.2f} ms")
-        print(f"Avg Clusters/Graph: {df['Clusters'].mean():.1f}")
-        print("-" * 40)
-        print("Detailed metrics saved to: authentic_fastmemory_metrics.csv")
+        print(f"Total Topological Clusters: {df['Clusters'].sum()}")
+        print("-" * 50)
+        print("Final BEAM metrics saved to: authentic_fastmemory_metrics.csv")
     else:
-        print("\n❌ Audit failed to produce metrics. Check dataset connectivity.")
+        print("\n❌ Audit failed. Check logs.")
 
 if __name__ == "__main__":
     main()
