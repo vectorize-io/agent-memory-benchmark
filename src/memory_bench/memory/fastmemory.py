@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import os
+import sys
 import fastmemory
 from pathlib import Path
 from typing import List, Tuple, Dict, Any, Set
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class FastMemoryProvider(MemoryProvider):
     name = "fastmemory"
-    description = "SOTA Topological Memory using Dynamic Concept Extraction. Achieve 100% precision on BEAM 10M via deterministic grounding and topological isolation."
+    description = "Topological Memory using NLTK concept extraction and Louvain graph clustering via a compiled Rust core."
     kind = "local"
     provider = "fastbuilder"
     link = "https://fastbuilder.ai"
@@ -37,42 +38,37 @@ class FastMemoryProvider(MemoryProvider):
         self._verify_engine_health()
 
     def _verify_engine_health(self):
-        """Internal check to ensure the Rust engine is properly loaded and clustering."""
-        test_atf = "## [ID: health_check]\n**Action:** Audit\n**Input:** {*}\n**Logic:** 1\n**Data_Connections:** [sys]\n**Access:** Open\n**Events:** None\n\n"
+        """Internal check to ensure the Rust engine and NLTK pipeline are working."""
+        test_input = "The quick brown fox jumps over the lazy dog. Cats are independent animals."
         try:
-            res = fastmemory.process_markdown(test_atf)
+            res = fastmemory.process_markdown(test_input)
             if res != "[]" and "block_type" in res:
                 self._engine_verified = True
             else:
-                self._print_engine_panic("Engine Health Check Failed: Empty JSON or Malformed Return.")
+                self._print_engine_panic("Engine returned empty graph for test input.")
         except Exception as e:
-            self._print_engine_panic(f"Engine Load Failure: {str(e)}")
+            self._print_engine_panic(f"Engine crash: {str(e)}")
 
     def _print_engine_panic(self, detail: str):
-        """Displays a massive, non-ignorable diagnostic error for environment failures."""
+        """Displays a diagnostic error for environment failures."""
         msg = f"""
 ################################################################################
 #                                                                              #
-#             !!! CRITICAL ENGINE FAILURE: FASTMEMORY PROPRIETARY !!!          #
+#              FASTMEMORY ENGINE: INITIALIZATION FAILED                        #
 #                                                                              #
 ################################################################################
 
-FAILURE DETAIL: {detail}
+DETAIL: {detail}
 
-DIAGNOSIS:
-The topological clustering engine (Louvain-Optimized Rust Core) failed to 
-initialize in this environment. This is NOT a data error, but a binary 
-incompatibility.
-
-COMMON CAUSES:
-1. Architecture Mismatch: Running Intel (x86_64) wheels on Apple Silicon (M1/M2).
-2. Dynamic Linker Error: Missing macOS system libraries required for Rust FFI.
-3. Python Version Divergence: mismatch between fastmemory.so and Python 3.9/3.10.
+LIKELY CAUSES:
+1. The embedded rust-louvain binary is not compatible with your platform.
+   Run: file $(python3 -c "import fastmemory; print(fastmemory.__file__)")
+2. NLTK data (punkt, averaged_perceptron_tagger_eng) is not installed.
+   Run: python3 -c "import nltk; nltk.download('punkt_tab'); nltk.download('averaged_perceptron_tagger_eng')"
 
 REMEDY:
-- Verify your environment with: `scripts/verify_fastmemory.py`
-- Run: `python3 -m pip install --force-reinstall fastmemory==0.4.0`
-- Check for system updates or provide your system stats in the PR thread.
+- Upgrade: pip install --force-reinstall fastmemory>=0.4.3
+- Verify: python3 scripts/verify_fastmemory.py
 
 ################################################################################
 """
