@@ -22,7 +22,7 @@ dependencies = [
     "tiktoken>=0.12.0",
     "groq>=1.1.1",
     "scipy>=1.11",
-    "fastmemory>=0.4.3",
+    "fastmemory>=0.4.4",
 ]
 
 [project.scripts]
