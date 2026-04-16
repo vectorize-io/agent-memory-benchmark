@@ -284,6 +284,7 @@ If it's correct, set correct=true.
         category: str | None = None,
         limit: int | None = None,
         ids: set[str] | None = None,
+        user_ids: set[str] | None = None,
     ) -> list[Document]:
         data = self._load_raw()
         documents: list[Document] = []
@@ -293,6 +294,8 @@ If it's correct, set correct=true.
 
         for item in data:
             sample_id = item["sample_id"]
+            if user_ids is not None and sample_id not in user_ids:
+                continue
             if conv_filter is not None and sample_id != conv_filter:
                 continue
             conv = item["conversation"]

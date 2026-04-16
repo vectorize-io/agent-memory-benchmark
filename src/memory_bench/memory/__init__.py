@@ -1,28 +1,28 @@
 from .base import MemoryProvider
 from .bm25 import BM25MemoryProvider
-from .cognee import CogneeMemoryProvider
-from .hindsight import HindsightCloudMemoryProvider, HindsightHTTPMemoryProvider, HindsightMemoryProvider
-from .mastra import MastraMemoryProvider
-from .mastra_om import MastraOMMemoryProvider
-from .mem0 import Mem0MemoryProvider
-from .mem0_cloud import Mem0CloudMemoryProvider
-from .hybrid_search import HybridSearchMemoryProvider
-from .supermemory import SupermemoryMemoryProvider
+# from .cognee import CogneeMemoryProvider
+# from .hindsight import HindsightCloudMemoryProvider, HindsightHTTPMemoryProvider, HindsightMemoryProvider
+# from .mastra import MastraMemoryProvider
+# from .mastra_om import MastraOMMemoryProvider
+# from .mem0 import Mem0MemoryProvider
+# from .mem0_cloud import Mem0CloudMemoryProvider
+# from .hybrid_search import HybridSearchMemoryProvider
+# from .supermemory import SupermemoryMemoryProvider
 from .fastmemory import FastMemoryProvider
 
 REGISTRY: dict[str, type[MemoryProvider]] = {
     "bm25": BM25MemoryProvider,
-    "cognee": CogneeMemoryProvider,
-    "hindsight": HindsightMemoryProvider,
-    "hindsight-cloud": HindsightCloudMemoryProvider,
-    "hindsight-http": HindsightHTTPMemoryProvider,
+    # "cognee": CogneeMemoryProvider,
+    # "hindsight": HindsightMemoryProvider,
+    # "hindsight-cloud": HindsightCloudMemoryProvider,
+    # "hindsight-http": HindsightHTTPMemoryProvider,
 
-    "mastra": MastraMemoryProvider,
-    "mastra-om": MastraOMMemoryProvider,
-    "mem0": Mem0MemoryProvider,
-    "mem0-cloud": Mem0CloudMemoryProvider,
-    "qdrant": HybridSearchMemoryProvider,
-    "supermemory": SupermemoryMemoryProvider,
+    # "mastra": MastraMemoryProvider,
+    # "mastra-om": MastraOMMemoryProvider,
+    # "mem0": Mem0MemoryProvider,
+    # "mem0-cloud": Mem0CloudMemoryProvider,
+    # "qdrant": HybridSearchMemoryProvider,
+    # "supermemory": SupermemoryMemoryProvider,
     "fastmemory": FastMemoryProvider,
 }
 
