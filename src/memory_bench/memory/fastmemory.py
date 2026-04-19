@@ -192,7 +192,8 @@ REMEDY:
                 print(f"--- [FM_DEBUG] Search failed: Graph for user {uid} is empty. ---")
             return [], None
 
-        query_terms = set(query.lower().split())
+        query_words = set(re.findall(r'\b\w+\b', query.lower()))
+        query_terms = {w for w in query_words if w not in self.STOP_WORDS}
         query_concepts = set(self._extract_concepts(query))
         
         scored_nodes = []
@@ -209,13 +210,16 @@ REMEDY:
                 # We prioritize nodes that share 'Concepts' with the query
                 connections = str(node.get("data_connections", "")).lower()
                 
+                logic_words = set(re.findall(r'\b\w+\b', logic))
+                action_words = set(re.findall(r'\b\w+\b', action))
+                
                 score = 0
                 for term in query_terms:
-                    if term in logic:
+                    if term in logic_words:
                         score += 1
                     if term in node_id:
                         score += 5  # High weight for ID matches (NIAH success)
-                    if term in action:
+                    if term in action_words:
                         score += 2
                 
                 # Topological Boost: If the query and node share a concept link
@@ -235,8 +239,7 @@ REMEDY:
             results.append(Document(
                 id=node.get("id", "unknown"),
                 content=node.get("logic", ""),
-                user_id=uid,
-                meta={"fastmemory_score": score, "cluster_type": cluster.get("block_type")}
+                user_id=uid
             ))
 
         return results, {"total_nodes_searched": sum(len(c.get("nodes", [])) for c in self.graphs[uid])}
