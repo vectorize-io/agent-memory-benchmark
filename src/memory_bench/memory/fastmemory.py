@@ -80,6 +80,7 @@ REMEDY:
         if reset:
             self.graphs = {}
             self.concepts = {}
+            self.original_docs = {}
 
     def _extract_concepts(self, text: str) -> List[str]:
         """
@@ -122,6 +123,7 @@ REMEDY:
         user_id = doc.user_id if doc.user_id else "default_user"
         connections = [f"[{user_id}]"]
         connections.extend([f"[{c}]" for c in concepts])
+        connections.append(f"[doc_{doc.id}]")
         
         # Dynamic Action name based on primary concept
         primary_concept = concepts[0] if concepts else "Standard"
@@ -147,6 +149,12 @@ REMEDY:
             if uid not in by_user:
                 by_user[uid] = []
             by_user[uid].append(doc)
+            
+            if not hasattr(self, "original_docs"):
+                self.original_docs = {}
+            if uid not in self.original_docs:
+                self.original_docs[uid] = {}
+            self.original_docs[uid][f"doc_{doc.id}".lower()] = doc
 
         for uid, docs in by_user.items():
             atf_payload = "".join([self._to_atf(d) for d in docs])
@@ -199,47 +207,99 @@ REMEDY:
         scored_nodes = []
 
         # Search through all clusters/nodes in the user's graph
-        for cluster in self.graphs[uid]:
-            for node in cluster.get("nodes", []):
-                # Extract logic and metadata
-                logic = node.get("logic", "").lower()
-                node_id = node.get("id", "").lower()
-                action = node.get("action", "").lower()
-                
-                # Data Connections (Topological Edges)
-                # We prioritize nodes that share 'Concepts' with the query
-                connections = str(node.get("data_connections", "")).lower()
-                
-                logic_words = set(re.findall(r'\b\w+\b', logic))
-                action_words = set(re.findall(r'\b\w+\b', action))
-                
-                score = 0
-                for term in query_terms:
-                    if term in logic_words:
-                        score += 1
-                    if term in node_id:
-                        score += 5  # High weight for ID matches (NIAH success)
-                    if term in action_words:
-                        score += 2
-                
-                # Topological Boost: If the query and node share a concept link
-                for concept in query_concepts:
-                    if concept.lower() in connections:
-                        score += 10 # Massive boost for conceptual alignment
-                
-                if score > 0:
-                    scored_nodes.append((score, node))
+        for cluster in self.graphs.get(uid, []):
+            
+            # Step 1: Extract any doc IDs referenced in this cluster's entire topology
+            cluster_doc_keys = set()
+            def find_docs(block):
+                for n in block.get("nodes", []):
+                    action_str = str(n.get("action", "")).lower()
+                    if action_str.startswith("doc_"):
+                        cluster_doc_keys.add(action_str[4:])
+                    for conn in n.get("data_connections", []):
+                        conn_lower = str(conn).lower()
+                        if conn_lower.startswith("d_doc_"):
+                            cluster_doc_keys.add(conn_lower[6:])
+                for sub in block.get("sub_blocks", []):
+                    find_docs(sub)
+            
+            find_docs(cluster)
+            
+            # Step 2: Extract all nodes and compute scores
+            def score_nodes(block):
+                for node in block.get("nodes", []):
+                    action = str(node.get("action", ""))
+                    connections_raw = node.get("data_connections", [])
+                    connections = str(connections_raw).lower()
+                    logic = action + " " + " ".join(connections_raw)
+                    
+                    logic_words = set(re.findall(r'\b\w+\b', logic.lower()))
+                    action_words = set(re.findall(r'\b\w+\b', action.lower()))
+                    
+                    score = 0
+                    for term in query_terms:
+                        if term in logic_words:
+                            score += 5
+                        if term in action_words:
+                            score += 2
+                    
+                    for concept in query_concepts:
+                        if concept.lower() in connections:
+                            score += 10
+                            
+                    if score > 0:
+                        scored_nodes.append((score, node, cluster_doc_keys))
+                        
+                for sub in block.get("sub_blocks", []):
+                    score_nodes(sub)
+
+            score_nodes(cluster)
 
         # Sort by score desc and take top k
         scored_nodes.sort(key=lambda x: x[0], reverse=True)
-        top_k = scored_nodes[:k]
+        top_k = scored_nodes[:k * 2]
 
-        results = []
-        for score, node in top_k:
-            results.append(Document(
-                id=node.get("id", "unknown"),
-                content=node.get("logic", ""),
-                user_id=uid
-            ))
-
-        return results, {"total_nodes_searched": sum(len(c.get("nodes", [])) for c in self.graphs[uid])}
+        doc_scores = {}
+        for doc_key, doc in self.original_docs.get(uid, {}).items():
+            doc_score = 0
+            doc_lower = doc.content.lower()
+            for score, node, _ in top_k:
+                action = str(node.get("action", "")).lower()
+                
+                # Boost if native node action is found
+                if action and len(action) > 2 and action in doc_lower:
+                    doc_score += score
+                
+                # Unpack structural links. Rust engine uses D_, F_, A_ prefixes
+                for conn in node.get("data_connections", []):
+                    conn_str = str(conn).lower()
+                    
+                    # Trim component classifier prefixes
+                    if conn_str.startswith("d_") or conn_str.startswith("f_") or conn_str.startswith("a_"):
+                        conn_str = conn_str[2:]
+                    
+                    # Discard doc_ mappings since they are purely topological indicators
+                    if conn_str.startswith("doc_"):
+                        continue
+                        
+                    if conn_str and len(conn_str) > 2 and conn_str in doc_lower:
+                        doc_score += (score * 0.5) # Award partial structural weight
+                        
+            if doc_score > 0:
+                doc_scores[doc_key] = (doc_score, doc)
+                
+        # Sort documents by their cumulative topological intersection score
+        sorted_docs = sorted(doc_scores.values(), key=lambda x: x[0], reverse=True)
+        
+        results = [doc for _, doc in sorted_docs[:k]]
+        
+        # Absolute fallback if query had zero intersection with any graph concepts
+        if not results:
+            for score, node, _ in top_k[:k]:
+                results.append(Document(
+                    id=node.get("id", "unknown"),
+                    content=node.get("action", ""),
+                    user_id=uid
+                ))
+        
+        return results[:k], {"total_nodes_searched": sum(len(c.get("nodes", [])) for c in self.graphs.get(uid, []))}
