@@ -28,12 +28,13 @@ class FastMemoryProvider(MemoryProvider):
         "about", "would", "could", "should", "some", "other"
     }
     
-    def __init__(self, debug_mode: bool = False):
+    def __init__(self, debug_mode: bool = False, context_cutoff_threshold: float = 0.0):
         super().__init__()
         self.graphs: Dict[str, List[Dict[str, Any]]] = {}  # user_id -> compiled_graph
         self.concepts: Dict[str, Set[str]] = {}           # user_id -> global_concepts
         self.isolation_unit = "conversation"
         self.debug_mode = debug_mode or os.getenv("FM_DEBUG") == "1"
+        self.context_cutoff_threshold = context_cutoff_threshold
         self._engine_verified = False
         self._verify_engine_health()
 
@@ -291,8 +292,18 @@ REMEDY:
         # Sort documents by their cumulative topological intersection score
         sorted_docs = sorted(doc_scores.values(), key=lambda x: x[0], reverse=True)
         
-        results = [doc for _, doc in sorted_docs[:k]]
-        
+        results = []
+        if sorted_docs:
+            if self.context_cutoff_threshold > 0:
+                # Enforce dynamic boundary relative to the param to drop subset noise
+                avg_score = sum(score for score, _ in sorted_docs) / len(sorted_docs)
+                confidence_threshold = avg_score * self.context_cutoff_threshold
+                for doc_score, doc in sorted_docs[:k]:
+                    if doc_score >= confidence_threshold:
+                        results.append(doc)
+            else:
+                # Top-K fallback natively
+                results = [doc for _, doc in sorted_docs[:k]]
         # Absolute fallback if query had zero intersection with any graph concepts
         if not results:
             for score, node, _ in top_k[:k]:
