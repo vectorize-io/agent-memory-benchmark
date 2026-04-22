@@ -287,7 +287,8 @@ REMEDY:
                         if conn_str and len(conn_str) > 2 and conn_str in turn_lower:
                             turn_score += (score * 0.5)
                 
-                # Signal 2: Direct query term presence
+                # Signal 2: Direct query term presence — critical discriminator
+                # at scale where topology nodes match broadly across many docs
                 query_hit_count = sum(1 for t in query_terms if t in turn_lower)
                 if query_hit_count >= 2:
                     turn_score += query_hit_count * 8
