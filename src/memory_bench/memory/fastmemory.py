@@ -28,13 +28,12 @@ class FastMemoryProvider(MemoryProvider):
         "about", "would", "could", "should", "some", "other"
     }
     
-    def __init__(self, debug_mode: bool = False, context_cutoff_threshold: float = 0.0):
+    def __init__(self, debug_mode: bool = False):
         super().__init__()
         self.graphs: Dict[str, List[Dict[str, Any]]] = {}  # user_id -> compiled_graph
         self.concepts: Dict[str, Set[str]] = {}           # user_id -> global_concepts
         self.isolation_unit = "conversation"
         self.debug_mode = debug_mode or os.getenv("FM_DEBUG") == "1"
-        self.context_cutoff_threshold = context_cutoff_threshold
         self._engine_verified = False
         self._verify_engine_health()
 
@@ -262,48 +261,92 @@ REMEDY:
 
         doc_scores = {}
         for doc_key, doc in self.original_docs.get(uid, {}).items():
-            doc_score = 0
-            doc_lower = doc.content.lower()
-            for score, node, _ in top_k:
-                action = str(node.get("action", "")).lower()
+            
+            # Phase 1: Turn-level splitting (preserves conversational boundaries)
+            doc_turns = re.split(r'\n(?=\[?(?:Turn|[A-Z][a-z]+-\d+-\d{4} \| Turn) )', doc.content)
+            turn_scores = []
+            
+            for turn_idx, turn in enumerate(doc_turns):
+                turn_lower = turn.lower()
+                turn_score = 0
                 
-                # Boost if native node action is found
-                if action and len(action) > 2 and action in doc_lower:
-                    doc_score += score
+                # Signal 1: Topological node intersection
+                for score, node, _ in top_k:
+                    action = str(node.get("action", "")).lower()
+                    
+                    if action and len(action) > 2 and action in turn_lower:
+                        turn_score += score
+                    
+                    for conn in node.get("data_connections", []):
+                        conn_str = str(conn).lower()
+                        if conn_str.startswith("d_") or conn_str.startswith("f_") or conn_str.startswith("a_"):
+                            conn_str = conn_str[2:]
+                        if conn_str.startswith("doc_"):
+                            continue
+                            
+                        if conn_str and len(conn_str) > 2 and conn_str in turn_lower:
+                            turn_score += (score * 0.5)
                 
-                # Unpack structural links. Rust engine uses D_, F_, A_ prefixes
-                for conn in node.get("data_connections", []):
-                    conn_str = str(conn).lower()
+                # Signal 2: Direct query term presence
+                query_hit_count = sum(1 for t in query_terms if t in turn_lower)
+                if query_hit_count >= 2:
+                    turn_score += query_hit_count * 8
+                            
+                turn_scores.append((turn_score, turn_idx, turn))
+            
+            # Phase 2: Select top turns + neighbors
+            if turn_scores:
+                scored_only = [(s, idx, t) for s, idx, t in turn_scores if s > 0]
+                if not scored_only:
+                    continue
                     
-                    # Trim component classifier prefixes
-                    if conn_str.startswith("d_") or conn_str.startswith("f_") or conn_str.startswith("a_"):
-                        conn_str = conn_str[2:]
+                ranked = sorted(scored_only, key=lambda x: x[0], reverse=True)
+                
+                selected_indices = set()
+                for _, idx, _ in ranked[:12]:
+                    selected_indices.add(idx)
+                    if idx > 0:
+                        selected_indices.add(idx - 1)
+                    if idx < len(doc_turns) - 1:
+                        selected_indices.add(idx + 1)
+                
+                # Always anchor first turn
+                selected_indices.add(0)
+                
+                # Phase 3: Sub-trim only very long turns at paragraph level
+                selected_sorted = sorted(selected_indices)
+                trimmed_turns = []
+                for i in selected_sorted:
+                    turn = doc_turns[i]
+                    paragraphs = re.split(r'\n\n+', turn)
                     
-                    # Discard doc_ mappings since they are purely topological indicators
-                    if conn_str.startswith("doc_"):
-                        continue
-                        
-                    if conn_str and len(conn_str) > 2 and conn_str in doc_lower:
-                        doc_score += (score * 0.5) # Award partial structural weight
-                        
-            if doc_score > 0:
-                doc_scores[doc_key] = (doc_score, doc)
+                    if len(paragraphs) <= 6:
+                        # Normal turns — keep as-is
+                        trimmed_turns.append(turn)
+                    else:
+                        # Oversized turns — trim irrelevant filler paragraphs
+                        kept = [paragraphs[0]]  # Always keep the turn header
+                        for para in paragraphs[1:]:
+                            para_lower = para.lower()
+                            q_hits = sum(1 for t in query_terms if t in para_lower)
+                            topo_hit = any(
+                                str(node.get("action", "")).lower() in para_lower
+                                for _, node, _ in top_k[:5]
+                            )
+                            if q_hits >= 1 or topo_hit or len(para) < 300:
+                                kept.append(para)
+                        trimmed_turns.append("\n\n".join(kept))
+                
+                doc_score = sum(s for s, _, _ in ranked[:12])
+                
+                synthesized_content = "\n\n...[...]\n\n".join(trimmed_turns)
+                new_doc = Document(id=doc.id, content=synthesized_content, user_id=doc.user_id)
+                doc_scores[doc_key] = (doc_score, new_doc)
                 
         # Sort documents by their cumulative topological intersection score
         sorted_docs = sorted(doc_scores.values(), key=lambda x: x[0], reverse=True)
         
-        results = []
-        if sorted_docs:
-            if self.context_cutoff_threshold > 0:
-                # Enforce dynamic boundary relative to the param to drop subset noise
-                avg_score = sum(score for score, _ in sorted_docs) / len(sorted_docs)
-                confidence_threshold = avg_score * self.context_cutoff_threshold
-                for doc_score, doc in sorted_docs[:k]:
-                    if doc_score >= confidence_threshold:
-                        results.append(doc)
-            else:
-                # Top-K fallback natively
-                results = [doc for _, doc in sorted_docs[:k]]
+        results = [doc for _, doc in sorted_docs[:k]]
         # Absolute fallback if query had zero intersection with any graph concepts
         if not results:
             for score, node, _ in top_k[:k]:
