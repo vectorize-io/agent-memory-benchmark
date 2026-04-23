@@ -21,11 +21,33 @@ class FastMemoryProvider(MemoryProvider):
     provider = "fastbuilder"
     link = "https://fastbuilder.ai"
     
-    # Common words to ignore during concept extraction
+    # Expanded stop words — must aggressively filter generic English at scale
     STOP_WORDS = {
-        "this", "that", "these", "those", "when", "where", "which", "what", 
+        # Articles, pronouns, determiners, prepositions
+        "the", "and", "for", "are", "but", "not", "you", "all", "can",
+        "had", "her", "was", "one", "our", "out", "day", "get", "has",
+        "him", "his", "how", "its", "may", "new", "now", "old", "see",
+        "way", "who", "did", "let", "say", "she", "too", "use",
+        "this", "that", "these", "those", "when", "where", "which", "what",
         "there", "their", "after", "before", "will", "have", "with", "from",
-        "about", "would", "could", "should", "some", "other"
+        "about", "would", "could", "should", "some", "other", "each", "every",
+        "been", "being", "were", "does", "done", "doing", "then", "than",
+        "into", "over", "under", "again", "further", "here", "just", "also",
+        "very", "more", "most", "much", "many", "well", "still", "only",
+        "even", "back", "down", "such", "like", "make", "made", "take",
+        "took", "come", "came", "give", "gave", "know", "knew", "think",
+        "thought", "look", "looked", "want", "wanted", "tell", "told",
+        "work", "working", "worked", "call", "called", "need", "needed",
+        "keep", "kept", "feel", "felt", "seem", "seemed", "help", "helped",
+        # Generic verbs/actions that match everything
+        "using", "used", "create", "created", "creating", "include", "includes",
+        "including", "implement", "implementing", "ensure", "ensuring",
+        "handle", "handling", "provide", "providing", "consider", "considering",
+        "require", "requires", "required", "requirements", "following",
+        "different", "specific", "based", "example", "approach", "process",
+        "system", "systems", "project", "information", "important",
+        "allows", "support", "address", "manage", "perform", "update",
+        "updated", "change", "changed", "added", "adding", "start", "started",
     }
     
     def __init__(self, debug_mode: bool = False):
@@ -84,19 +106,42 @@ REMEDY:
 
     def _extract_concepts(self, text: str) -> List[str]:
         """
-        Lightweight entity/concept extraction.
-        Identifies capitalized words and frequent nouns to build topological connections.
+        Sharpened ontological concept extraction.
+        Multi-tier strategy for discriminating topic identification:
+        - Tier 1: Technical compound terms (hyphenated, camelCase, snake_case)
+        - Tier 2: Proper nouns and acronyms (capitalized, ALL-CAPS)
+        - Tier 3: Domain-specific bigrams (adjacent noun pairs)
+        - Tier 4: Significant single terms (4+ chars, not stop words)
         """
-        # Extract Capitalized Words (Proper Nouns)
-        proper_nouns = re.findall(r'\b[A-Z][a-z]{3,}\b', text)
+        concepts = []
         
-        # Extract potential concepts (words > 5 chars, not in stop words)
-        words = re.findall(r'\b[a-z]{6,}\b', text.lower())
-        concepts = [w for w in words if w not in self.STOP_WORDS]
+        # Tier 1: Technical compounds — most discriminating
+        # Captures: Flask-Login, Flask-SQLAlchemy, account_lockout, camelCase
+        compounds = re.findall(r'\b[A-Za-z][\w]*[-_][A-Za-z][\w]*(?:[-_][A-Za-z][\w]*)*\b', text)
+        concepts.extend(c.lower() for c in compounds)
         
-        # Combine and unique
-        all_concepts = list(set(proper_nouns + concepts))
-        return list(all_concepts)[:5] # Limit to top 5 for dense connectivity
+        # Tier 2: Proper nouns (3+ chars capitalized) and acronyms (2+ ALL-CAPS)
+        proper_nouns = re.findall(r'\b[A-Z][a-z]{2,}\b', text)
+        acronyms = re.findall(r'\b[A-Z]{2,6}\b', text)
+        concepts.extend(w.lower() for w in proper_nouns if w.lower() not in self.STOP_WORDS)
+        concepts.extend(w.lower() for w in acronyms if len(w) >= 2 and w.lower() not in self.STOP_WORDS)
+        
+        # Tier 3: Domain bigrams — adjacent significant words
+        words = re.findall(r'\b[a-z]{3,}\b', text.lower())
+        filtered = [w for w in words if w not in self.STOP_WORDS and len(w) >= 4]
+        for i in range(len(filtered) - 1):
+            bigram = f"{filtered[i]}_{filtered[i+1]}"
+            concepts.append(bigram)
+        
+        # Tier 4: Significant single terms (4+ chars, not stop)
+        singles = [w for w in words if len(w) >= 4 and w not in self.STOP_WORDS]
+        concepts.extend(singles)
+        
+        # Deduplicate and rank by frequency (most frequent = most characteristic)
+        from collections import Counter
+        freq = Counter(concepts)
+        ranked = [term for term, _ in freq.most_common()]
+        return ranked[:12]  # Top 12 for richer topology
 
     def _sanitize_logic(self, content: str) -> str:
         """
