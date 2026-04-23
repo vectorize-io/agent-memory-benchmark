@@ -110,7 +110,7 @@ REMEDY:
         Multi-tier strategy for discriminating topic identification:
         - Tier 1: Technical compound terms (hyphenated, camelCase, snake_case)
         - Tier 2: Proper nouns and acronyms (capitalized, ALL-CAPS)
-        - Tier 3: Domain-specific bigrams (adjacent noun pairs)
+        - Tier 3: High-frequency bigrams and trigrams (adjacent noun phrases)
         - Tier 4: Significant single terms (4+ chars, not stop words)
         """
         concepts = []
@@ -126,12 +126,15 @@ REMEDY:
         concepts.extend(w.lower() for w in proper_nouns if w.lower() not in self.STOP_WORDS)
         concepts.extend(w.lower() for w in acronyms if len(w) >= 2 and w.lower() not in self.STOP_WORDS)
         
-        # Tier 3: Domain bigrams — adjacent significant words
+        # Tier 3: High-frequency bigrams and trigrams from significant words
         words = re.findall(r'\b[a-z]{3,}\b', text.lower())
         filtered = [w for w in words if w not in self.STOP_WORDS and len(w) >= 4]
+        # Bigrams
         for i in range(len(filtered) - 1):
-            bigram = f"{filtered[i]}_{filtered[i+1]}"
-            concepts.append(bigram)
+            concepts.append(f"{filtered[i]}_{filtered[i+1]}")
+        # Trigrams — capture multi-word domain phrases like "user_authentication_flow"
+        for i in range(len(filtered) - 2):
+            concepts.append(f"{filtered[i]}_{filtered[i+1]}_{filtered[i+2]}")
         
         # Tier 4: Significant single terms (4+ chars, not stop)
         singles = [w for w in words if len(w) >= 4 and w not in self.STOP_WORDS]
@@ -141,7 +144,7 @@ REMEDY:
         from collections import Counter
         freq = Counter(concepts)
         ranked = [term for term, _ in freq.most_common()]
-        return ranked[:12]  # Top 12 for richer topology
+        return ranked[:15]  # Top 15 for richer discriminating topology
 
     def _sanitize_logic(self, content: str) -> str:
         """
@@ -245,9 +248,9 @@ REMEDY:
                 print(f"--- [FM_DEBUG] Search failed: Graph for user {uid} is empty. ---")
             return [], None
 
-        query_words = set(re.findall(r'\b\w+\b', query.lower()))
-        query_terms = {w for w in query_words if w not in self.STOP_WORDS}
         query_concepts = set(self._extract_concepts(query))
+        # Bridge topological concepts to raw text matching spaces instead of underscores
+        query_terms = {c.replace('_', ' ') for c in query_concepts}
         
         scored_nodes = []
 
@@ -304,8 +307,56 @@ REMEDY:
         scored_nodes.sort(key=lambda x: x[0], reverse=True)
         top_k = scored_nodes[:k * 2]
 
+        # Pre-compute inverse document frequency for query terms across user corpus
+        user_docs_dict = self.original_docs.get(uid, {})
+        num_docs = len(user_docs_dict)
+        
+        # Adaptive turn selection: fewer turns per doc when corpus is large
+        # so total context stays within LLM's effective reasoning window
+        if num_docs <= 10:
+            turns_per_doc = 12   # Small corpus — keep broad context
+        elif num_docs <= 30:
+            turns_per_doc = 8    # Medium corpus — moderate extraction
+        else:
+            turns_per_doc = 6    # Large corpus — surgical extraction
+        
+        term_doc_count = {}  # How many docs contain each query term
+        term_doc_freq = {}   # Term frequency per doc
+        
+        for doc_key, doc in user_docs_dict.items():
+            doc_lower = doc.content.lower()
+            term_doc_freq[doc_key] = {}
+            for term in query_terms:
+                count = doc_lower.count(term)
+                if count > 0:
+                    term_doc_count[term] = term_doc_count.get(term, 0) + 1
+                    term_doc_freq[doc_key][term] = count
+        
+        import math
+        
+        # Calculate how specific/rare the query is globally
+        query_max_idf = 1.0
+        if query_terms:
+            idf_vals = [math.log((num_docs + 1) / (term_doc_count.get(t, 1) + 1)) + 1 for t in query_terms]
+            if idf_vals:
+                query_max_idf = max(idf_vals)
+                
+        # Dynamic multiplier: factual queries (rare terms) isolate docs purely by TF-IDF (multiplier 3000+)
+        # Reasoning queries (common terms) allow topological graphs to assist (multiplier < 200)
+        dynamic_multiplier = 40 * (query_max_idf ** 3)
+        
         doc_scores = {}
-        for doc_key, doc in self.original_docs.get(uid, {}).items():
+        for doc_key, doc in user_docs_dict.items():
+            
+            # Signal 0: Document-level TF-IDF score (BM25-like discriminator)
+            tfidf_score = 0.0
+            for term in query_terms:
+                tf = term_doc_freq.get(doc_key, {}).get(term, 0)
+                if tf > 0:
+                    df = term_doc_count.get(term, 1)
+                    idf = math.log((num_docs + 1) / (df + 1)) + 1
+                    # Sublinear TF scaling, no length penalty for software docs
+                    tfidf_score += (1 + math.log(1 + tf)) * idf
             
             # Phase 1: Turn-level splitting (preserves conversational boundaries)
             doc_turns = re.split(r'\n(?=\[?(?:Turn|[A-Z][a-z]+-\d+-\d{4} \| Turn) )', doc.content)
@@ -334,22 +385,40 @@ REMEDY:
                 
                 # Signal 2: Direct query term presence — critical discriminator
                 # at scale where topology nodes match broadly across many docs
-                query_hit_count = sum(1 for t in query_terms if t in turn_lower)
-                if query_hit_count >= 2:
-                    turn_score += query_hit_count * 8
-                            
+                query_hit_count = 0
+                turn_tfidf_score = 0.0
+                for t in query_terms:
+                    if t in turn_lower:
+                        query_hit_count += 1
+                        df = term_doc_count.get(t, 1)
+                        idf = math.log((num_docs + 1) / (df + 1)) + 1
+                        
+                        # Intra-document Inverse Term Frequency (ITF)
+                        # Massively boosts turns containing terms that are rare inside this specific document
+                        tf_global = term_doc_freq.get(doc_key, {}).get(t, 0)
+                        intra_idf = 1000.0 / (1.0 + tf_global)
+                        
+                        turn_tfidf_score += (idf * intra_idf)
+                        
+                if query_hit_count >= 1:
+                    turn_score += turn_tfidf_score * max(10, dynamic_multiplier)
+                    
                 turn_scores.append((turn_score, turn_idx, turn))
             
             # Phase 2: Select top turns + neighbors
             if turn_scores:
                 scored_only = [(s, idx, t) for s, idx, t in turn_scores if s > 0]
                 if not scored_only:
-                    continue
+                    # Fallback: if no specific turn matched strongly but doc was 
+                    # retrieved via TF-IDF, just take the first N turns.
+                    scored_only = [(0.1, idx, t) for idx, t in enumerate(doc_turns[:turns_per_doc])]
+                    if not scored_only:
+                        continue
                     
                 ranked = sorted(scored_only, key=lambda x: x[0], reverse=True)
                 
                 selected_indices = set()
-                for _, idx, _ in ranked[:12]:
+                for _, idx, _ in ranked[:turns_per_doc]:
                     selected_indices.add(idx)
                     if idx > 0:
                         selected_indices.add(idx - 1)
@@ -383,7 +452,18 @@ REMEDY:
                                 kept.append(para)
                         trimmed_turns.append("\n\n".join(kept))
                 
-                doc_score = sum(s for s, _, _ in ranked[:12])
+                # Hybrid scoring: topology turn-score + document-level TF-IDF
+                topo_score = sum(s for s, _, _ in ranked[:turns_per_doc])
+                
+                if num_docs > 1:
+                    # Multi-document splits (100k, 500k, 1M): Strict Lexical Supremacy
+                    # Increase multiplier to 5000 to completely dominate polynomial topology
+                    # score accumulation, ensuring precise factual matching dictates top-K docs.
+                    doc_score = tfidf_score * 5000 + topo_score
+                else:
+                    # Mega-document splits (10M): Single 14.5MB connected string.
+                    # Rely on the dynamic ITF-weighted turn selection and topological ties
+                    doc_score = tfidf_score * dynamic_multiplier + topo_score
                 
                 synthesized_content = "\n\n...[...]\n\n".join(trimmed_turns)
                 new_doc = Document(id=doc.id, content=synthesized_content, user_id=doc.user_id)
