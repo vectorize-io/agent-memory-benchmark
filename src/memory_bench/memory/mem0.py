@@ -14,7 +14,7 @@ _LOCAL_EMBEDDING_DIMS = 384
 
 class Mem0MemoryProvider(MemoryProvider):
     name = "mem0"
-    description = "Agentic memory with Gemini 2.0 Flash for reflective extraction + local Qdrant store."
+    description = "Agentic memory with Gemini 2.5 Flash for reflective extraction + local Qdrant store."
     kind = "local"
     provider = "mem0"
     variant = "local"
@@ -36,7 +36,7 @@ class Mem0MemoryProvider(MemoryProvider):
             {
                 "llm": {
                     "provider": "gemini",
-                    "config": {"model": "gemini-2.0-flash", "temperature": 0.0},
+                    "config": {"model": "gemini-2.5-flash", "temperature": 0.0},
                 },
                 "embedder": {
                     "provider": "huggingface",
