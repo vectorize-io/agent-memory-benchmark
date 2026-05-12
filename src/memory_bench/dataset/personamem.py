@@ -284,6 +284,7 @@ class PersonaMemDataset(Dataset):
         category: str | None = None,
         limit: int | None = None,
         ids: set[str] | None = None,
+        user_ids: set[str] | None = None,
     ) -> list[Document]:
         sessions_by_ctx = self._load_sessions(split)
         documents: list[Document] = []

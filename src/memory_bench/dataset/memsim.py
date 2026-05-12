@@ -139,6 +139,7 @@ class MemSimDataset(Dataset):
         category: str | None = None,
         limit: int | None = None,
         ids: set[str] | None = None,
+        user_ids: set[str] | None = None,
     ) -> list[Document]:
         trajectories = self._load_trajectories(split)
         documents: list[Document] = []
