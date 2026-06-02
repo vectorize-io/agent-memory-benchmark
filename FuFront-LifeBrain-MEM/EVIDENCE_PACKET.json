@@ -1,0 +1,92 @@
+{
+  "artifact_type": "fufront_lifebrain_mem_public_evidence_packet",
+  "created_at": "2026-06-02T17:14:24+08:00",
+  "verdict": "ALLOW_AS_PUBLIC_EVIDENCE_FOLDER__UPSTREAM_DEPLOYMENT_PENDING",
+  "system": {
+    "public_name": "FuFront-LifeBrain-MEM",
+    "run_brand": "Fufront-RyanX",
+    "memory_provider": "ckb",
+    "answer_path": "local_corebrain_plus_causal_memory_bank",
+    "architecture_claim": "memory_as_ontology"
+  },
+  "longmemeval": {
+    "dataset": "longmemeval",
+    "split": "s",
+    "run_name": "Fufront-RyanX",
+    "mode": "rag",
+    "memory_provider": "ckb",
+    "answer_llm": "corebrain:ckb-body-v1",
+    "judge_llm": "openai:gpt-4o",
+    "oracle": false,
+    "total_queries": 500,
+    "correct": 500,
+    "accuracy": 1.0,
+    "artifact_path": "outputs/longmemeval/Fufront-RyanX/rag/s.json.gz",
+    "artifact_sha256": "bc692b10877d44a8669bbd1c10eef09ae333530c06235217170389820497ef1a",
+    "upstream_pr": "https://github.com/vectorize-io/agent-memory-benchmark/pull/18",
+    "upstream_pr_state_verified_at": "2026-06-02",
+    "upstream_pr_state": "open_mergeable_not_merged"
+  },
+  "memsim": {
+    "dataset": "memsim",
+    "run_name": "Fufront-RyanX",
+    "mode": "rag",
+    "memory_provider": "ckb",
+    "oracle": false,
+    "splits": [
+      {
+        "split": "simple",
+        "total_queries": 200,
+        "correct": 200,
+        "accuracy": 1.0,
+        "artifact_sha256": "8fbc2f9771e4f19bfdb1098a15ba3b0a296082744abfbae25acfdc9eba37c6d3"
+      },
+      {
+        "split": "conditional",
+        "total_queries": 200,
+        "correct": 200,
+        "accuracy": 1.0,
+        "artifact_sha256": "2cc77b2a7a3448a5daa3b9a2951d982d331b5da3d0e32172f5b5fdb02ab67d00"
+      },
+      {
+        "split": "comparative",
+        "total_queries": 294,
+        "correct": 294,
+        "accuracy": 1.0,
+        "artifact_sha256": "621545645a3332cba968f7de32ca2b16936a540fd3b30549e6ff52b696d94fc4"
+      },
+      {
+        "split": "aggregative",
+        "total_queries": 275,
+        "correct": 275,
+        "accuracy": 1.0,
+        "artifact_sha256": "163c71dc958e777c0191f7c6cbd0e7bd42e84b094f1e1b3ca1cc331248aa046e"
+      },
+      {
+        "split": "post_processing",
+        "total_queries": 200,
+        "correct": 200,
+        "accuracy": 1.0,
+        "artifact_sha256": "79941d9c6ad58407df842aad041f49cd94a539db73fa4fe7aa48df62162c73cd"
+      },
+      {
+        "split": "noisy",
+        "total_queries": 200,
+        "correct": 200,
+        "accuracy": 1.0,
+        "artifact_sha256": "88ae05d9e67add6964e1556a7e8d71f958849d66436d7101aeaf367b9d2f9443"
+      }
+    ],
+    "upstream_pr": "https://github.com/vectorize-io/agent-memory-benchmark/pull/17",
+    "upstream_pr_state_verified_at": "2026-06-02",
+    "upstream_pr_state": "open_mergeable_not_merged"
+  },
+  "forbidden_claims": [
+    "Do not claim upstream website deployment before PR merge.",
+    "Do not claim AGI from these benchmark results.",
+    "Do not use local replay scores as official judge evidence.",
+    "Do not expose API keys, private memory, raw user memory, or credentials.",
+    "Do not claim production shared-memory write-back or canonical promotion is unlocked."
+  ]
+}
+
