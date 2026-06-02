@@ -1,13 +1,16 @@
 {
   "artifact_type": "fufront_lifebrain_mem_public_evidence_packet",
+  "artifact_type_zh": "FuFront-LifeBrain-MEM 公開證據包",
   "created_at": "2026-06-02T17:14:24+08:00",
   "verdict": "ALLOW_AS_PUBLIC_EVIDENCE_FOLDER__UPSTREAM_DEPLOYMENT_PENDING",
+  "verdict_zh": "允許作為公開證據資料夾；upstream 部署仍等待合併",
   "system": {
     "public_name": "FuFront-LifeBrain-MEM",
     "run_brand": "Fufront-RyanX",
     "memory_provider": "ckb",
     "answer_path": "local_corebrain_plus_causal_memory_bank",
-    "architecture_claim": "memory_as_ontology"
+    "architecture_claim": "memory_as_ontology",
+    "architecture_claim_zh": "記憶即本體"
   },
   "longmemeval": {
     "dataset": "longmemeval",
@@ -25,7 +28,8 @@
     "artifact_sha256": "bc692b10877d44a8669bbd1c10eef09ae333530c06235217170389820497ef1a",
     "upstream_pr": "https://github.com/vectorize-io/agent-memory-benchmark/pull/18",
     "upstream_pr_state_verified_at": "2026-06-02",
-    "upstream_pr_state": "open_mergeable_not_merged"
+    "upstream_pr_state": "open_mergeable_not_merged",
+    "note_zh": "LongMemEval S 使用本地核心小腦 + 因果記憶庫回答；OpenAI GPT-4o 僅作為官方裁判。"
   },
   "memsim": {
     "dataset": "memsim",
@@ -33,6 +37,7 @@
     "mode": "rag",
     "memory_provider": "ckb",
     "oracle": false,
+    "note_zh": "MemSim 六個 split 全部 100%。",
     "splits": [
       {
         "split": "simple",
@@ -87,6 +92,12 @@
     "Do not use local replay scores as official judge evidence.",
     "Do not expose API keys, private memory, raw user memory, or credentials.",
     "Do not claim production shared-memory write-back or canonical promotion is unlocked."
+  ],
+  "forbidden_claims_zh": [
+    "PR 合併前不要宣稱 upstream 官網已部署。",
+    "不要用這些 benchmark 結果宣稱 AGI。",
+    "不要把本地 replay 分數當成 official judge 證據。",
+    "不要暴露 API key、私有記憶、原始使用者記憶或憑證。",
+    "不要宣稱 production shared-memory write-back 或 canonical promotion 已解鎖。"
   ]
 }
-
