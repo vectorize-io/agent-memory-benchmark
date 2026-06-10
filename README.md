@@ -67,3 +67,15 @@ Results are saved to `outputs/{dataset}/{memory}/{mode}/{domain}.json` and can b
 - Python ≥ 3.11
 - `GEMINI_API_KEY` in `.env` or environment
 - For MemBench: set `MEMBENCH_DATA_PATH` to your local data directory
+- For the `csm` provider: Node.js 22+, a checkout of
+  [context-swarm-memory](https://github.com/muhamadjawdatsalemalakoum/context-swarm-memory)
+  with `npm install` run once, and `CSM_REPO_DIR` pointing at that checkout.
+  `GEMINI_API_KEY` (above) is also used by CSM's internal retrieval model
+  (`gemini-3.5-flash` by default; override with `CSM_AMB_MODEL`). The provider
+  starts a local warm bridge service on `initialize()` and stops it on
+  `cleanup()`; no other services are needed. Optional env (return-k knobs and
+  a per-query token-telemetry sidecar via `CSM_AMB_TELEMETRY_JSONL`) is
+  documented in `src/memory_bench/memory/csm.py`. Windows note: install with
+  `uv sync --no-install-package uvloop` (uvloop arrives transitively via
+  hindsight-api and does not build on Windows; it is unused by this provider)
+  and run with `uv run --no-sync`.
