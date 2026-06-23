@@ -56,6 +56,7 @@ class EvalRunner:
         category: str | None = None,
         query_limit: int | None = None,
         query_id: str | None = None,
+        unit: str | None = None,
         doc_limit: int | None = None,
         oracle: bool = False,
         skip_ingestion: bool = False,
@@ -114,6 +115,10 @@ class EvalRunner:
         else:
             console.print(f"  {len(queries)} queries loaded")
 
+        if unit:
+            queries = [q for q in queries if str(q.user_id) == str(unit)]
+            console.print(f"  filtered to unit {unit}: {len(queries)} queries [dim](--unit)[/dim]")
+
         console.print("[dim]Loading documents...[/dim]")
         if oracle:
             gold_ids = {gid for q in queries for gid in q.gold_ids}
@@ -121,7 +126,7 @@ class EvalRunner:
                 raise ValueError("Oracle mode requested but no gold_ids found in queries")
             documents = dataset.load_documents(split, category=doc_category, ids=gold_ids)
             console.print(f"  {len(documents)} gold documents loaded [dim](oracle mode)[/dim]")
-        elif dataset.isolation_unit is not None and query_limit is not None:
+        elif dataset.isolation_unit is not None and (query_limit is not None or unit is not None):
             # For isolated datasets with a query limit, only load docs for the queried units
             # to avoid loading the entire dataset into memory unnecessarily.
             query_user_ids = {q.user_id for q in queries if q.user_id}

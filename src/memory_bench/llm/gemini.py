@@ -35,6 +35,7 @@ class GeminiLLM(LLM):
         config = types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=genai_schema,
+            temperature=0.0,  # deterministic answers + judging (reproducible benchmark)
         )
         delay = _RETRY_BASE_DELAY
         last_text = ""
@@ -135,7 +136,7 @@ class GeminiLLM(LLM):
         return ""
 
     def _generate_raw(self, contents, config: types.GenerateContentConfig | None = None):
-        config = config or types.GenerateContentConfig()
+        config = config or types.GenerateContentConfig(temperature=0.0)
         delay = _RETRY_BASE_DELAY
         for attempt in range(_MAX_RETRIES):
             try:
@@ -145,14 +146,23 @@ class GeminiLLM(LLM):
                     config=config,
                 )
             except Exception as e:
+                # Retry on rate limits (429) and any transient server error (5xx:
+                # 500 INTERNAL, 502 Bad Gateway, 503 UNAVAILABLE, 504 timeout, 529
+                # overloaded). Preview models in particular return sporadic 5xx
+                # under load — a single one must not kill a multi-hour run.
+                from google.genai.errors import ServerError
                 msg = str(e)
-                if ("429" in msg or "RESOURCE_EXHAUSTED" in msg or
-                        "503" in msg or "UNAVAILABLE" in msg):
-                    if attempt < _MAX_RETRIES - 1:
-                        logger.warning("[gemini] retry %d/%d after %.0fs — %s", attempt + 1, _MAX_RETRIES, delay, msg[:120])
-                        time.sleep(delay)
-                        delay *= 2
-                        continue
+                retryable = (
+                    isinstance(e, ServerError)
+                    or "429" in msg or "RESOURCE_EXHAUSTED" in msg
+                    or any(code in msg for code in ("500", "502", "503", "504", "529"))
+                    or "UNAVAILABLE" in msg or "INTERNAL" in msg or "Bad Gateway" in msg
+                )
+                if retryable and attempt < _MAX_RETRIES - 1:
+                    logger.warning("[gemini] retry %d/%d after %.0fs — %s", attempt + 1, _MAX_RETRIES, delay, msg[:120])
+                    time.sleep(delay)
+                    delay *= 2
+                    continue
                 raise
         raise RuntimeError(f"Gemini request failed after {_MAX_RETRIES} retries")
 
