@@ -30,9 +30,10 @@ class RAGMode(ResponseMode):
     name = "rag"
     description = "Default. Provider retrieves top-k documents; they are injected into an LLM prompt as context. Supports both MCQ and open-ended questions."
 
-    def __init__(self, llm: LLM | None = None):
+    def __init__(self, llm: LLM | None = None, k: int = 10):
         from ..llm import get_answer_llm
         self._llm = llm or get_answer_llm()
+        self.k = k
 
     @property
     def llm_id(self) -> str | None:
@@ -46,7 +47,7 @@ class RAGMode(ResponseMode):
         meta = meta or {}
         query_timestamp = meta.get("query_timestamp")
         retrieval_query = meta.get("retrieval_query") or query
-        docs, raw_response = await memory.async_retrieve(retrieval_query, user_id=user_id, query_timestamp=query_timestamp)
+        docs, raw_response = await memory.async_retrieve(retrieval_query, k=self.k, user_id=user_id, query_timestamp=query_timestamp)
         retrieve_ms = (time.perf_counter() - t0) * 1000
 
         context = "\n\n".join(
