@@ -99,5 +99,33 @@
   "outputs/beam/hindsight/single-query/10m.json.gz": {
     "sha": "594f4d8f1fe3158ea4f144fdf90be55c578505e698ef644d992a4c5c66b60fad",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/beam/hindsight/single-query/10m.json-E0CaKGmXRhxJQehl9laFAOnWTiK8N2.gz"
+  },
+  "outputs/memsim/Fufront-RyanX/rag/simple.json.gz": {
+    "sha": "8fbc2f9771e4f19bfdb1098a15ba3b0a296082744abfbae25acfdc9eba37c6d3",
+    "url": "https://jekdpawoyjgjis0w.public.blob.vercel-storage.com/outputs/memsim/Fufront-RyanX/rag/simple.json.gz"
+  },
+  "outputs/memsim/Fufront-RyanX/rag/conditional.json.gz": {
+    "sha": "2cc77b2a7a3448a5daa3b9a2951d982d331b5da3d0e32172f5b5fdb02ab67d00",
+    "url": "https://jekdpawoyjgjis0w.public.blob.vercel-storage.com/outputs/memsim/Fufront-RyanX/rag/conditional.json.gz"
+  },
+  "outputs/memsim/Fufront-RyanX/rag/comparative.json.gz": {
+    "sha": "621545645a3332cba968f7de32ca2b16936a540fd3b30549e6ff52b696d94fc4",
+    "url": "https://jekdpawoyjgjis0w.public.blob.vercel-storage.com/outputs/memsim/Fufront-RyanX/rag/comparative.json.gz"
+  },
+  "outputs/memsim/Fufront-RyanX/rag/aggregative.json.gz": {
+    "sha": "163c71dc958e777c0191f7c6cbd0e7bd42e84b094f1e1b3ca1cc331248aa046e",
+    "url": "https://jekdpawoyjgjis0w.public.blob.vercel-storage.com/outputs/memsim/Fufront-RyanX/rag/aggregative.json.gz"
+  },
+  "outputs/memsim/Fufront-RyanX/rag/post_processing.json.gz": {
+    "sha": "79941d9c6ad58407df842aad041f49cd94a539db73fa4fe7aa48df62162c73cd",
+    "url": "https://jekdpawoyjgjis0w.public.blob.vercel-storage.com/outputs/memsim/Fufront-RyanX/rag/post_processing.json.gz"
+  },
+  "outputs/memsim/Fufront-RyanX/rag/noisy.json.gz": {
+    "sha": "88ae05d9e67add6964e1556a7e8d71f958849d66436d7101aeaf367b9d2f9443",
+    "url": "https://jekdpawoyjgjis0w.public.blob.vercel-storage.com/outputs/memsim/Fufront-RyanX/rag/noisy.json.gz"
+  },
+  "outputs/longmemeval/Fufront-RyanX/rag/s.json.gz": {
+    "sha": "bc692b10877d44a8669bbd1c10eef09ae333530c06235217170389820497ef1a",
+    "url": "https://jekdpawoyjgjis0w.public.blob.vercel-storage.com/outputs/longmemeval/Fufront-RyanX/rag/s.json-hSRwHCJU9LEs2KRNc7pkFX4rDz757j.gz"
   }
 }
