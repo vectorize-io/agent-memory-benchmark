@@ -84,13 +84,15 @@ def load_env() -> dict:
     return env
 
 
-def run_agent(workdir: Path, task: dict, model: str, timeout: int) -> dict:
+def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: bool = False) -> dict:
     env = load_env()
     env["PWD"] = str(workdir)
-    prompt = PROMPT.format(repo=task["repo"], bug_report=task["bug_report"])
+    cmd = ["opencode", "run", "--format", "json", "-m", model]
+    if resume:
+        cmd.append("-c")          # continue the last session in this dir (keeps context)
+    cmd.append(message)
     t0 = time.perf_counter()
-    proc = subprocess.run(["opencode", "run", "--format", "json", "-m", model, prompt],
-                          cwd=str(workdir), env=env, timeout=timeout,
+    proc = subprocess.run(cmd, cwd=str(workdir), env=env, timeout=timeout,
                           capture_output=True, text=True)
     elapsed = time.perf_counter() - t0
     out_tok = in_tok = turns = 0
@@ -140,8 +142,25 @@ def grade(task: dict, source_patch: str, work: Path) -> dict:
          "python", "-m", "pytest", "-q", "tests", "--no-header"],
         capture_output=True, text=True)
     passed = r.returncode == 0
-    tail = (r.stdout or "").strip().splitlines()[-1:] if r.stdout else [""]
-    return {"applied": applied, "resolved": passed and applied, "pytest": tail[0] if tail else ""}
+    out = (r.stdout or "")
+    tail = out.strip().splitlines()[-1:] if out.strip() else [""]
+    return {"applied": applied, "resolved": passed and applied,
+            "pytest": tail[0] if tail else "", "output": out,
+            "patch_failed": not applied}
+
+
+def build_feedback(grade_result: dict) -> str:
+    """Surface the NEW problem (failing tests) — not the solution."""
+    if grade_result["patch_failed"]:
+        return ("Your change could not be applied cleanly to the source. Re-read the current "
+                "code and make a focused edit that applies, then ensure the tests pass.")
+    out = grade_result["output"]
+    # keep the failures section (assertion errors + the short summary), trimmed
+    body = out[-2500:] if len(out) > 2500 else out
+    return ("Your change did not fully fix the reported regression. Re-running the project's "
+            "test suite now reports the following remaining failures:\n\n"
+            f"```\n{body.strip()}\n```\n\n"
+            "Fix the source so these pass. Do NOT modify any test file.")
 
 
 def main():
@@ -153,6 +172,8 @@ def main():
     ap.add_argument("--price-in", type=float, default=0.0, help="$ per 1M input tokens")
     ap.add_argument("--price-out", type=float, default=0.0, help="$ per 1M output tokens")
     ap.add_argument("--run-id", default="r1")
+    ap.add_argument("--max-interventions", type=int, default=5,
+                    help="cap on feedback rounds before giving up (drift guard)")
     args = ap.parse_args()
     task = json.loads(Path(args.task).read_text())
 
@@ -162,23 +183,42 @@ def main():
     work.mkdir(parents=True)
     repo = work / "repo"
     build_repo(task, repo, args.history)
-    print(f"[{task['task_id']}] history={args.history} model={args.model} — running agent…", flush=True)
-    m = run_agent(repo, task, args.model, args.timeout)
-    patch = capture_source_patch(repo)
-    g = grade(task, patch, work)
-    cost = (m["in_tokens"] * args.price_in + m["out_tokens"] * args.price_out) / 1_000_000
+
+    totals = {"out_tokens": 0, "in_tokens": 0, "turns": 0, "wall_s": 0.0}
+    def acc(m):
+        totals["out_tokens"] += m["out_tokens"]; totals["in_tokens"] += m["in_tokens"]
+        totals["turns"] += m["turns"]; totals["wall_s"] += m["elapsed"]
+
+    print(f"[{task['task_id']}] history={args.history} model={args.model} — initial attempt…", flush=True)
+    acc(run_agent(repo, args.model, args.timeout, PROMPT.format(repo=task["repo"], bug_report=task["bug_report"])))
+
+    # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.
+    # Metric = number of human-like interventions needed (capped); cost = sum across all rounds.
+    interventions = 0
+    while True:
+        patch = capture_source_patch(repo)
+        g = grade(task, patch, work)
+        if g["resolved"] or interventions >= args.max_interventions:
+            break
+        interventions += 1
+        print(f"  ↳ intervention {interventions}: {g['pytest']}", flush=True)
+        acc(run_agent(repo, args.model, args.timeout, build_feedback(g), resume=True))
+
+    solved = g["resolved"]
+    cost = (totals["in_tokens"] * args.price_in + totals["out_tokens"] * args.price_out) / 1_000_000
     result = {
         "task_id": task["task_id"], "history": args.history, "model": args.model,
-        "resolved": g["resolved"], "applied": g["applied"], "pytest": g["pytest"],
-        "patch_bytes": len(patch), "turns": m["turns"],
-        "out_tokens": m["out_tokens"], "in_tokens": m["in_tokens"],
-        "wall_s": round(m["elapsed"], 1), "cost_usd": round(cost, 4),
+        "solved": solved, "interventions": interventions,
+        "capped": (not solved and interventions >= args.max_interventions),
+        "final_pytest": g["pytest"], "patch_bytes": len(patch),
+        "turns": totals["turns"], "out_tokens": totals["out_tokens"], "in_tokens": totals["in_tokens"],
+        "wall_s": round(totals["wall_s"], 1), "cost_usd": round(cost, 4),
     }
     out = work / "result.json"
     out.write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))
-    print(f"\nRESULT history={args.history}: resolved={g['resolved']} "
-          f"turns={m['turns']} out_tok={m['out_tokens']} wall={m['elapsed']:.0f}s -> {out}")
+    print(f"\nRESULT history={args.history}: solved={solved} interventions={interventions} "
+          f"turns={totals['turns']} out_tok={totals['out_tokens']} wall={totals['wall_s']:.0f}s -> {out}")
 
 
 if __name__ == "__main__":
