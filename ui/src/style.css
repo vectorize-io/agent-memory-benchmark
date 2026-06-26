@@ -151,6 +151,10 @@
   border-radius: var(--radius-sm); padding: 0.05rem 0.3rem; text-align: center; }
 .traj-patch-ok { color: #34d399; background: rgba(52,211,153,0.16); }
 .traj-patch-fail { color: #f87171; background: rgba(248,113,113,0.16); }
+.git-commit { list-style: none; }
+.git-sha { flex-shrink: 0; width: 4.8rem; color: var(--primary); opacity: 0.8; font-weight: 600; }
+.git-subject { flex: 1; min-width: 0; color: var(--foreground); opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.git-body { color: var(--muted-foreground); opacity: 0.85; white-space: pre-wrap; word-break: break-word; margin: 0 0 0.5rem; line-height: 1.5; }
 /* the middle truncates the whole arg + output-preview as one ellipsised line */
 .traj-mid { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .traj-arg { color: var(--foreground); opacity: 0.82; }

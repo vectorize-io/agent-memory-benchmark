@@ -425,14 +425,30 @@ function toggleCat(axis, cat) {
               <Card class="p-4 text-sm text-foreground leading-relaxed whitespace-pre-wrap">{{ active.query }}</Card>
             </section>
 
-            <section>
+            <section v-if="active.git_history && active.git_history.length">
+              <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                Repository history <span class="text-muted-foreground/60 font-normal normal-case tracking-normal">· {{ active.git_history.length }} commits (newest first) — click to expand the diff</span>
+              </p>
+              <div class="trajectory">
+                <details v-for="(c, i) in active.git_history" :key="i">
+                  <summary class="traj-step traj-clickable git-commit">
+                    <span class="git-sha">{{ c.sha }}</span>
+                    <span class="git-subject">{{ c.subject }}</span>
+                  </summary>
+                  <div class="traj-detail">
+                    <pre v-if="c.body" class="git-body">{{ c.body }}</pre>
+                    <div class="diff-block"><div v-for="l in patchLines(c.diff)" :key="l.i" :class="'diff-line diff-' + (l.cls || 'ctx')">{{ l.text || ' ' }}</div></div>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section v-else-if="memBlocks.length">
               <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2">
                 Memory injected <span class="text-muted-foreground/60 font-normal normal-case tracking-normal">· {{ memBlocks.length }} recalled</span>
               </p>
-              <div v-if="memBlocks.length" class="space-y-2">
+              <div class="space-y-2">
                 <Card v-for="(m, i) in memBlocks" :key="i" class="p-3 text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap border-l-2 border-primary/60">{{ m }}</Card>
               </div>
-              <p v-else class="text-sm text-muted-foreground italic">— none injected for this task —</p>
             </section>
 
             <section>

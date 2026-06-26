@@ -134,6 +134,22 @@ def ingest_history(task: dict, bank: str):
     time.sleep(18)
 
 
+def capture_git_history(task: dict) -> list:
+    """The task repo's engineered git history (commits + diffs) — the 'source documents'
+    the full/hindsight arms have access to and the squashed arm does not. Newest first."""
+    src = Path("/tmp/sdebench/hist") / task["repo"]
+    if src.exists():
+        shutil.rmtree(src)
+    sh("python", str(SDEBENCH / "datasets" / task["repo"] / task["build"]), str(src))
+    out = []
+    for sha in sh("git", "-C", str(src), "rev-list", "HEAD", cap=True).stdout.split():
+        subject = sh("git", "-C", str(src), "show", "-s", "--format=%s", sha, cap=True).stdout.strip()
+        body = sh("git", "-C", str(src), "show", "-s", "--format=%b", sha, cap=True).stdout.strip()
+        diff = "\n".join(sh("git", "-C", str(src), "show", "--format=", sha, cap=True).stdout.splitlines()[:150])
+        out.append({"sha": sha[:8], "subject": subject, "body": body, "diff": diff})
+    return out
+
+
 def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: bool = False,
               memory_bank: str | None = None) -> dict:
     env = load_env(memory_bank)
@@ -278,6 +294,7 @@ def main():
         ingest_history(task, memory_bank)           # reset + ingest the full git history
     else:
         build_repo(task, repo, args.history)
+    git_history = capture_git_history(task)
 
     TOK = ("input", "output", "reasoning", "cache_read", "cache_write")
     totals = {k: 0 for k in TOK}; totals.update({"turns": 0, "wall_s": 0.0})
@@ -324,7 +341,7 @@ def main():
     }
     (work / "result.json").write_text(json.dumps(result, indent=2))
     (work / "trace.json").write_text(json.dumps(
-        {**result, "bug_report": task["bug_report"], "final_patch": patch, "trace": trace}, indent=2))
+        {**result, "bug_report": task["bug_report"], "final_patch": patch, "git_history": git_history, "trace": trace}, indent=2))
     print(json.dumps(result, indent=2))
     tk = result["tokens"]
     print(f"\nRESULT history={args.history}: solved={solved} interventions={interventions} | "

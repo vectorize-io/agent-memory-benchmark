@@ -10,12 +10,20 @@ Usage:
     uv run python sdebench/harness/ui_export.py --glob '*ttl*'  # filter
     uv run omb view    # then open dataset 'sdebench'
 """
-import argparse, json, re, glob
+import argparse, json, re, glob, sys
 from pathlib import Path
 
+HARNESS = Path(__file__).resolve().parent
+SDEBENCH = HARNESS.parent
 REPO_ROOT = Path(__file__).resolve().parents[2]
 OUT = REPO_ROOT / "outputs" / "sdebench"
 RUN_DIR = Path("/tmp/sdebench/run")
+sys.path.insert(0, str(HARNESS))
+from run import capture_git_history   # reuse to backfill git history for any run
+
+
+def repo_of(t):
+    return t["task_id"].rsplit("-regression", 1)[0]
 
 
 PRICES = {  # $ per 1M tokens (gemini-3.5-flash, Jun 2026)
@@ -50,7 +58,7 @@ def flatten_trace(trace):
     return steps
 
 
-def to_query_result(t, key):
+def to_query_result(t, key, git_history):
     tok = t.get("tokens", {})
     cost = compute_cost(t.get("model"), tok)
     return {
@@ -67,6 +75,7 @@ def to_query_result(t, key):
         "meta": {"interventions": t.get("interventions"), "history": t.get("history"),
                  "tokens": tok, "wall_s": t.get("wall_s"), "turns": t.get("turns"),
                  "cost_usd": cost},
+        "git_history": git_history,   # the repo's engineered commits (source docs)
         "raw_response": None, "category_axes": {},
     }
 
@@ -77,14 +86,19 @@ def main():
     args = ap.parse_args()
 
     traces = sorted(glob.glob(str(RUN_DIR / args.glob / "trace.json")))
-    runs = {}  # (model, history) -> [trace dicts]
+    runs = {}  # (model, history, repo) -> [(key, trace)]
     for f in traces:
         t = json.loads(Path(f).read_text())
-        runs.setdefault((t["model"], t["history"]), []).append((Path(f).parent.name, t))
+        runs.setdefault((t["model"], t["history"], repo_of(t)), []).append((Path(f).parent.name, t))
 
-    for (model, history), items in runs.items():
+    hist_cache = {}  # repo -> git history (captured once)
+    for (model, history, repo), items in runs.items():
+        if repo not in hist_cache:
+            task = json.loads((SDEBENCH / "datasets" / repo / "task.json").read_text())
+            hist_cache[repo] = capture_git_history(task)
+        gh = hist_cache[repo]
         run_name = f"opencode+{model}+{history}"
-        results = [to_query_result(t, key) for key, t in items]
+        results = [to_query_result(t, key, gh) for key, t in items]
         correct = sum(1 for r in results if r["correct"])
         avg_interv = round(sum((r["meta"]["interventions"] or 0) for r in results) / len(results), 2)
         tot_cost = round(sum(r["meta"]["cost_usd"] for r in results), 4)
@@ -93,7 +107,7 @@ def main():
                    for k in ("input", "output", "reasoning", "cache_read", "cache_write")}
         summary = {
             "view": "agent",
-            "dataset": "sdebench", "split": "all", "category": None,
+            "dataset": "sdebench", "split": repo, "category": None,
             "memory_provider": run_name, "run_name": _safe(run_name), "mode": "agent", "oracle": False,
             "total_queries": len(results), "correct": correct,
             "accuracy": correct / len(results) if results else 0.0,
@@ -106,7 +120,7 @@ def main():
             "sde_avg_cost_usd": avg_cost, "sde_tokens": sum_tok,
             "results": results,
         }
-        dest = OUT / _safe(run_name) / "agent" / "all.json"
+        dest = OUT / _safe(run_name) / "agent" / f"{repo}.json"
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(json.dumps(summary, indent=2))
         print(f"[ok] {run_name}: {correct}/{len(results)} solved, mean interv {avg_interv} -> {dest.relative_to(REPO_ROOT)}")
