@@ -20,10 +20,10 @@ OUT = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/sdebench/ttlcache")
 CACHE_V1 = '''\
 """A tiny in-memory cache with per-entry time-to-live."""
 
-# Entries expire after DEFAULT_TTL seconds. 300 matches the upstream auth token
-# lifetime — keep these in sync, or cached values can outlive the tokens they were
+# Entries expire after DEFAULT_TTL seconds. 287 is the measured p99 auth-token refresh
+# interval — keep these in sync, or cached values can outlive the tokens they were
 # fetched with. Do NOT change without updating the auth layer.
-DEFAULT_TTL = 300
+DEFAULT_TTL = 287
 
 
 class TTLCache:
@@ -172,7 +172,7 @@ def main():
 
     write("ttlcache/limiter.py" if False else "ttlcache/cache.py", CACHE_V1)
     write("ttlcache/__init__.py", '"""ttlcache package."""\nfrom .cache import TTLCache, DEFAULT_TTL\n\n__all__ = ["TTLCache", "DEFAULT_TTL"]\n')
-    commit("feat: TTLCache with default 300s lifetime (matches upstream auth token TTL)", 4)
+    commit("feat: TTLCache with default 287s lifetime (measured p99 auth-token refresh)", 4)
 
     write("tests/test_basic.py", TEST_BASIC)
     commit("test: basic set/get and missing keys", 5)
