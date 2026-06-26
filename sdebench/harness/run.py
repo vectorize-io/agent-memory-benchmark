@@ -222,10 +222,14 @@ def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: boo
             tok["input"] += tk.get("input", 0) or 0
             tok["output"] += tk.get("output", 0) or 0
             tok["reasoning"] += tk.get("reasoning", 0) or 0
-            # stamp this model-step's tokens onto the trajectory steps it produced
+            # stamp this model-step's tokens onto the trajectory steps it produced.
+            # reasoning is token-only (Gemini hides the thinking TEXT) — track the count so
+            # the UI can show how much hidden reasoning each turn did.
+            s_reason = tk.get("reasoning", 0) or 0
             for s in traj[seg_start:]:
                 s["tok_in"] = s_in + s_cache
                 s["tok_out"] = s_out
+                s["tok_reason"] = s_reason
             seg_start = len(traj)
     return {"elapsed": elapsed, "tokens": tok, "turns": turns, "trajectory": traj}
 

@@ -159,6 +159,31 @@ const steps = computed(() => {
   })
 })
 
+// Group steps into TURNS: opencode issues several tool calls from ONE prompt (one model
+// turn). Steps sharing a tok_in belong to the same turn; tokens are per-turn, shown once.
+// Feedback markers (🔁) and submitted patches stay as standalone blocks between turns.
+const turns = computed(() => {
+  const out = []
+  let cur = null, prevIn
+  for (const s of steps.value) {
+    const isSep = s.k === 'patch' || (s.k === 'say' && String(s.text || '').startsWith('🔁'))
+    if (isSep) {
+      out.push({ kind: s.k === 'patch' ? 'patch' : 'feedback', step: s, key: 'sep' + s.i })
+      cur = null; prevIn = undefined; continue
+    }
+    if (!cur || s.tok_in !== prevIn) {
+      cur = { kind: 'turn', key: 'turn' + s.i, n: out.filter(t => t.kind === 'turn').length + 1,
+              tok_in: s.tok_in, tok_in_delta: s.tok_in_delta, tok_out: s.tok_out,
+              tok_reason: s.tok_reason, notes: [], tools: [] }
+      out.push(cur)
+    }
+    prevIn = s.tok_in
+    if (s.k === 'say') cur.notes.push(s)
+    else cur.tools.push(s)
+  }
+  return out
+})
+
 const expandedSteps = ref(new Set())
 function toggleStep(i) {
   const s = new Set(expandedSteps.value)
@@ -461,37 +486,49 @@ function toggleCat(axis, cat) {
 
             <section>
               <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                Agent trajectory <span class="text-muted-foreground/60 font-normal normal-case tracking-normal">· {{ steps.length }} steps</span>
+                Agent trajectory <span class="text-muted-foreground/60 font-normal normal-case tracking-normal">· {{ turns.filter(t => t.kind === 'turn').length }} turns · {{ steps.length }} steps</span>
               </p>
               <div class="trajectory">
-                <div v-for="s in steps" :key="s.i">
-                  <div class="traj-step" :class="{ 'traj-clickable': (s.k === 'tool' && (s.out || s.input)) || s.k === 'patch' }"
-                       @click="((s.k === 'tool' && (s.out || s.input)) || s.k === 'patch') && toggleStep(s.i)">
-                    <template v-if="s.k === 'tool'">
-                      <span :class="['traj-tool', s.mem && 'traj-tool-mem']">{{ s.tool }}</span>
-                      <span class="traj-mid">
-                        <span class="traj-arg">{{ s.arg }}</span>
-                        <span v-if="s.out && !expandedSteps.has(s.i)" class="traj-out-prev"> ↳ {{ outPreview(s) }}</span>
-                      </span>
-                      <span v-if="s.tok_out != null" class="traj-tok" title="↑ prompt context fed to the model this step — CUMULATIVE (system prompt + tool defs + all prior steps), mostly cached · +Δ NEW context added since the previous step · ↓ tokens the model generated this step"><span class="traj-tok-arrow">↑</span>{{ tokFmt(s.tok_in) }}<span v-if="s.tok_in_delta != null" class="traj-tok-delta">+{{ tokFmt(s.tok_in_delta) }}</span> <span class="traj-tok-arrow">↓</span>{{ tokFmt(s.tok_out) }}</span>
-                      <span v-if="s.out || s.input" class="traj-exp">{{ expandedSteps.has(s.i) ? '▾' : '▸' }}</span>
+                <template v-for="t in turns" :key="t.key">
+                  <!-- one model turn: reasoning/notes + the batch of tool calls it issued + ONE per-turn token badge -->
+                  <div v-if="t.kind === 'turn'" class="turn">
+                    <div class="turn-head">
+                      <span class="turn-n">turn {{ t.n }}</span>
+                      <span v-if="t.tok_reason" class="turn-reason" title="Hidden reasoning tokens this turn — Gemini bills these (as output) but does NOT expose the thinking text, so there's nothing to display but the count.">🧠 {{ tokFmt(t.tok_reason) }}</span>
+                      <span v-if="t.tok_out != null" class="traj-tok turn-tok" title="Per-TURN tokens — the model issues ALL of this turn's tool calls from ONE prompt. ↑ cumulative context (system prompt + tool defs + every prior turn), mostly cached · +Δ NEW context since the previous turn (the prior turn's tool results) · ↓ tokens generated this turn (tool calls + reasoning)"><span class="traj-tok-arrow">↑</span>{{ tokFmt(t.tok_in) }}<span v-if="t.tok_in_delta != null" class="traj-tok-delta">+{{ tokFmt(t.tok_in_delta) }}</span> <span class="traj-tok-arrow">↓</span>{{ tokFmt(t.tok_out) }}</span>
+                    </div>
+                    <p v-for="note in t.notes" :key="note.i" class="turn-note">{{ note.text }}</p>
+                    <template v-for="s in t.tools" :key="s.i">
+                      <div class="traj-step" :class="{ 'traj-clickable': s.out || s.input }"
+                           @click="(s.out || s.input) && toggleStep(s.i)">
+                        <span :class="['traj-tool', s.mem && 'traj-tool-mem']">{{ s.tool }}</span>
+                        <span class="traj-mid">
+                          <span class="traj-arg">{{ s.arg }}</span>
+                          <span v-if="s.out && !expandedSteps.has(s.i)" class="traj-out-prev"> ↳ {{ outPreview(s) }}</span>
+                        </span>
+                        <span v-if="s.out || s.input" class="traj-exp">{{ expandedSteps.has(s.i) ? '▾' : '▸' }}</span>
+                      </div>
+                      <div v-if="expandedSteps.has(s.i)" class="traj-detail">
+                        <div v-if="s.input"><span class="traj-detail-label">input</span><pre>{{ s.input }}</pre></div>
+                        <div v-if="s.out"><span class="traj-detail-label">output</span><pre>{{ s.out }}</pre></div>
+                      </div>
                     </template>
-                    <template v-else-if="s.k === 'patch'">
-                      <span :class="['traj-patch', s.passed ? 'traj-patch-ok' : 'traj-patch-fail']">{{ s.passed ? '✓ submitted' : '✗ submitted' }}</span>
-                      <span class="traj-mid"><span class="traj-arg">{{ s.round }}</span><span class="traj-out-prev"> · {{ s.pytest }}</span></span>
-                      <span class="traj-exp">{{ expandedSteps.has(s.i) ? '▾' : '▸' }}</span>
-                    </template>
-                    <span v-else class="traj-say">{{ s.text }}</span>
                   </div>
-                  <div v-if="s.k === 'tool' && expandedSteps.has(s.i)" class="traj-detail">
-                    <div v-if="s.input"><span class="traj-detail-label">input</span><pre>{{ s.input }}</pre></div>
-                    <div v-if="s.out"><span class="traj-detail-label">output</span><pre>{{ s.out }}</pre></div>
-                  </div>
-                  <div v-if="s.k === 'patch' && expandedSteps.has(s.i)" class="traj-detail">
-                    <span class="traj-detail-label">patch submitted this round ({{ s.pytest }})</span>
-                    <div class="diff-block"><div v-for="l in patchLines(s.patch)" :key="l.i" :class="'diff-line diff-' + (l.cls || 'ctx')">{{ l.text || ' ' }}</div></div>
-                  </div>
-                </div>
+                  <!-- feedback round separator -->
+                  <div v-else-if="t.kind === 'feedback'" class="traj-step"><span class="traj-say">{{ t.step.text }}</span></div>
+                  <!-- submitted patch (✓/✗ + diff) -->
+                  <template v-else-if="t.kind === 'patch'">
+                    <div class="traj-step traj-clickable" @click="toggleStep(t.step.i)">
+                      <span :class="['traj-patch', t.step.passed ? 'traj-patch-ok' : 'traj-patch-fail']">{{ t.step.passed ? '✓ submitted' : '✗ submitted' }}</span>
+                      <span class="traj-mid"><span class="traj-arg">{{ t.step.round }}</span><span class="traj-out-prev"> · {{ t.step.pytest }}</span></span>
+                      <span class="traj-exp">{{ expandedSteps.has(t.step.i) ? '▾' : '▸' }}</span>
+                    </div>
+                    <div v-if="expandedSteps.has(t.step.i)" class="traj-detail">
+                      <span class="traj-detail-label">patch submitted this round ({{ t.step.pytest }})</span>
+                      <div class="diff-block"><div v-for="l in patchLines(t.step.patch)" :key="l.i" :class="'diff-line diff-' + (l.cls || 'ctx')">{{ l.text || ' ' }}</div></div>
+                    </div>
+                  </template>
+                </template>
               </div>
             </section>
 

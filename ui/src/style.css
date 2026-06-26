@@ -165,6 +165,16 @@
 }
 .traj-tok-arrow { opacity: 0.5; }
 .traj-tok-delta { color: var(--primary); opacity: 0.65; margin-left: 0.15rem; }
+.turn { margin-bottom: 0.45rem; border-left: 2px solid var(--border); padding-left: 0.35rem; }
+.turn-head { display: flex; align-items: center; gap: 0.5rem; padding: 0.12rem 0.55rem; }
+.turn-n { flex-shrink: 0; font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted-foreground); opacity: 0.55; }
+.turn-tok { margin-left: auto; }
+.turn-reason { flex-shrink: 0; font-size: 0.6rem; color: var(--muted-foreground); opacity: 0.7;
+  font-variant-numeric: tabular-nums; }
+.turn-note { margin: 0; padding: 0.05rem 0.55rem 0.25rem; color: var(--foreground); opacity: 0.72;
+  font-style: italic; font-family: var(--font-sans, sans-serif); font-size: 0.78rem;
+  line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
 .traj-say { color: var(--foreground); opacity: 0.72; font-style: italic; font-family: var(--font-sans, sans-serif);
   padding: 0.2rem 0; white-space: pre-wrap; }
 .traj-clickable { cursor: pointer; }
