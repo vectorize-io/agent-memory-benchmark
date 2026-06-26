@@ -97,7 +97,7 @@ def build_repo(task: dict, dest: Path, history: str):
 HINDSIGHT_URL = "http://localhost:8888"
 
 
-def load_env(memory_bank: str | None = None) -> dict:
+def load_env(memory_bank: str | None = None, mem_index: str | None = None) -> dict:
     env = os.environ.copy()
     ef = REPO_ROOT / ".env"
     if ef.exists():
@@ -106,7 +106,10 @@ def load_env(memory_bank: str | None = None) -> dict:
             if "=" in line and not line.startswith("#"):
                 k, v = line.split("=", 1)
                 env.setdefault(k.strip(), v.strip().strip('"').strip("'"))
-    if memory_bank:   # enable the Hindsight opencode plugin pointed at this bank (recall mode)
+    if mem_index:     # enable the LOCAL recall_intent tool over the raw-commit index
+        env.pop("HINDSIGHT_DISABLED", None)
+        env["MEM_INDEX"] = mem_index
+    elif memory_bank: # enable the Hindsight opencode plugin pointed at this bank (recall mode)
         env.pop("HINDSIGHT_DISABLED", None)
         env["HINDSIGHT_API_URL"] = HINDSIGHT_URL
         env["HINDSIGHT_BANK_ID"] = memory_bank
@@ -144,6 +147,13 @@ def ingest_history(task: dict, bank: str):
     time.sleep(18)
 
 
+def build_mem_index(task: dict) -> str:
+    """Build the local raw-commit index for the recall_intent tool (from the full history)."""
+    out = Path("/tmp/sdebench/memindex") / f"{task.get('codebase') or task['repo']}.json"
+    sh("python", str(HARNESS / "mem_index.py"), str(_codebase_dir(task) / task["build"]), str(out))
+    return str(out)
+
+
 def capture_git_history(task: dict) -> list:
     """The task repo's engineered git history (commits + diffs) — the 'source documents'
     the full/hindsight arms have access to and the squashed arm does not. Newest first."""
@@ -161,8 +171,8 @@ def capture_git_history(task: dict) -> list:
 
 
 def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: bool = False,
-              memory_bank: str | None = None) -> dict:
-    env = load_env(memory_bank)
+              memory_bank: str | None = None, mem_index: str | None = None) -> dict:
+    env = load_env(memory_bank, mem_index)
     env["PWD"] = str(workdir)
     cmd = ["opencode", "run", "--format", "json", "-m", model]
     if resume:
@@ -287,7 +297,7 @@ def build_feedback(grade_result: dict) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
-    ap.add_argument("--history", choices=["full", "squashed", "hindsight"], default="full")
+    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool"], default="full")
     ap.add_argument("--model", default="google/gemini-3.5-flash")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
@@ -304,10 +314,14 @@ def main():
     work.mkdir(parents=True)
     repo = work / "repo"
     memory_bank = None
+    mem_index = None
     if args.history == "hindsight":
         build_repo(task, repo, "squashed")          # no git trail; history is in memory
         memory_bank = f"sde-{task['repo']}"
         ingest_history(task, memory_bank)           # reset + ingest the full git history
+    elif args.history == "memtool":
+        build_repo(task, repo, "squashed")          # no git trail; history is in the recall_intent index
+        mem_index = build_mem_index(task)
     else:
         build_repo(task, repo, args.history)
     git_history = capture_git_history(task)
@@ -325,7 +339,7 @@ def main():
 
     print(f"[{task['task_id']}] history={args.history} model={args.model} — initial attempt…", flush=True)
     init_prompt = PROMPT.format(repo=task["repo"], bug_report=task["bug_report"])
-    acc(run_agent(repo, args.model, args.timeout, init_prompt, memory_bank=memory_bank), "initial", init_prompt)
+    acc(run_agent(repo, args.model, args.timeout, init_prompt, memory_bank=memory_bank, mem_index=mem_index), "initial", init_prompt)
 
     # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.
     # Metric = number of human-like interventions needed (capped); cost = sum across all rounds.
@@ -342,7 +356,7 @@ def main():
         interventions += 1
         fb = build_feedback(g)
         print(f"  ↳ intervention {interventions}: {g['pytest']}", flush=True)
-        acc(run_agent(repo, args.model, args.timeout, fb, resume=True, memory_bank=memory_bank), f"intervention-{interventions}", fb)
+        acc(run_agent(repo, args.model, args.timeout, fb, resume=True, memory_bank=memory_bank, mem_index=mem_index), f"intervention-{interventions}", fb)
 
     solved = g["resolved"]
     cost = compute_cost(args.model, {k: totals[k] for k in TOK})
