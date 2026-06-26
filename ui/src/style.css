@@ -137,25 +137,34 @@
   padding: 0.5rem 0; max-height: 28rem; overflow-y: auto;
   font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.72rem;
 }
-.traj-step { display: flex; gap: 0.6rem; padding: 0.18rem 1rem; align-items: baseline; line-height: 1.5; }
+/* one clean single line per tool step: [tool] [arg ↳ out … (truncated)] [in→out] [▸] */
+.traj-step { display: flex; gap: 0.5rem; padding: 0.14rem 0.55rem; align-items: center; line-height: 1.4; }
 .traj-step:hover { background: color-mix(in oklch, var(--foreground) 4%, transparent); }
 .traj-tool {
-  flex-shrink: 0; min-width: 5.5rem; color: var(--primary); font-weight: 600;
+  flex-shrink: 0; width: 5rem; color: var(--primary); font-weight: 600; font-size: 0.68rem;
   background: color-mix(in oklch, var(--primary) 12%, transparent);
-  border-radius: var(--radius-sm); padding: 0 0.4rem; text-align: center;
+  border-radius: var(--radius-sm); padding: 0.05rem 0.3rem; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .traj-tool-mem { color: #c084fc !important; background: rgba(192,132,252,0.14) !important; }
-.traj-arg { color: var(--muted-foreground); word-break: break-all; flex: 1; }
-.traj-tok { flex-shrink: 0; color: var(--muted-foreground); opacity: 0.65; font-size: 0.66rem; white-space: nowrap; padding: 0 0.3rem; }
-.traj-say { color: var(--foreground); opacity: 0.78; font-style: italic; font-family: var(--font-sans, sans-serif); }
+/* the middle truncates the whole arg + output-preview as one ellipsised line */
+.traj-mid { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.traj-arg { color: var(--foreground); opacity: 0.82; }
+.traj-out-prev { color: var(--muted-foreground); opacity: 0.5; }
+.traj-tok {
+  flex-shrink: 0; color: var(--muted-foreground); font-size: 0.64rem; white-space: nowrap;
+  font-variant-numeric: tabular-nums; opacity: 0.75; min-width: 4.5rem; text-align: right;
+}
+.traj-tok-arrow { opacity: 0.45; }
+.traj-say { color: var(--foreground); opacity: 0.72; font-style: italic; font-family: var(--font-sans, sans-serif);
+  padding: 0.2rem 0; white-space: pre-wrap; }
 .traj-clickable { cursor: pointer; }
 .traj-clickable:hover { background: color-mix(in oklch, var(--primary) 7%, transparent); }
-.traj-exp { color: var(--muted-foreground); opacity: 0.6; flex-shrink: 0; }
-.traj-out-prev { color: var(--muted-foreground); opacity: 0.5; word-break: break-all; }
+.traj-exp { color: var(--muted-foreground); opacity: 0.55; flex-shrink: 0; width: 0.8rem; text-align: center; }
 .traj-detail {
   background: color-mix(in oklch, var(--foreground) 4%, transparent);
   border-left: 2px solid color-mix(in oklch, var(--primary) 40%, transparent);
-  margin: 0.1rem 1rem 0.3rem 1.5rem; border-radius: var(--radius-sm); padding: 0.4rem 0.7rem;
+  margin: 0.1rem 0.55rem 0.3rem 1.1rem; border-radius: var(--radius-sm); padding: 0.4rem 0.7rem;
 }
 .traj-detail-label {
   display: inline-block; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;

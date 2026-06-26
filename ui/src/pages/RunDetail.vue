@@ -159,7 +159,11 @@ function toggleStep(i) {
 }
 function outPreview(s) {
   const o = (s.out || '').replace(/\s+/g, ' ').trim()
-  return o.length > 100 ? o.slice(0, 100) + ' …' : o
+  return o.length > 80 ? o.slice(0, 80) + ' …' : o
+}
+function tokFmt(n) {
+  n = n ?? 0
+  return n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '') + 'k' : String(n)
 }
 watch(activeIndex, () => { expandedSteps.value = new Set() })
 
@@ -441,10 +445,12 @@ function toggleCat(axis, cat) {
                        @click="(s.k === 'tool' && (s.out || s.input)) && toggleStep(s.i)">
                     <template v-if="s.k === 'tool'">
                       <span :class="['traj-tool', s.mem && 'traj-tool-mem']">{{ s.tool }}</span>
-                      <span class="traj-arg">{{ s.arg }}</span>
-                      <span v-if="s.tok_out != null" class="traj-tok" title="Tokens this model step: in (incl. cached) → out">{{ (s.tok_in ?? 0).toLocaleString() }}→{{ (s.tok_out ?? 0).toLocaleString() }}</span>
+                      <span class="traj-mid">
+                        <span class="traj-arg">{{ s.arg }}</span>
+                        <span v-if="s.out && !expandedSteps.has(s.i)" class="traj-out-prev"> ↳ {{ outPreview(s) }}</span>
+                      </span>
+                      <span v-if="s.tok_out != null" class="traj-tok" title="Model-step tokens: in (incl. cached) → out">{{ tokFmt(s.tok_in) }}<span class="traj-tok-arrow"> → </span>{{ tokFmt(s.tok_out) }}</span>
                       <span v-if="s.out || s.input" class="traj-exp">{{ expandedSteps.has(s.i) ? '▾' : '▸' }}</span>
-                      <span v-if="s.out && !expandedSteps.has(s.i)" class="traj-out-prev">↳ {{ outPreview(s) }}</span>
                     </template>
                     <span v-else class="traj-say">{{ s.text }}</span>
                   </div>
