@@ -49,7 +49,9 @@ You are a maintainer of the `{repo}` Python project. A regression was reported:
 {bug_report}
 
 Fix the bug in the source code. Do NOT modify any test files — the graders supply their own.
-Save your changes to disk before finishing.
+Work efficiently: find the root cause, make the smallest change that fixes it, run the failing
+test to confirm it passes (and existing behaviour still works), then stop — avoid unnecessary
+exploration. Save your changes to disk before finishing.
 """
 
 
