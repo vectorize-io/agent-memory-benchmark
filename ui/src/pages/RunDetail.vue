@@ -174,7 +174,7 @@ const turns = computed(() => {
     if (!cur || s.tok_in !== prevIn) {
       cur = { kind: 'turn', key: 'turn' + s.i, n: out.filter(t => t.kind === 'turn').length + 1,
               tok_in: s.tok_in, tok_in_delta: s.tok_in_delta, tok_out: s.tok_out,
-              tok_reason: s.tok_reason, notes: [], tools: [] }
+              tok_cache: s.tok_cache, tok_reason: s.tok_reason, notes: [], tools: [] }
       out.push(cur)
     }
     prevIn = s.tok_in
@@ -228,6 +228,7 @@ const agentStats = computed(() => {
     cost: rs.map(r => r.meta?.cost_usd ?? 0).reduce((a, b) => a + b, 0),
     interv: sum('interventions'),
     inTok: sumTok('input') + sumTok('cache_read') + sumTok('cache_write'),
+    cachedTok: sumTok('cache_read'),
     outTok: sumTok('output') + sumTok('reasoning'),
     turns: sum('turns'),
     sde: rs.some(r => r.meta?.cost_usd != null || r.meta?.interventions != null),
@@ -318,11 +319,12 @@ function toggleCat(axis, cat) {
           <div v-if="data.judge_llm"><span class="text-foreground/70">Judge LLM</span> {{ data.judge_llm }}</div>
         </div>
 
-        <div v-if="isAgent && agentStats?.sde" class="grid grid-cols-3 gap-1.5">
+        <div v-if="isAgent && agentStats?.sde" class="grid grid-cols-2 gap-1.5">
           <div v-for="[label, val] in [
             ['Total cost', '$' + agentStats.cost.toFixed(3)],
             ['Interventions', agentStats.interv.toLocaleString()],
-            ['Tokens in/out', (agentStats.inTok/1000).toFixed(0) + 'k / ' + (agentStats.outTok/1000).toFixed(1) + 'k'],
+            ['Tokens ↑in / ↓out', (agentStats.inTok/1000).toFixed(0) + 'k / ' + (agentStats.outTok/1000).toFixed(1) + 'k'],
+            ['⚡ Cached input', (agentStats.cachedTok/1000).toFixed(0) + 'k (' + (agentStats.inTok ? Math.round(100*agentStats.cachedTok/agentStats.inTok) : 0) + '% of ↑)'],
           ]" :key="label" class="stat-box">
             <p class="text-muted-foreground/85 text-sm mb-0.5">{{ label }}</p>
             <p class="font-semibold text-foreground text-sm">{{ val }}</p>
@@ -427,7 +429,7 @@ function toggleCat(axis, cat) {
               <template v-if="isAgent && active.meta?.cost_usd != null">
                 <span class="pill" title="Human-like feedback rounds needed">🔁 {{ active.meta?.interventions ?? '–' }} interv</span>
                 <span class="pill" title="Cost (USD)">💲 {{ active.meta?.cost_usd?.toFixed(3) ?? '–' }}</span>
-                <span class="pill" title="Tokens in (incl. cached) / out">🔤 {{ ((active.meta?.tokens?.input ?? 0) + (active.meta?.tokens?.cache_read ?? 0)).toLocaleString() }} in / {{ ((active.meta?.tokens?.output ?? 0) + (active.meta?.tokens?.reasoning ?? 0)).toLocaleString() }} out</span>
+                <span class="pill" title="Tokens ↑in (fresh + cached, re-sent every turn) / ↓out · ⚡ = cached portion of ↑, billed ~10× cheaper">🔤 {{ ((active.meta?.tokens?.input ?? 0) + (active.meta?.tokens?.cache_read ?? 0)).toLocaleString() }} in <span v-if="active.meta?.tokens?.cache_read" class="pill-cache">⚡{{ (active.meta.tokens.cache_read).toLocaleString() }}</span> / {{ ((active.meta?.tokens?.output ?? 0) + (active.meta?.tokens?.reasoning ?? 0)).toLocaleString() }} out</span>
                 <span class="pill" title="Tool calls (agent turns)">🔧 {{ active.meta?.turns ?? '–' }} turns</span>
                 <span class="pill" title="Wall time">⏱ {{ active.meta?.wall_s ?? '–' }}s</span>
               </template>
@@ -495,7 +497,7 @@ function toggleCat(axis, cat) {
                     <div class="turn-head">
                       <span class="turn-n">turn {{ t.n }}</span>
                       <span v-if="t.tok_reason" class="turn-reason" title="Hidden reasoning tokens this turn — Gemini bills these (as output) but does NOT expose the thinking text, so there's nothing to display but the count.">🧠 {{ tokFmt(t.tok_reason) }}</span>
-                      <span v-if="t.tok_out != null" class="traj-tok turn-tok" title="Per-TURN tokens — the model issues ALL of this turn's tool calls from ONE prompt. ↑ cumulative context (system prompt + tool defs + every prior turn), mostly cached · +Δ NEW context since the previous turn (the prior turn's tool results) · ↓ tokens generated this turn (tool calls + reasoning)"><span class="traj-tok-arrow">↑</span>{{ tokFmt(t.tok_in) }}<span v-if="t.tok_in_delta != null" class="traj-tok-delta">+{{ tokFmt(t.tok_in_delta) }}</span> <span class="traj-tok-arrow">↓</span>{{ tokFmt(t.tok_out) }}</span>
+                      <span v-if="t.tok_out != null" class="traj-tok turn-tok" title="Per-TURN tokens — the model issues ALL of this turn's tool calls from ONE prompt. ↑ cumulative context (system prompt + tool defs + every prior turn), mostly cached · +Δ NEW context since the previous turn (the prior turn's tool results) · ↓ tokens generated this turn (tool calls + reasoning)"><span class="traj-tok-arrow">↑</span>{{ tokFmt(t.tok_in) }}<span v-if="t.tok_cache" class="turn-cache" title="cached portion of this turn's prompt — billed at the discount rate (~$0.15/1M vs $1.50)">⚡{{ tokFmt(t.tok_cache) }}</span><span v-if="t.tok_in_delta != null" class="traj-tok-delta">+{{ tokFmt(t.tok_in_delta) }}</span> <span class="traj-tok-arrow">↓</span>{{ tokFmt(t.tok_out) }}</span>
                     </div>
                     <p v-for="note in t.notes" :key="note.i" class="turn-note">{{ note.text }}</p>
                     <template v-for="s in t.tools" :key="s.i">

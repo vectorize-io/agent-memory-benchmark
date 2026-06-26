@@ -227,7 +227,8 @@ def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: boo
             # the UI can show how much hidden reasoning each turn did.
             s_reason = tk.get("reasoning", 0) or 0
             for s in traj[seg_start:]:
-                s["tok_in"] = s_in + s_cache
+                s["tok_in"] = s_in + s_cache       # full prompt this turn (fresh + cached)
+                s["tok_cache"] = s_cache           # cached portion (billed at the discount rate)
                 s["tok_out"] = s_out
                 s["tok_reason"] = s_reason
             seg_start = len(traj)
