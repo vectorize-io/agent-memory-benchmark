@@ -42,11 +42,25 @@ sdebench/
   Dockerfile                          # prebuilt env (python + pytest + git)
 ```
 
-## Tasks (each: a regression whose fix depends on a NON-GUESSABLE fact that lives only in history)
+## Codebases & tasks
+**Small / easy** (one short module, one regression):
 - `ttlcache-regression-001` — a refactor changed `DEFAULT_TTL` 287→600 and dropped the
   rationale comment; `287` (a non-round "measured" value) lives only in git history.
 - `ledger-regression-001` — a refactor changed `round_cents` to half-up; the real rule is
   round-half-DOWN ("match legacy billing") — non-guessable (agents default to banker's/half-up).
+
+**`billing`** (4 modules, ~18-commit noisy history — the "medium" reference codebase):
+- `billing-rounding-001` — same half-down rounding rule, now buried in noise.
+- `billing-taxbase-001` — tax charged on the discounted subtotal (2019 policy); navigate noise.
+
+**`minicalc`** (9 modules, ~22-commit noisy history — the "hard / bigger" codebase, a
+spreadsheet formula engine: tokens/nodes/parser/refs/sheet/functions/evaluator/errors/engine):
+- `minicalc-erragg-001` — **bug far from its symptom**: a "centralize argument evaluation"
+  refactor made the *evaluator* short-circuit on any error argument, so COUNT/AVG/MIN/MAX over
+  a range containing a `#DIV/0!` return the error instead of aggregating the numbers (SUM is
+  unaffected → slips past existing tests). Symptom points at `COUNT`; the bug is in `evaluator.py`.
+  Underdetermined (a COUNT-only fix passes the repro, fails the AVG/MIN/MAX hidden tests); the
+  "functions decide; the evaluator must not short-circuit calls" policy lives in history + `functions.py`.
 
 Design rule (learned the hard way): the history-encoded fact must be **non-guessable** — a
 conventional value/rule (e.g. TTL=300, or banker's rounding for money) the agent guesses
