@@ -42,6 +42,12 @@ sdebench/
   Dockerfile                          # prebuilt env (python + pytest + git)
 ```
 
-## Tasks
-- `ratelimiter-regression-001` — token-bucket limiter; a `perf:` commit floors partial
-  token refill (`int(elapsed*rate)`) while adding `available()`. Fix = drop the floor.
+## Tasks (each: a regression whose fix depends on a NON-GUESSABLE fact that lives only in history)
+- `ttlcache-regression-001` — a refactor changed `DEFAULT_TTL` 287→600 and dropped the
+  rationale comment; `287` (a non-round "measured" value) lives only in git history.
+- `ledger-regression-001` — a refactor changed `round_cents` to half-up; the real rule is
+  round-half-DOWN ("match legacy billing") — non-guessable (agents default to banker's/half-up).
+
+Design rule (learned the hard way): the history-encoded fact must be **non-guessable** — a
+conventional value/rule (e.g. TTL=300, or banker's rounding for money) the agent guesses
+without history won't make the A/B diverge.

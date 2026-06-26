@@ -1,13 +1,13 @@
 """Build the `ledger` synthetic repo — a HISTORY-DEPENDENT regression (rounding MODE).
 
-A refactor ("simplify rounding; add format_cents()") switched round_cents from BANKER'S
-rounding (ROUND_HALF_EVEN) to ROUND_HALF_UP, and dropped the comment explaining WHY it was
-half-even (to match the accounting ledger / avoid upward drift). The repro only shows ONE
-amount rounding the wrong way — it does NOT reveal the rule. The hidden tests pin the mode to
-banker's (half-even). A naive fix (half-up / half-down / truncate) passes the repro but fails
-hidden. The rule "ROUND_HALF_EVEN, do not use half-up" now lives ONLY in git history, so:
-  - with history: git log/blame the function -> "banker's rounding" -> fixed in one shot.
-  - without history: the agent must discover the exact mode via feedback rounds.
+A refactor ("simplify rounding; add format_cents()") switched round_cents to ROUND_HALF_UP
+and dropped the comment explaining the real rule: round half-cents DOWN (toward zero), to
+match the legacy billing system. The repro (2.125 -> 2.12) is also satisfied by BANKER'S
+rounding, which is what an agent reaches for on money — so the natural guess passes the repro
+but FAILS the hidden 2.135 -> 2.13 case (banker's gives 2.14). Round-half-DOWN is non-guessable
+(no one defaults to it), and the rule lives ONLY in git history, so:
+  - with history: git log/blame -> "rounds half-cents DOWN" -> fixed in one shot.
+  - without history: the agent guesses banker's/half-up -> fails hidden -> needs feedback rounds.
 The refactor also bundles a legit format_cents() (with its own test), so a lazy `git revert`
 fails PASS_TO_PASS -> forces a surgical one-line fix (the rounding mode).
 
@@ -20,17 +20,17 @@ OUT = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/sdebench/ledger")
 
 ROUND_V1 = '''\
 """Money rounding helpers for the accounting ledger."""
-from decimal import Decimal, ROUND_HALF_EVEN
+from decimal import Decimal, ROUND_HALF_DOWN
 
 
 def round_cents(amount):
-    """Round `amount` to cents using BANKER'S ROUNDING (round-half-to-even).
+    """Round `amount` to cents, rounding exact half-cents DOWN (toward zero).
 
-    We deliberately use half-to-even rather than half-up so rounded totals match the
-    accounting ledger and rounding error does not accumulate in one direction. Do NOT
-    switch this to half-up — it drifts the books upward over many transactions.
+    Our legacy billing system rounds exact half-cents DOWN, and customer invoices must
+    match its exports byte-for-byte. Do NOT use half-up or banker's (half-to-even)
+    rounding here — either one makes our totals disagree with the legacy system.
     """
-    return Decimal(str(amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN)
+    return Decimal(str(amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_DOWN)
 '''
 
 # C5 refactor: ROUND_HALF_EVEN -> ROUND_HALF_UP (REGRESSION), rationale dropped, + format_cents()
@@ -116,7 +116,7 @@ def main():
 
     write("ledger/rounding.py", ROUND_V1)
     write("ledger/__init__.py", '"""ledger package."""\nfrom .rounding import round_cents\n\n__all__ = ["round_cents"]\n')
-    commit("feat: round_cents uses banker's rounding (half-to-even) to match the ledger", 4)
+    commit("feat: round_cents rounds half-cents DOWN to match the legacy billing system", 4)
 
     write("tests/test_basic.py", TEST_BASIC)
     commit("test: rounding of typical amounts", 5)

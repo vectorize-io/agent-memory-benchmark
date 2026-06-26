@@ -5,11 +5,19 @@
   "build": "build.py",
   "base_ref": "HEAD",
   "regression_intro_subject": "refactor: simplify rounding; add format_cents()",
-  "guarantee_subject": "feat: round_cents uses banker's rounding (half-to-even) to match the ledger",
-  "bug_report": "Our rounded amounts no longer match the accounting ledger. Half-cent amounts round the wrong way — for example 2.125 should round to 2.12 (the ledger value), but we are now producing 2.13. This started after a recent refactor of the rounding code. A failing repro test is at tests/test_regression.py. Fix the rounding so it matches the ledger again, without breaking existing behaviour.",
-  "fail_to_pass": ["tests/test_regression.py"],
-  "pass_to_pass": ["tests/test_basic.py", "tests/test_more.py", "tests/test_format.py"],
-  "hidden_to_pass": ["tests/test_hidden.py"],
+  "guarantee_subject": "feat: round_cents rounds half-cents DOWN to match the legacy billing system",
+  "bug_report": "Our rounded amounts no longer match the accounting ledger. Half-cent amounts round the wrong way \u2014 for example 2.125 should round to 2.12 (the ledger value), but we are now producing 2.13. This started after a recent refactor of the rounding code. A failing repro test is at tests/test_regression.py. Fix the rounding so it matches the ledger again, without breaking existing behaviour.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_basic.py",
+    "tests/test_more.py",
+    "tests/test_format.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
   "regression_test_file": "regression_test.py",
   "hidden_test_file": "hidden_test.py"
 }
