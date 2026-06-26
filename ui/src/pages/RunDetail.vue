@@ -449,7 +449,7 @@ function toggleCat(axis, cat) {
                         <span class="traj-arg">{{ s.arg }}</span>
                         <span v-if="s.out && !expandedSteps.has(s.i)" class="traj-out-prev"> ↳ {{ outPreview(s) }}</span>
                       </span>
-                      <span v-if="s.tok_out != null" class="traj-tok" title="Model-step tokens: in (incl. cached) → out">{{ tokFmt(s.tok_in) }}<span class="traj-tok-arrow"> → </span>{{ tokFmt(s.tok_out) }}</span>
+                      <span v-if="s.tok_out != null" class="traj-tok" title="Tokens this model step — ↑ input/prompt (incl. cached) · ↓ output/generated"><span class="traj-tok-arrow">↑</span>{{ tokFmt(s.tok_in) }} <span class="traj-tok-arrow">↓</span>{{ tokFmt(s.tok_out) }}</span>
                       <span v-if="s.out || s.input" class="traj-exp">{{ expandedSteps.has(s.i) ? '▾' : '▸' }}</span>
                     </template>
                     <span v-else class="traj-say">{{ s.text }}</span>
