@@ -148,7 +148,15 @@ const steps = computed(() => {
   if (!isAgent.value) return []
   const tj = active.value?.trajectory
   const raw = Array.isArray(tj) && tj.length ? tj : parseSteps(active.value?.reasoning)
-  return raw.map((s, i) => ({ ...s, i, mem: s.tool ? String(s.tool).startsWith('hindsight') : false }))
+  let prevIn = 0
+  return raw.map((s, i) => {
+    const o = { ...s, i, mem: s.tool ? String(s.tool).startsWith('hindsight') : false }
+    if (s.tok_in != null) {           // +Δ = NEW context this model step added (cumulative - previous)
+      o.tok_in_delta = Math.max(0, s.tok_in - prevIn)
+      prevIn = s.tok_in
+    }
+    return o
+  })
 })
 
 const expandedSteps = ref(new Set())
@@ -465,7 +473,7 @@ function toggleCat(axis, cat) {
                         <span class="traj-arg">{{ s.arg }}</span>
                         <span v-if="s.out && !expandedSteps.has(s.i)" class="traj-out-prev"> ↳ {{ outPreview(s) }}</span>
                       </span>
-                      <span v-if="s.tok_out != null" class="traj-tok" title="Tokens this model step — ↑ input/prompt (incl. cached) · ↓ output/generated"><span class="traj-tok-arrow">↑</span>{{ tokFmt(s.tok_in) }} <span class="traj-tok-arrow">↓</span>{{ tokFmt(s.tok_out) }}</span>
+                      <span v-if="s.tok_out != null" class="traj-tok" title="↑ prompt context fed to the model this step — CUMULATIVE (system prompt + tool defs + all prior steps), mostly cached · +Δ NEW context added since the previous step · ↓ tokens the model generated this step"><span class="traj-tok-arrow">↑</span>{{ tokFmt(s.tok_in) }}<span v-if="s.tok_in_delta != null" class="traj-tok-delta">+{{ tokFmt(s.tok_in_delta) }}</span> <span class="traj-tok-arrow">↓</span>{{ tokFmt(s.tok_out) }}</span>
                       <span v-if="s.out || s.input" class="traj-exp">{{ expandedSteps.has(s.i) ? '▾' : '▸' }}</span>
                     </template>
                     <template v-else-if="s.k === 'patch'">

@@ -161,9 +161,10 @@
 .traj-out-prev { color: var(--muted-foreground); opacity: 0.5; }
 .traj-tok {
   flex-shrink: 0; color: var(--muted-foreground); font-size: 0.64rem; white-space: nowrap;
-  font-variant-numeric: tabular-nums; opacity: 0.78; min-width: 6rem; text-align: right;
+  font-variant-numeric: tabular-nums; opacity: 0.78; min-width: 8.5rem; text-align: right;
 }
 .traj-tok-arrow { opacity: 0.5; }
+.traj-tok-delta { color: var(--primary); opacity: 0.65; margin-left: 0.15rem; }
 .traj-say { color: var(--foreground); opacity: 0.72; font-style: italic; font-family: var(--font-sans, sans-serif);
   padding: 0.2rem 0; white-space: pre-wrap; }
 .traj-clickable { cursor: pointer; }
