@@ -18,6 +18,16 @@ SDEBENCH = HARNESS.parent
 REPO_ROOT = SDEBENCH.parent
 IMAGE = "sdebench-base"
 
+
+def _codebase_dir(task):
+    """Dir holding build.py for this task's shared codebase."""
+    return SDEBENCH / "datasets" / (task.get("codebase") or task["repo"])
+
+
+def _task_dir(task):
+    """Dir holding this task's own regression_test.py / hidden_test.py (task.json's dir)."""
+    return Path(task["_dir"])
+
 # $ per 1M tokens, per class (update when model prices change). gemini-3.5-flash (Jun 2026):
 # $1.50 input / $9.00 output, cached input 90% off ($0.15). reasoning bills as output.
 PRICES = {
@@ -65,7 +75,7 @@ def neutral_home() -> str:
 def build_repo(task: dict, dest: Path, history: str):
     if dest.exists():
         shutil.rmtree(dest)
-    ds = SDEBENCH / "datasets" / task["repo"]
+    ds = _codebase_dir(task)
     sh("python", str(ds / task["build"]), str(dest))
     if history == "squashed":
         shutil.rmtree(dest / ".git")
@@ -75,7 +85,7 @@ def build_repo(task: dict, dest: Path, history: str):
                "GIT_COMMITTER_NAME": "x", "GIT_COMMITTER_EMAIL": "x@x"}
         sh("git", "commit", "-q", "-m", "Initial commit", cwd=dest, env=env)
     # ship the failing regression repro (the agent sees it; it is red)
-    ds_test = ds / task["regression_test_file"]
+    ds_test = _task_dir(task) / task["regression_test_file"]
     shutil.copy(ds_test, dest / "tests" / "test_regression.py")
     sh("git", "add", "-A", cwd=dest)
     env = {**os.environ, "GIT_AUTHOR_NAME": "x", "GIT_AUTHOR_EMAIL": "x@x",
@@ -120,7 +130,7 @@ def ingest_history(task: dict, bank: str):
     src = Path("/tmp/sdebench/ingest") / task["repo"]
     if src.exists():
         shutil.rmtree(src)
-    sh("python", str(SDEBENCH / "datasets" / task["repo"] / task["build"]), str(src))
+    sh("python", str(_codebase_dir(task) / task["build"]), str(src))
     subprocess.run(["hindsight", "bank", "delete", bank, "--yes"], env=cli_env(),
                    capture_output=True)
     shas = sh("git", "-C", str(src), "rev-list", "--reverse", "HEAD", cap=True).stdout.split()
@@ -140,7 +150,7 @@ def capture_git_history(task: dict) -> list:
     src = Path("/tmp/sdebench/hist") / task["repo"]
     if src.exists():
         shutil.rmtree(src)
-    sh("python", str(SDEBENCH / "datasets" / task["repo"] / task["build"]), str(src))
+    sh("python", str(_codebase_dir(task) / task["build"]), str(src))
     out = []
     for sha in sh("git", "-C", str(src), "rev-list", "HEAD", cap=True).stdout.split():
         subject = sh("git", "-C", str(src), "show", "-s", "--format=%s", sha, cap=True).stdout.strip()
@@ -235,8 +245,7 @@ def grade(task: dict, source_patch: str, work: Path) -> dict:
     """Apply the source patch to a pristine full build + pristine test sets, run pytest in Docker."""
     gd = work / "grade"
     build_repo(task, gd, "full")                      # pristine repo (full)
-    ds = SDEBENCH / "datasets" / task["repo"]
-    shutil.copy(ds / task["hidden_test_file"], gd / "tests" / "test_hidden.py")
+    shutil.copy(_task_dir(task) / task["hidden_test_file"], gd / "tests" / "test_hidden.py")
     # regression test already copied by build_repo; apply the agent's source patch
     applied = True
     if source_patch.strip():
@@ -281,6 +290,8 @@ def main():
                     help="cap on feedback rounds before giving up (drift guard)")
     args = ap.parse_args()
     task = json.loads(Path(args.task).read_text())
+    task["_dir"] = str(Path(args.task).resolve().parent)
+    task.setdefault("repo", task.get("codebase") or task["task_id"])
 
     work = Path("/tmp/sdebench/run") / f"{task['task_id']}_{args.history}_{args.run_id}"
     if work.exists():
@@ -331,7 +342,8 @@ def main():
     solved = g["resolved"]
     cost = compute_cost(args.model, {k: totals[k] for k in TOK})
     result = {
-        "task_id": task["task_id"], "history": args.history, "model": args.model,
+        "task_id": task["task_id"], "codebase": task.get("codebase") or task["repo"],
+        "history": args.history, "model": args.model,
         "solved": solved, "interventions": interventions,
         "capped": (not solved and interventions >= args.max_interventions),
         "final_pytest": g["pytest"], "patch_bytes": len(patch),

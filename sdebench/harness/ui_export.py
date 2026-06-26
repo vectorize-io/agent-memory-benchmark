@@ -86,17 +86,22 @@ def main():
     args = ap.parse_args()
 
     traces = sorted(glob.glob(str(RUN_DIR / args.glob / "trace.json")))
-    runs = {}  # (model, history, repo) -> [(key, trace)]
+    runs = {}  # (model, history, task_id) -> [(key, trace)]
     for f in traces:
         t = json.loads(Path(f).read_text())
-        runs.setdefault((t["model"], t["history"], repo_of(t)), []).append((Path(f).parent.name, t))
+        runs.setdefault((t["model"], t["history"], t["task_id"]), []).append((Path(f).parent.name, t))
 
-    hist_cache = {}  # repo -> git history (captured once)
-    for (model, history, repo), items in runs.items():
-        if repo not in hist_cache:
-            task = json.loads((SDEBENCH / "datasets" / repo / "task.json").read_text())
-            hist_cache[repo] = capture_git_history(task)
-        gh = hist_cache[repo]
+    hist_cache = {}  # repo -> git history (fallback capture for old runs w/o stored history)
+    for (model, history, task_id), items in runs.items():
+        t0 = items[0][1]
+        gh = t0.get("git_history")
+        if not gh:   # backfill old runs by rebuilding the codebase
+            cb = repo_of(t0)
+            if cb not in hist_cache:
+                task = json.loads((SDEBENCH / "datasets" / cb / "task.json").read_text())
+                hist_cache[cb] = capture_git_history(task)
+            gh = hist_cache[cb]
+        repo = task_id   # one UI split per task (tasks sharing a codebase share gh)
         run_name = f"opencode+{model}+{history}"
         results = [to_query_result(t, key, gh) for key, t in items]
         correct = sum(1 for r in results if r["correct"])
