@@ -1,0 +1,15 @@
+{
+  "task_id": "ttlcache-regression-001",
+  "repo": "ttlcache",
+  "type": "regression-fix",
+  "build": "build.py",
+  "base_ref": "HEAD",
+  "regression_intro_subject": "refactor: centralize cache constants; add clear()",
+  "guarantee_subject": "feat: TTLCache with default 300s lifetime (matches upstream auth token TTL)",
+  "bug_report": "We're serving stale data: cached entries live far longer than they should. An entry created over EIGHT MINUTES ago is still being returned, even though cache entries are meant to expire well before that. This started recently. A failing repro test is at tests/test_regression.py. Fix the source so entries expire when they should, without breaking existing behaviour.",
+  "fail_to_pass": ["tests/test_regression.py"],
+  "pass_to_pass": ["tests/test_basic.py", "tests/test_expiry.py", "tests/test_custom.py", "tests/test_clear.py"],
+  "hidden_to_pass": ["tests/test_hidden.py"],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py"
+}
