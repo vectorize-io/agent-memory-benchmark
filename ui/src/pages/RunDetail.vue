@@ -132,6 +132,67 @@ const perf = computed(() => {
   return { recTimes, ctxTokens, ingestAvg: data.value.ingested_docs ? data.value.ingestion_time_ms / data.value.ingested_docs : 0 }
 })
 
+// ── Multi-turn agent view (declared by `view: "agent"` in the result JSON) ──
+const isAgent = computed(() => data.value?.view === 'agent')
+
+function parseSteps(reasoning) {  // fallback for old string-based traces
+  if (!reasoning) return []
+  return reasoning.split('\n').filter(l => l.trim()).map(l => {
+    const t = l.match(/^(\S+)\s*(.*)$/)
+    if (t && /^(grep|read|glob|bash|edit|write|apply_patch|hindsight\w*|list|webfetch)$/.test(t[1]))
+      return { k: 'tool', tool: t[1], arg: t[2].trim() }
+    return { k: 'say', text: l }
+  })
+}
+const steps = computed(() => {
+  if (!isAgent.value) return []
+  const tj = active.value?.trajectory
+  const raw = Array.isArray(tj) && tj.length ? tj : parseSteps(active.value?.reasoning)
+  return raw.map((s, i) => ({ ...s, i, mem: s.tool ? String(s.tool).startsWith('hindsight') : false }))
+})
+
+const expandedSteps = ref(new Set())
+function toggleStep(i) {
+  const s = new Set(expandedSteps.value)
+  s.has(i) ? s.delete(i) : s.add(i)
+  expandedSteps.value = s
+}
+function outPreview(s) {
+  const o = (s.out || '').replace(/\s+/g, ' ').trim()
+  return o.length > 100 ? o.slice(0, 100) + ' …' : o
+}
+watch(activeIndex, () => { expandedSteps.value = new Set() })
+
+function patchLines(patch) {
+  if (!patch) return []
+  return patch.split('\n').map((text, i) => {
+    let cls = ''
+    if (text.startsWith('+') && !text.startsWith('+++')) cls = 'add'
+    else if (text.startsWith('-') && !text.startsWith('---')) cls = 'del'
+    else if (text.startsWith('@@')) cls = 'hunk'
+    else if (/^(diff |index |\+\+\+|---)/.test(text)) cls = 'meta'
+    return { text, cls, i }
+  })
+}
+const patch = computed(() => isAgent.value ? patchLines(active.value?.answer) : [])
+
+const memBlocks = computed(() => {
+  const c = active.value?.context
+  if (!c) return []
+  return c.split(/\n(?=## Memory )/).map(b => b.trim()).filter(Boolean)
+})
+
+const agentStats = computed(() => {
+  if (!isAgent.value) return null
+  const rs = results.value
+  const sum = k => rs.map(r => r.meta?.[k]).filter(v => v != null).reduce((a, b) => a + b, 0)
+  return {
+    tok: sum('out_tokens'),
+    turns: sum('turns'),
+    memTasks: rs.filter(r => (r.meta?.memories_injected ?? 0) > 0).length,
+  }
+})
+
 function navigate(dir) {
   if (activeIndex.value == null) return
   const next = activeIndex.value + dir
@@ -214,7 +275,17 @@ function toggleCat(axis, cat) {
           <div v-if="data.judge_llm"><span class="text-foreground/70">Judge LLM</span> {{ data.judge_llm }}</div>
         </div>
 
-        <div v-if="perf" class="grid grid-cols-3 gap-1.5">
+        <div v-if="isAgent && agentStats" class="grid grid-cols-3 gap-1.5">
+          <div v-for="[label, val] in [
+            ['Output tok', agentStats.tok.toLocaleString()],
+            ['Tool turns', agentStats.turns.toLocaleString()],
+            ['Mem tasks', agentStats.memTasks + ' / ' + results.length],
+          ]" :key="label" class="stat-box">
+            <p class="text-muted-foreground/85 text-sm mb-0.5">{{ label }}</p>
+            <p class="font-semibold text-foreground text-sm">{{ val }}</p>
+          </div>
+        </div>
+        <div v-else-if="perf" class="grid grid-cols-3 gap-1.5">
           <div v-for="[label, val] in [
             ['Ingest/doc', perf.ingestAvg.toFixed(1) + 'ms'],
             ['Recall p50', pct50(perf.recTimes).toFixed(0) + 'ms'],
@@ -300,13 +371,75 @@ function toggleCat(axis, cat) {
                     class="hover:text-foreground transition-colors disabled:opacity-25 disabled:pointer-events-none">← prev</button>
             <span class="font-mono flex items-center gap-2.5">
               {{ activeIndex + 1 }} / {{ results.length }}
-              <span class="pill" title="Memory recall latency">⏱ recall {{ active.retrieve_time_ms?.toFixed(0) }}ms</span>
-              <span class="pill" title="Context tokens fed to the LLM">🔤 {{ active.context_tokens?.toLocaleString() }} tok</span>
+              <template v-if="isAgent">
+                <span class="pill" title="Tool calls (agent turns)">🔧 {{ active.meta?.turns ?? '–' }} turns</span>
+                <span class="pill" title="Output tokens">🔤 {{ active.meta?.out_tokens?.toLocaleString() ?? '–' }} tok</span>
+                <span class="pill" title="Wall time">⏱ {{ active.meta?.elapsed_s ?? '–' }}s</span>
+              </template>
+              <template v-else>
+                <span class="pill" title="Memory recall latency">⏱ recall {{ active.retrieve_time_ms?.toFixed(0) }}ms</span>
+                <span class="pill" title="Context tokens fed to the LLM">🔤 {{ active.context_tokens?.toLocaleString() }} tok</span>
+              </template>
             </span>
             <button @click="navigate(1)" :disabled="activeIndex === results.length - 1"
                     class="hover:text-foreground transition-colors disabled:opacity-25 disabled:pointer-events-none">next →</button>
           </div>
 
+          <!-- ─────────────── Multi-turn agent view ─────────────── -->
+          <template v-if="isAgent">
+            <div :class="active.correct ? 'verdict-pass' : 'verdict-fail'" class="text-sm flex items-center gap-2">
+              <span class="font-semibold">{{ active.correct ? '✓ Resolved' : '✗ Unresolved' }}</span>
+              <span v-if="active.judge_reason" class="opacity-75 font-normal">— {{ active.judge_reason }}</span>
+              <span class="ml-auto font-mono text-muted-foreground/70 text-xs">{{ active.query_id }}</span>
+            </div>
+
+            <section>
+              <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2">Issue</p>
+              <Card class="p-4 text-sm text-foreground leading-relaxed whitespace-pre-wrap">{{ active.query }}</Card>
+            </section>
+
+            <section>
+              <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                Memory injected <span class="text-muted-foreground/60 font-normal normal-case tracking-normal">· {{ memBlocks.length }} recalled</span>
+              </p>
+              <div v-if="memBlocks.length" class="space-y-2">
+                <Card v-for="(m, i) in memBlocks" :key="i" class="p-3 text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap border-l-2 border-primary/60">{{ m }}</Card>
+              </div>
+              <p v-else class="text-sm text-muted-foreground italic">— none injected for this task —</p>
+            </section>
+
+            <section>
+              <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                Agent trajectory <span class="text-muted-foreground/60 font-normal normal-case tracking-normal">· {{ steps.length }} steps</span>
+              </p>
+              <div class="trajectory">
+                <div v-for="s in steps" :key="s.i">
+                  <div class="traj-step" :class="{ 'traj-clickable': s.k === 'tool' && (s.out || s.input) }"
+                       @click="(s.k === 'tool' && (s.out || s.input)) && toggleStep(s.i)">
+                    <template v-if="s.k === 'tool'">
+                      <span :class="['traj-tool', s.mem && 'traj-tool-mem']">{{ s.tool }}</span>
+                      <span class="traj-arg">{{ s.arg }}</span>
+                      <span v-if="s.out || s.input" class="traj-exp">{{ expandedSteps.has(s.i) ? '▾' : '▸' }}</span>
+                      <span v-if="s.out && !expandedSteps.has(s.i)" class="traj-out-prev">↳ {{ outPreview(s) }}</span>
+                    </template>
+                    <span v-else class="traj-say">{{ s.text }}</span>
+                  </div>
+                  <div v-if="s.k === 'tool' && expandedSteps.has(s.i)" class="traj-detail">
+                    <div v-if="s.input"><span class="traj-detail-label">input</span><pre>{{ s.input }}</pre></div>
+                    <div v-if="s.out"><span class="traj-detail-label">output</span><pre>{{ s.out }}</pre></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2">Final patch</p>
+              <div class="diff-block"><div v-for="l in patch" :key="l.i" :class="'diff-line diff-' + (l.cls || 'ctx')">{{ l.text || ' ' }}</div></div>
+            </section>
+          </template>
+
+          <!-- ─────────────── RAG view ─────────────── -->
+          <template v-else>
           <section>
             <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 flex items-center gap-2">
               Query
@@ -369,6 +502,7 @@ function toggleCat(axis, cat) {
               <div class="mt-2 code-block"><pre>{{ JSON.stringify(active.raw_response, null, 2) }}</pre></div>
             </details>
           </section>
+          </template>
         </div>
       </div>
     </main>

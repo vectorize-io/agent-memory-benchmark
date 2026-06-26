@@ -131,6 +131,52 @@
   color: var(--muted-foreground); max-height: 24rem; overflow-y: auto; line-height: 1.7;
 }
 
+/* ── Multi-turn agent view: trajectory + diff ────────────────────────── */
+.trajectory {
+  background: var(--muted); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.5rem 0; max-height: 28rem; overflow-y: auto;
+  font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.72rem;
+}
+.traj-step { display: flex; gap: 0.6rem; padding: 0.18rem 1rem; align-items: baseline; line-height: 1.5; }
+.traj-step:hover { background: color-mix(in oklch, var(--foreground) 4%, transparent); }
+.traj-tool {
+  flex-shrink: 0; min-width: 5.5rem; color: var(--primary); font-weight: 600;
+  background: color-mix(in oklch, var(--primary) 12%, transparent);
+  border-radius: var(--radius-sm); padding: 0 0.4rem; text-align: center;
+}
+.traj-tool-mem { color: #c084fc !important; background: rgba(192,132,252,0.14) !important; }
+.traj-arg { color: var(--muted-foreground); word-break: break-all; }
+.traj-say { color: var(--foreground); opacity: 0.78; font-style: italic; font-family: var(--font-sans, sans-serif); }
+.traj-clickable { cursor: pointer; }
+.traj-clickable:hover { background: color-mix(in oklch, var(--primary) 7%, transparent); }
+.traj-exp { color: var(--muted-foreground); opacity: 0.6; flex-shrink: 0; }
+.traj-out-prev { color: var(--muted-foreground); opacity: 0.5; word-break: break-all; }
+.traj-detail {
+  background: color-mix(in oklch, var(--foreground) 4%, transparent);
+  border-left: 2px solid color-mix(in oklch, var(--primary) 40%, transparent);
+  margin: 0.1rem 1rem 0.3rem 1.5rem; border-radius: var(--radius-sm); padding: 0.4rem 0.7rem;
+}
+.traj-detail-label {
+  display: inline-block; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--muted-foreground); opacity: 0.7; margin-bottom: 0.15rem;
+}
+.traj-detail pre {
+  white-space: pre-wrap; word-break: break-word; color: var(--foreground); opacity: 0.85;
+  margin: 0 0 0.4rem; max-height: 18rem; overflow-y: auto; line-height: 1.5;
+}
+
+.diff-block {
+  background: var(--muted); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.5rem 0; max-height: 26rem; overflow: auto;
+  font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.72rem; line-height: 1.6;
+}
+.diff-line { padding: 0 1rem; white-space: pre; }
+.diff-add  { background: rgba(52,211,153,0.12); color: #34d399; }
+.diff-del  { background: rgba(248,113,113,0.12); color: #f87171; }
+.diff-hunk { color: var(--primary); opacity: 0.85; }
+.diff-meta { color: var(--muted-foreground); opacity: 0.6; }
+.diff-ctx  { color: var(--muted-foreground); }
+
 /* ── Cat filter rows ─────────────────────────────────────────────────── */
 .cat-row { cursor: pointer; border-radius: var(--radius-sm); transition: background 0.1s; }
 .cat-row:hover { background: var(--muted); }

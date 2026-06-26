@@ -255,7 +255,8 @@ def main():
         "cost_usd": round(cost, 4),                   # 0 unless --price-* given
     }
     (work / "result.json").write_text(json.dumps(result, indent=2))
-    (work / "trace.json").write_text(json.dumps({**result, "bug_report": task["bug_report"], "trace": trace}, indent=2))
+    (work / "trace.json").write_text(json.dumps(
+        {**result, "bug_report": task["bug_report"], "final_patch": patch, "trace": trace}, indent=2))
     print(json.dumps(result, indent=2))
     tk = result["tokens"]
     print(f"\nRESULT history={args.history}: solved={solved} interventions={interventions} | "
