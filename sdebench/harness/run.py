@@ -84,7 +84,10 @@ def build_repo(task: dict, dest: Path, history: str):
        cwd=dest, env=env)
 
 
-def load_env() -> dict:
+HINDSIGHT_URL = "http://localhost:8888"
+
+
+def load_env(memory_bank: str | None = None) -> dict:
     env = os.environ.copy()
     ef = REPO_ROOT / ".env"
     if ef.exists():
@@ -93,14 +96,47 @@ def load_env() -> dict:
             if "=" in line and not line.startswith("#"):
                 k, v = line.split("=", 1)
                 env.setdefault(k.strip(), v.strip().strip('"').strip("'"))
-    env["HINDSIGHT_DISABLED"] = "1"   # plain agent: no memory/plugins, just git via bash
+    if memory_bank:   # enable the Hindsight opencode plugin pointed at this bank (recall mode)
+        env.pop("HINDSIGHT_DISABLED", None)
+        env["HINDSIGHT_API_URL"] = HINDSIGHT_URL
+        env["HINDSIGHT_BANK_ID"] = memory_bank
+        env["HINDSIGHT_MEMORY_MODE"] = "recall"
+    else:
+        env["HINDSIGHT_DISABLED"] = "1"   # plain agent: no memory/plugins, just git via bash
     env["PWD"] = ""                   # set per-run
     env["HOME"] = neutral_home()
     return env
 
 
-def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: bool = False) -> dict:
-    env = load_env()
+def cli_env() -> dict:
+    e = os.environ.copy()
+    e["HINDSIGHT_API_URL"] = HINDSIGHT_URL
+    return e
+
+
+def ingest_history(task: dict, bank: str):
+    """Build the full repo and push each commit (message + diff) into a Hindsight bank,
+    so a squashed-repo agent can RECALL the history it can't `git blame` for."""
+    src = Path("/tmp/sdebench/ingest") / task["repo"]
+    if src.exists():
+        shutil.rmtree(src)
+    sh("python", str(SDEBENCH / "datasets" / task["repo"] / task["build"]), str(src))
+    subprocess.run(["hindsight", "bank", "delete", bank, "--yes"], env=cli_env(),
+                   capture_output=True)
+    shas = sh("git", "-C", str(src), "rev-list", "--reverse", "HEAD", cap=True).stdout.split()
+    for sha in shas:
+        msg = sh("git", "-C", str(src), "show", "-s", "--format=%s%n%n%b", sha, cap=True).stdout
+        diff = "\n".join(sh("git", "-C", str(src), "show", "--format=", sha, cap=True).stdout.splitlines()[:120])
+        subprocess.run(["hindsight", "memory", "retain", bank,
+                        f"Git commit in the {task['repo']} repo: {msg}\n\nDiff:\n{diff}"],
+                       env=cli_env(), capture_output=True)
+    print(f"[ingest] {len(shas)} commits -> bank {bank}; waiting for extraction…", flush=True)
+    time.sleep(18)
+
+
+def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: bool = False,
+              memory_bank: str | None = None) -> dict:
+    env = load_env(memory_bank)
     env["PWD"] = str(workdir)
     cmd = ["opencode", "run", "--format", "json", "-m", model]
     if resume:
@@ -221,7 +257,7 @@ def build_feedback(grade_result: dict) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
-    ap.add_argument("--history", choices=["full", "squashed"], default="full")
+    ap.add_argument("--history", choices=["full", "squashed", "hindsight"], default="full")
     ap.add_argument("--model", default="google/gemini-3.5-flash")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
@@ -235,7 +271,13 @@ def main():
         shutil.rmtree(work)
     work.mkdir(parents=True)
     repo = work / "repo"
-    build_repo(task, repo, args.history)
+    memory_bank = None
+    if args.history == "hindsight":
+        build_repo(task, repo, "squashed")          # no git trail; history is in memory
+        memory_bank = f"sde-{task['repo']}"
+        ingest_history(task, memory_bank)           # reset + ingest the full git history
+    else:
+        build_repo(task, repo, args.history)
 
     TOK = ("input", "output", "reasoning", "cache_read", "cache_write")
     totals = {k: 0 for k in TOK}; totals.update({"turns": 0, "wall_s": 0.0})
@@ -250,7 +292,7 @@ def main():
 
     print(f"[{task['task_id']}] history={args.history} model={args.model} — initial attempt…", flush=True)
     init_prompt = PROMPT.format(repo=task["repo"], bug_report=task["bug_report"])
-    acc(run_agent(repo, args.model, args.timeout, init_prompt), "initial", init_prompt)
+    acc(run_agent(repo, args.model, args.timeout, init_prompt, memory_bank=memory_bank), "initial", init_prompt)
 
     # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.
     # Metric = number of human-like interventions needed (capped); cost = sum across all rounds.
@@ -267,7 +309,7 @@ def main():
         interventions += 1
         fb = build_feedback(g)
         print(f"  ↳ intervention {interventions}: {g['pytest']}", flush=True)
-        acc(run_agent(repo, args.model, args.timeout, fb, resume=True), f"intervention-{interventions}", fb)
+        acc(run_agent(repo, args.model, args.timeout, fb, resume=True, memory_bank=memory_bank), f"intervention-{interventions}", fb)
 
     solved = g["resolved"]
     cost = compute_cost(args.model, {k: totals[k] for k in TOK})
