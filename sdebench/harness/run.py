@@ -155,6 +155,8 @@ def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: boo
                 s_cache = cache.get("read", 0) or 0
                 tok["cache_read"] += s_cache
                 tok["cache_write"] += cache.get("write", 0) or 0
+            # provider semantics (verified): total = input + cache_read + output + reasoning,
+            # i.e. `input` is the NON-cached prompt and `cache_read` is the cached prompt (separate).
             tok["input"] += tk.get("input", 0) or 0
             tok["output"] += tk.get("output", 0) or 0
             tok["reasoning"] += tk.get("reasoning", 0) or 0
