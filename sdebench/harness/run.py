@@ -95,7 +95,10 @@ def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: boo
     proc = subprocess.run(cmd, cwd=str(workdir), env=env, timeout=timeout,
                           capture_output=True, text=True)
     elapsed = time.perf_counter() - t0
-    out_tok = in_tok = turns = 0
+    # Token split kept separate (cached vs input vs output) — $ is computed later per model.
+    tok = {"input": 0, "output": 0, "reasoning": 0, "cache_read": 0, "cache_write": 0}
+    turns = 0
+    traj = []  # structured trajectory for the UI: tool steps + assistant text
     for line in proc.stdout.splitlines():
         line = line.strip()
         if not line:
@@ -104,13 +107,38 @@ def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: boo
             e = json.loads(line)
         except Exception:
             continue
-        if e.get("type") == "tool_use":
+        t = e.get("type")
+        part = e.get("part", {}) or {}
+        if t == "tool_use":
             turns += 1
-        elif e.get("type") == "step_finish":
-            tk = e.get("part", {}).get("tokens", {}) or {}
-            out_tok += (tk.get("output", 0) or 0) + (tk.get("reasoning", 0) or 0)
-            in_tok += tk.get("input", 0) or 0
-    return {"elapsed": elapsed, "out_tokens": out_tok, "in_tokens": in_tok, "turns": turns}
+            state = part.get("state", {}) or {}
+            inp = state.get("input") or part.get("input") or {}
+            arg = ""
+            if isinstance(inp, dict):
+                for k in ("filePath", "path", "pattern", "command", "query", "url", "content"):
+                    if inp.get(k):
+                        arg = f"{k}={str(inp[k])[:160]}"
+                        break
+                if not arg and inp:
+                    k, v = next(iter(inp.items())); arg = f"{k}={str(v)[:160]}"
+            full_in = "\n".join(f"{k}: {v}" for k, v in inp.items())[:4000] if isinstance(inp, dict) and inp else str(inp)[:4000]
+            out = state.get("output")
+            traj.append({"k": "tool", "tool": part.get("tool") or "tool", "arg": arg,
+                         "input": full_in, "out": str(out)[:4000] if out else ""})
+        elif t == "text":
+            txt = (part.get("text") or "").strip()
+            if txt:
+                traj.append({"k": "say", "text": txt[:1500]})
+        elif t == "step_finish":
+            tk = part.get("tokens", {}) or {}
+            tok["input"] += tk.get("input", 0) or 0
+            tok["output"] += tk.get("output", 0) or 0
+            tok["reasoning"] += tk.get("reasoning", 0) or 0
+            cache = tk.get("cache", {})
+            if isinstance(cache, dict):
+                tok["cache_read"] += cache.get("read", 0) or 0
+                tok["cache_write"] += cache.get("write", 0) or 0
+    return {"elapsed": elapsed, "tokens": tok, "turns": turns, "trajectory": traj}
 
 
 _JUNK = [".venv", "venv", "build", "dist", "*.egg-info", "__pycache__", ".pytest_cache", "*.pyc"]
@@ -184,13 +212,20 @@ def main():
     repo = work / "repo"
     build_repo(task, repo, args.history)
 
-    totals = {"out_tokens": 0, "in_tokens": 0, "turns": 0, "wall_s": 0.0}
-    def acc(m):
-        totals["out_tokens"] += m["out_tokens"]; totals["in_tokens"] += m["in_tokens"]
+    TOK = ("input", "output", "reasoning", "cache_read", "cache_write")
+    totals = {k: 0 for k in TOK}; totals.update({"turns": 0, "wall_s": 0.0})
+    trace = []  # ordered multi-round conversation for the UI
+
+    def acc(m, role, prompt_text):
+        for k in TOK:
+            totals[k] += m["tokens"][k]
         totals["turns"] += m["turns"]; totals["wall_s"] += m["elapsed"]
+        trace.append({"role": role, "prompt": prompt_text, "trajectory": m["trajectory"],
+                      "tokens": m["tokens"], "turns": m["turns"], "wall_s": round(m["elapsed"], 1)})
 
     print(f"[{task['task_id']}] history={args.history} model={args.model} — initial attempt…", flush=True)
-    acc(run_agent(repo, args.model, args.timeout, PROMPT.format(repo=task["repo"], bug_report=task["bug_report"])))
+    init_prompt = PROMPT.format(repo=task["repo"], bug_report=task["bug_report"])
+    acc(run_agent(repo, args.model, args.timeout, init_prompt), "initial", init_prompt)
 
     # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.
     # Metric = number of human-like interventions needed (capped); cost = sum across all rounds.
@@ -201,24 +236,31 @@ def main():
         if g["resolved"] or interventions >= args.max_interventions:
             break
         interventions += 1
+        fb = build_feedback(g)
         print(f"  ↳ intervention {interventions}: {g['pytest']}", flush=True)
-        acc(run_agent(repo, args.model, args.timeout, build_feedback(g), resume=True))
+        acc(run_agent(repo, args.model, args.timeout, fb, resume=True), f"intervention-{interventions}", fb)
 
     solved = g["resolved"]
-    cost = (totals["in_tokens"] * args.price_in + totals["out_tokens"] * args.price_out) / 1_000_000
+    # $ is computed LATER per model; here we keep the token split. Optional convenience cost if priced:
+    billable_in = totals["input"] + totals["cache_read"] + totals["cache_write"]
+    billable_out = totals["output"] + totals["reasoning"]
+    cost = (billable_in * args.price_in + billable_out * args.price_out) / 1_000_000
     result = {
         "task_id": task["task_id"], "history": args.history, "model": args.model,
         "solved": solved, "interventions": interventions,
         "capped": (not solved and interventions >= args.max_interventions),
         "final_pytest": g["pytest"], "patch_bytes": len(patch),
-        "turns": totals["turns"], "out_tokens": totals["out_tokens"], "in_tokens": totals["in_tokens"],
-        "wall_s": round(totals["wall_s"], 1), "cost_usd": round(cost, 4),
+        "tokens": {k: totals[k] for k in TOK},      # cached vs input vs output kept separate
+        "turns": totals["turns"], "wall_s": round(totals["wall_s"], 1),
+        "cost_usd": round(cost, 4),                   # 0 unless --price-* given
     }
-    out = work / "result.json"
-    out.write_text(json.dumps(result, indent=2))
+    (work / "result.json").write_text(json.dumps(result, indent=2))
+    (work / "trace.json").write_text(json.dumps({**result, "bug_report": task["bug_report"], "trace": trace}, indent=2))
     print(json.dumps(result, indent=2))
-    print(f"\nRESULT history={args.history}: solved={solved} interventions={interventions} "
-          f"turns={totals['turns']} out_tok={totals['out_tokens']} wall={totals['wall_s']:.0f}s -> {out}")
+    tk = result["tokens"]
+    print(f"\nRESULT history={args.history}: solved={solved} interventions={interventions} | "
+          f"tokens in={tk['input']} out={tk['output']} cache_r={tk['cache_read']} cache_w={tk['cache_write']} | "
+          f"wall={totals['wall_s']:.0f}s -> {work}/result.json")
 
 
 if __name__ == "__main__":
