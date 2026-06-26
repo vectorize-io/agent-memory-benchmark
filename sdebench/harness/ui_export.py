@@ -37,13 +37,16 @@ def _safe(s):
 
 
 def flatten_trace(trace):
-    """Multi-round trace -> one trajectory with feedback markers between rounds."""
+    """Multi-round trace -> one trajectory with feedback markers + the submitted patch per round."""
     steps = []
     for rnd in trace:
         if rnd["role"] != "initial":
             steps.append({"k": "say",
                           "text": f"🔁 {rnd['role']} — feedback sent to the agent:\n{rnd['prompt'][:1400]}"})
         steps.extend(rnd.get("trajectory", []))
+        if rnd.get("patch") is not None:   # the patch submitted this round + its grade outcome
+            steps.append({"k": "patch", "round": rnd["role"], "passed": rnd.get("grade_passed"),
+                          "pytest": rnd.get("grade_pytest"), "patch": rnd["patch"]})
     return steps
 
 

@@ -147,6 +147,10 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .traj-tool-mem { color: #c084fc !important; background: rgba(192,132,252,0.14) !important; }
+.traj-patch { flex-shrink: 0; width: 5rem; font-weight: 600; font-size: 0.66rem; white-space: nowrap;
+  border-radius: var(--radius-sm); padding: 0.05rem 0.3rem; text-align: center; }
+.traj-patch-ok { color: #34d399; background: rgba(52,211,153,0.16); }
+.traj-patch-fail { color: #f87171; background: rgba(248,113,113,0.16); }
 /* the middle truncates the whole arg + output-preview as one ellipsised line */
 .traj-mid { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .traj-arg { color: var(--foreground); opacity: 0.82; }

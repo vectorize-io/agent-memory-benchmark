@@ -258,6 +258,10 @@ def main():
     while True:
         patch = capture_source_patch(repo)
         g = grade(task, patch, work)
+        # record THIS round's submitted patch + its grade outcome (incl. the rejected ones)
+        trace[-1]["patch"] = patch
+        trace[-1]["grade_pytest"] = g["pytest"]
+        trace[-1]["grade_passed"] = g["resolved"]
         if g["resolved"] or interventions >= args.max_interventions:
             break
         interventions += 1

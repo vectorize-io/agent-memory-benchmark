@@ -441,8 +441,8 @@ function toggleCat(axis, cat) {
               </p>
               <div class="trajectory">
                 <div v-for="s in steps" :key="s.i">
-                  <div class="traj-step" :class="{ 'traj-clickable': s.k === 'tool' && (s.out || s.input) }"
-                       @click="(s.k === 'tool' && (s.out || s.input)) && toggleStep(s.i)">
+                  <div class="traj-step" :class="{ 'traj-clickable': (s.k === 'tool' && (s.out || s.input)) || s.k === 'patch' }"
+                       @click="((s.k === 'tool' && (s.out || s.input)) || s.k === 'patch') && toggleStep(s.i)">
                     <template v-if="s.k === 'tool'">
                       <span :class="['traj-tool', s.mem && 'traj-tool-mem']">{{ s.tool }}</span>
                       <span class="traj-mid">
@@ -452,11 +452,20 @@ function toggleCat(axis, cat) {
                       <span v-if="s.tok_out != null" class="traj-tok" title="Tokens this model step — ↑ input/prompt (incl. cached) · ↓ output/generated"><span class="traj-tok-arrow">↑</span>{{ tokFmt(s.tok_in) }} <span class="traj-tok-arrow">↓</span>{{ tokFmt(s.tok_out) }}</span>
                       <span v-if="s.out || s.input" class="traj-exp">{{ expandedSteps.has(s.i) ? '▾' : '▸' }}</span>
                     </template>
+                    <template v-else-if="s.k === 'patch'">
+                      <span :class="['traj-patch', s.passed ? 'traj-patch-ok' : 'traj-patch-fail']">{{ s.passed ? '✓ submitted' : '✗ submitted' }}</span>
+                      <span class="traj-mid"><span class="traj-arg">{{ s.round }}</span><span class="traj-out-prev"> · {{ s.pytest }}</span></span>
+                      <span class="traj-exp">{{ expandedSteps.has(s.i) ? '▾' : '▸' }}</span>
+                    </template>
                     <span v-else class="traj-say">{{ s.text }}</span>
                   </div>
                   <div v-if="s.k === 'tool' && expandedSteps.has(s.i)" class="traj-detail">
                     <div v-if="s.input"><span class="traj-detail-label">input</span><pre>{{ s.input }}</pre></div>
                     <div v-if="s.out"><span class="traj-detail-label">output</span><pre>{{ s.out }}</pre></div>
+                  </div>
+                  <div v-if="s.k === 'patch' && expandedSteps.has(s.i)" class="traj-detail">
+                    <span class="traj-detail-label">patch submitted this round ({{ s.pytest }})</span>
+                    <div class="diff-block"><div v-for="l in patchLines(s.patch)" :key="l.i" :class="'diff-line diff-' + (l.cls || 'ctx')">{{ l.text || ' ' }}</div></div>
                   </div>
                 </div>
               </div>
