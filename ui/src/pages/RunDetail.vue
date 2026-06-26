@@ -186,9 +186,15 @@ const agentStats = computed(() => {
   if (!isAgent.value) return null
   const rs = results.value
   const sum = k => rs.map(r => r.meta?.[k]).filter(v => v != null).reduce((a, b) => a + b, 0)
+  const sumTok = k => rs.map(r => r.meta?.tokens?.[k] ?? 0).reduce((a, b) => a + b, 0)
   return {
-    tok: sum('out_tokens'),
+    cost: rs.map(r => r.meta?.cost_usd ?? 0).reduce((a, b) => a + b, 0),
+    interv: sum('interventions'),
+    inTok: sumTok('input') + sumTok('cache_read') + sumTok('cache_write'),
+    outTok: sumTok('output') + sumTok('reasoning'),
     turns: sum('turns'),
+    sde: rs.some(r => r.meta?.cost_usd != null || r.meta?.interventions != null),
+    tok: sum('out_tokens'),
     memTasks: rs.filter(r => (r.meta?.memories_injected ?? 0) > 0).length,
   }
 })
@@ -275,7 +281,17 @@ function toggleCat(axis, cat) {
           <div v-if="data.judge_llm"><span class="text-foreground/70">Judge LLM</span> {{ data.judge_llm }}</div>
         </div>
 
-        <div v-if="isAgent && agentStats" class="grid grid-cols-3 gap-1.5">
+        <div v-if="isAgent && agentStats?.sde" class="grid grid-cols-3 gap-1.5">
+          <div v-for="[label, val] in [
+            ['Total cost', '$' + agentStats.cost.toFixed(3)],
+            ['Interventions', agentStats.interv.toLocaleString()],
+            ['Tokens in/out', (agentStats.inTok/1000).toFixed(0) + 'k / ' + (agentStats.outTok/1000).toFixed(1) + 'k'],
+          ]" :key="label" class="stat-box">
+            <p class="text-muted-foreground/85 text-sm mb-0.5">{{ label }}</p>
+            <p class="font-semibold text-foreground text-sm">{{ val }}</p>
+          </div>
+        </div>
+        <div v-else-if="isAgent && agentStats" class="grid grid-cols-3 gap-1.5">
           <div v-for="[label, val] in [
             ['Output tok', agentStats.tok.toLocaleString()],
             ['Tool turns', agentStats.turns.toLocaleString()],
@@ -371,7 +387,14 @@ function toggleCat(axis, cat) {
                     class="hover:text-foreground transition-colors disabled:opacity-25 disabled:pointer-events-none">← prev</button>
             <span class="font-mono flex items-center gap-2.5">
               {{ activeIndex + 1 }} / {{ results.length }}
-              <template v-if="isAgent">
+              <template v-if="isAgent && active.meta?.cost_usd != null">
+                <span class="pill" title="Human-like feedback rounds needed">🔁 {{ active.meta?.interventions ?? '–' }} interv</span>
+                <span class="pill" title="Cost (USD)">💲 {{ active.meta?.cost_usd?.toFixed(3) ?? '–' }}</span>
+                <span class="pill" title="Tokens in (incl. cached) / out">🔤 {{ ((active.meta?.tokens?.input ?? 0) + (active.meta?.tokens?.cache_read ?? 0)).toLocaleString() }} in / {{ ((active.meta?.tokens?.output ?? 0) + (active.meta?.tokens?.reasoning ?? 0)).toLocaleString() }} out</span>
+                <span class="pill" title="Tool calls (agent turns)">🔧 {{ active.meta?.turns ?? '–' }} turns</span>
+                <span class="pill" title="Wall time">⏱ {{ active.meta?.wall_s ?? '–' }}s</span>
+              </template>
+              <template v-else-if="isAgent">
                 <span class="pill" title="Tool calls (agent turns)">🔧 {{ active.meta?.turns ?? '–' }} turns</span>
                 <span class="pill" title="Output tokens">🔤 {{ active.meta?.out_tokens?.toLocaleString() ?? '–' }} tok</span>
                 <span class="pill" title="Wall time">⏱ {{ active.meta?.elapsed_s ?? '–' }}s</span>
@@ -419,6 +442,7 @@ function toggleCat(axis, cat) {
                     <template v-if="s.k === 'tool'">
                       <span :class="['traj-tool', s.mem && 'traj-tool-mem']">{{ s.tool }}</span>
                       <span class="traj-arg">{{ s.arg }}</span>
+                      <span v-if="s.tok_out != null" class="traj-tok" title="Tokens this model step: in (incl. cached) → out">{{ (s.tok_in ?? 0).toLocaleString() }}→{{ (s.tok_out ?? 0).toLocaleString() }}</span>
                       <span v-if="s.out || s.input" class="traj-exp">{{ expandedSteps.has(s.i) ? '▾' : '▸' }}</span>
                       <span v-if="s.out && !expandedSteps.has(s.i)" class="traj-out-prev">↳ {{ outPreview(s) }}</span>
                     </template>

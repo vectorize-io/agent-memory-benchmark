@@ -18,6 +18,20 @@ OUT = REPO_ROOT / "outputs" / "sdebench"
 RUN_DIR = Path("/tmp/sdebench/run")
 
 
+PRICES = {  # $ per 1M tokens (gemini-3.5-flash, Jun 2026)
+    "google/gemini-3.5-flash": {"input": 1.50, "cache_read": 0.15, "cache_write": 1.50, "output": 9.00},
+}
+
+
+def compute_cost(model, tok):
+    p = PRICES.get(model)
+    if not p:
+        return 0.0
+    return round((tok.get("input", 0) * p["input"] + tok.get("cache_read", 0) * p["cache_read"]
+                  + tok.get("cache_write", 0) * p["cache_write"]
+                  + (tok.get("output", 0) + tok.get("reasoning", 0)) * p["output"]) / 1_000_000, 4)
+
+
 def _safe(s):
     return re.sub(r"[^A-Za-z0-9.+_-]", "_", s)
 
@@ -35,6 +49,7 @@ def flatten_trace(trace):
 
 def to_query_result(t, key):
     tok = t.get("tokens", {})
+    cost = compute_cost(t.get("model"), tok)
     return {
         "query_id": key,
         "query": t.get("bug_report", ""),
@@ -48,8 +63,7 @@ def to_query_result(t, key):
         "score": None,
         "meta": {"interventions": t.get("interventions"), "history": t.get("history"),
                  "tokens": tok, "wall_s": t.get("wall_s"), "turns": t.get("turns"),
-                 "input_tok": tok.get("input"), "output_tok": tok.get("output"),
-                 "cache_read": tok.get("cache_read")},
+                 "cost_usd": cost},
         "raw_response": None, "category_axes": {},
     }
 
@@ -70,6 +84,10 @@ def main():
         results = [to_query_result(t, key) for key, t in items]
         correct = sum(1 for r in results if r["correct"])
         avg_interv = round(sum((r["meta"]["interventions"] or 0) for r in results) / len(results), 2)
+        tot_cost = round(sum(r["meta"]["cost_usd"] for r in results), 4)
+        avg_cost = round(tot_cost / len(results), 4)
+        sum_tok = {k: sum(r["meta"]["tokens"].get(k, 0) for r in results)
+                   for k in ("input", "output", "reasoning", "cache_read", "cache_write")}
         summary = {
             "view": "agent",
             "dataset": "sdebench", "split": "all", "category": None,
@@ -77,9 +95,12 @@ def main():
             "total_queries": len(results), "correct": correct,
             "accuracy": correct / len(results) if results else 0.0,
             "ingestion_time_ms": 0.0, "ingested_docs": 0,
-            "description": f"sdebench — {history} history — mean interventions {avg_interv}",
+            "description": f"sdebench — {history} history — mean interv {avg_interv}, avg ${avg_cost}/task",
             "answer_llm": model, "judge_llm": "execution (FAIL_TO_PASS+PASS_TO_PASS+HIDDEN)",
             "avg_retrieve_time_ms": None, "avg_context_tokens": None,
+            # sdebench cost/speed roll-up (shown in the UI)
+            "sde_mean_interventions": avg_interv, "sde_total_cost_usd": tot_cost,
+            "sde_avg_cost_usd": avg_cost, "sde_tokens": sum_tok,
             "results": results,
         }
         dest = OUT / _safe(run_name) / "agent" / "all.json"

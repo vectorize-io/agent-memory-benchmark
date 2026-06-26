@@ -18,6 +18,21 @@ SDEBENCH = HARNESS.parent
 REPO_ROOT = SDEBENCH.parent
 IMAGE = "sdebench-base"
 
+# $ per 1M tokens, per class (update when model prices change). gemini-3.5-flash (Jun 2026):
+# $1.50 input / $9.00 output, cached input 90% off ($0.15). reasoning bills as output.
+PRICES = {
+    "google/gemini-3.5-flash": {"input": 1.50, "cache_read": 0.15, "cache_write": 1.50, "output": 9.00},
+}
+
+
+def compute_cost(model: str, tok: dict) -> float:
+    p = PRICES.get(model)
+    if not p:
+        return 0.0
+    return round((tok["input"] * p["input"] + tok["cache_read"] * p["cache_read"]
+                  + tok["cache_write"] * p["cache_write"]
+                  + (tok["output"] + tok["reasoning"]) * p["output"]) / 1_000_000, 4)
+
 PROMPT = """\
 You are a maintainer of the `{repo}` Python project. A regression was reported:
 
@@ -98,7 +113,8 @@ def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: boo
     # Token split kept separate (cached vs input vs output) — $ is computed later per model.
     tok = {"input": 0, "output": 0, "reasoning": 0, "cache_read": 0, "cache_write": 0}
     turns = 0
-    traj = []  # structured trajectory for the UI: tool steps + assistant text
+    traj = []          # structured trajectory for the UI: tool steps + assistant text
+    seg_start = 0      # index where the current model-step's steps begin (for token stamping)
     for line in proc.stdout.splitlines():
         line = line.strip()
         if not line:
@@ -131,13 +147,22 @@ def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: boo
                 traj.append({"k": "say", "text": txt[:1500]})
         elif t == "step_finish":
             tk = part.get("tokens", {}) or {}
+            s_in = (tk.get("input", 0) or 0)
+            s_out = (tk.get("output", 0) or 0) + (tk.get("reasoning", 0) or 0)
+            s_cache = 0
+            cache = tk.get("cache", {})
+            if isinstance(cache, dict):
+                s_cache = cache.get("read", 0) or 0
+                tok["cache_read"] += s_cache
+                tok["cache_write"] += cache.get("write", 0) or 0
             tok["input"] += tk.get("input", 0) or 0
             tok["output"] += tk.get("output", 0) or 0
             tok["reasoning"] += tk.get("reasoning", 0) or 0
-            cache = tk.get("cache", {})
-            if isinstance(cache, dict):
-                tok["cache_read"] += cache.get("read", 0) or 0
-                tok["cache_write"] += cache.get("write", 0) or 0
+            # stamp this model-step's tokens onto the trajectory steps it produced
+            for s in traj[seg_start:]:
+                s["tok_in"] = s_in + s_cache
+                s["tok_out"] = s_out
+            seg_start = len(traj)
     return {"elapsed": elapsed, "tokens": tok, "turns": turns, "trajectory": traj}
 
 
@@ -197,8 +222,6 @@ def main():
     ap.add_argument("--history", choices=["full", "squashed"], default="full")
     ap.add_argument("--model", default="google/gemini-3.5-flash")
     ap.add_argument("--timeout", type=int, default=900)
-    ap.add_argument("--price-in", type=float, default=0.0, help="$ per 1M input tokens")
-    ap.add_argument("--price-out", type=float, default=0.0, help="$ per 1M output tokens")
     ap.add_argument("--run-id", default="r1")
     ap.add_argument("--max-interventions", type=int, default=5,
                     help="cap on feedback rounds before giving up (drift guard)")
@@ -241,10 +264,7 @@ def main():
         acc(run_agent(repo, args.model, args.timeout, fb, resume=True), f"intervention-{interventions}", fb)
 
     solved = g["resolved"]
-    # $ is computed LATER per model; here we keep the token split. Optional convenience cost if priced:
-    billable_in = totals["input"] + totals["cache_read"] + totals["cache_write"]
-    billable_out = totals["output"] + totals["reasoning"]
-    cost = (billable_in * args.price_in + billable_out * args.price_out) / 1_000_000
+    cost = compute_cost(args.model, {k: totals[k] for k in TOK})
     result = {
         "task_id": task["task_id"], "history": args.history, "model": args.model,
         "solved": solved, "interventions": interventions,

@@ -145,7 +145,8 @@
   border-radius: var(--radius-sm); padding: 0 0.4rem; text-align: center;
 }
 .traj-tool-mem { color: #c084fc !important; background: rgba(192,132,252,0.14) !important; }
-.traj-arg { color: var(--muted-foreground); word-break: break-all; }
+.traj-arg { color: var(--muted-foreground); word-break: break-all; flex: 1; }
+.traj-tok { flex-shrink: 0; color: var(--muted-foreground); opacity: 0.65; font-size: 0.66rem; white-space: nowrap; padding: 0 0.3rem; }
 .traj-say { color: var(--foreground); opacity: 0.78; font-style: italic; font-family: var(--font-sans, sans-serif); }
 .traj-clickable { cursor: pointer; }
 .traj-clickable:hover { background: color-mix(in oklch, var(--primary) 7%, transparent); }
