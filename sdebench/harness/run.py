@@ -339,7 +339,7 @@ def build_feedback(grade_result: dict) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
-    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject"], default="full")
+    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle"], default="full")
     ap.add_argument("--model", default="google/gemini-3.5-flash")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
@@ -368,6 +368,11 @@ def main():
         build_repo(task, repo, "squashed")          # PUSH: relevant history injected into the prompt
         _idx = build_mem_index(task)
         task["bug_report"] = inject_context(task["bug_report"], rank_commits(_idx, task["bug_report"], k=2))
+    elif args.history == "oracle":
+        build_repo(task, repo, "squashed")          # ORACLE upper bound: inject the KNOWN cause commit
+        _idx = build_mem_index(task)
+        _cs = [c for c in json.loads(Path(_idx).read_text()) if c["subject"] == task.get("cause_subject")]
+        task["bug_report"] = inject_context(task["bug_report"], _cs)
     else:
         build_repo(task, repo, args.history)
     git_history = capture_git_history(task)

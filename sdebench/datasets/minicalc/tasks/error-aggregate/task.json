@@ -2,10 +2,21 @@
   "task_id": "minicalc-erragg-001",
   "codebase": "minicalc",
   "build": "build.py",
-  "bug_report": "COUNT is broken when a range contains an error cell. COUNT(A1:A5) returns #DIV/0! instead of 4 when one of the five cells holds a #DIV/0! error — it should count the valid numbers and ignore the error cell. This regressed after some recent refactoring of the engine. A failing repro is at tests/test_regression.py. Restore the intended behaviour without breaking anything else.",
-  "fail_to_pass": ["tests/test_regression.py"],
-  "pass_to_pass": ["tests/test_tokens.py", "tests/test_basic.py", "tests/test_cells.py", "tests/test_funcs.py", "tests/test_errors.py"],
-  "hidden_to_pass": ["tests/test_hidden.py"],
+  "bug_report": "COUNT is broken when a range contains an error cell. COUNT(A1:A5) returns #DIV/0! instead of 4 when one of the five cells holds a #DIV/0! error \u2014 it should count the valid numbers and ignore the error cell. This regressed after some recent refactoring of the engine. A failing repro is at tests/test_regression.py. Restore the intended behaviour without breaking anything else.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_tokens.py",
+    "tests/test_basic.py",
+    "tests/test_cells.py",
+    "tests/test_funcs.py",
+    "tests/test_errors.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
   "regression_test_file": "regression_test.py",
-  "hidden_test_file": "hidden_test.py"
+  "hidden_test_file": "hidden_test.py",
+  "cause_subject": "refactor: centralize argument evaluation in the evaluator"
 }

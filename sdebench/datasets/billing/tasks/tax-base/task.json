@@ -2,10 +2,20 @@
   "task_id": "billing-taxbase-001",
   "codebase": "billing",
   "build": "build.py",
-  "bug_report": "Finance reports that invoices with a discount are coming out wrong — the tax looks too high when a discount is applied. A $100 item with a 20% discount is producing a tax of $7.25. This regressed somewhere in recent refactoring. A failing repro is at tests/test_regression.py. Make the tax correct for discounted invoices, consistent with our billing policy.",
-  "fail_to_pass": ["tests/test_regression.py"],
-  "pass_to_pass": ["tests/test_money.py", "tests/test_discount.py", "tests/test_tax.py", "tests/test_invoice.py"],
-  "hidden_to_pass": ["tests/test_hidden.py"],
+  "bug_report": "Finance reports that invoices with a discount are coming out wrong \u2014 the tax looks too high when a discount is applied. A $100 item with a 20% discount is producing a tax of $7.25. This regressed somewhere in recent refactoring. A failing repro is at tests/test_regression.py. Make the tax correct for discounted invoices, consistent with our billing policy.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_money.py",
+    "tests/test_discount.py",
+    "tests/test_tax.py",
+    "tests/test_invoice.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
   "regression_test_file": "regression_test.py",
-  "hidden_test_file": "hidden_test.py"
+  "hidden_test_file": "hidden_test.py",
+  "cause_subject": "refactor invoice pipeline; simplify tax step"
 }

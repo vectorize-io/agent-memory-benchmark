@@ -19,5 +19,6 @@
     "tests/test_hidden.py"
   ],
   "regression_test_file": "regression_test.py",
-  "hidden_test_file": "hidden_test.py"
+  "hidden_test_file": "hidden_test.py",
+  "cause_subject": "refactor: simplify rounding; add format_cents()"
 }

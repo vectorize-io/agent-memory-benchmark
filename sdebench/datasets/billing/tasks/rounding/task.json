@@ -2,10 +2,20 @@
   "task_id": "billing-rounding-001",
   "codebase": "billing",
   "build": "build.py",
-  "bug_report": "Rounded amounts no longer match our legacy billing exports. Half-cent amounts round the wrong way — e.g. 2.125 should round to 2.12 (the legacy value) but we are now producing 2.13. It started after some recent refactoring. A failing repro is at tests/test_regression.py. Fix the rounding so it matches the legacy exports again, without breaking existing behaviour.",
-  "fail_to_pass": ["tests/test_regression.py"],
-  "pass_to_pass": ["tests/test_money.py", "tests/test_discount.py", "tests/test_tax.py", "tests/test_invoice.py"],
-  "hidden_to_pass": ["tests/test_hidden.py"],
+  "bug_report": "Rounded amounts no longer match our legacy billing exports. Half-cent amounts round the wrong way \u2014 e.g. 2.125 should round to 2.12 (the legacy value) but we are now producing 2.13. It started after some recent refactoring. A failing repro is at tests/test_regression.py. Fix the rounding so it matches the legacy exports again, without breaking existing behaviour.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_money.py",
+    "tests/test_discount.py",
+    "tests/test_tax.py",
+    "tests/test_invoice.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
   "regression_test_file": "regression_test.py",
-  "hidden_test_file": "hidden_test.py"
+  "hidden_test_file": "hidden_test.py",
+  "cause_subject": "tidy money module; normalize rounding helper"
 }
