@@ -10,7 +10,7 @@ Usage:
 
 Metrics reported: resolution (binary), cost (tokens; $ if --price set), speed (wall, turns).
 """
-import argparse, json, os, shutil, subprocess, time
+import argparse, json, os, re, shutil, subprocess, time
 from pathlib import Path
 
 HARNESS = Path(__file__).resolve().parent
@@ -156,6 +156,46 @@ def build_mem_index(task: dict) -> str:
     return str(out)
 
 
+_STOP = {"the","and","for","that","this","with","what","why","how","value","should","change",
+         "changed","does","when","over","its","into","use","used","using","make","made","not","but"}
+
+
+def rank_commits(index_path: str, query: str, k: int = 2) -> list:
+    """TF-rank the codebase's raw commits by a query (same scoring as the recall_intent tool)."""
+    commits = json.loads(Path(index_path).read_text())
+    terms = [t for t in re.findall(r"[a-z0-9_]{3,}", query.lower()) if t not in _STOP]
+    scored = []
+    for c in commits:
+        subj, files = c["subject"].lower(), " ".join(c["files"]).lower()
+        body, diff = (c.get("body") or "").lower(), c["diff"].lower()
+        sc = 0
+        for t in terms:
+            if t in subj: sc += 5
+            if t in files: sc += 4
+            if t in body: sc += 2
+            sc += min(diff.count(t), 6)
+        if sc > 0:
+            scored.append((sc, c))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [c for _, c in scored[:k]]
+
+
+def _changed_lines(diff: str, cap: int = 24) -> str:
+    out = [l for l in diff.split("\n")
+           if (l.startswith("+") or l.startswith("-")) and not l.startswith(("+++", "---"))]
+    return "\n".join(out[:cap])
+
+
+def inject_context(bug_report: str, commits: list) -> str:
+    """PUSH memory: append the relevant commits' changed lines to the bug report."""
+    if not commits:
+        return bug_report
+    blocks = [f"commit {c['sha']} — {c['subject']}\nfiles: {', '.join(c['files'])}\n{_changed_lines(c['diff'])}"
+              for c in commits]
+    return (bug_report + "\n\nFor context, here are some recent changes to this repository that "
+            "may be relevant:\n\n" + "\n\n----\n\n".join(blocks))
+
+
 def capture_git_history(task: dict) -> list:
     """The task repo's engineered git history (commits + diffs) — the 'source documents'
     the full/hindsight arms have access to and the squashed arm does not. Newest first."""
@@ -299,7 +339,7 @@ def build_feedback(grade_result: dict) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
-    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool"], default="full")
+    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject"], default="full")
     ap.add_argument("--model", default="google/gemini-3.5-flash")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
@@ -324,6 +364,10 @@ def main():
     elif args.history == "memtool":
         build_repo(task, repo, "squashed")          # no git trail; history is in the recall_intent index
         mem_index = build_mem_index(task)
+    elif args.history == "inject":
+        build_repo(task, repo, "squashed")          # PUSH: relevant history injected into the prompt
+        _idx = build_mem_index(task)
+        task["bug_report"] = inject_context(task["bug_report"], rank_commits(_idx, task["bug_report"], k=2))
     else:
         build_repo(task, repo, args.history)
     git_history = capture_git_history(task)
