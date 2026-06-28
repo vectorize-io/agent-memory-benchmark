@@ -58,6 +58,21 @@ Combining push memory + the `minimal` behavioral prompt (`inject+minimal`) vs `f
 
 `inject+minimal` is the best or tied-best config on every task and **never hurts**.
 
+### Benchmark-wide confirmation (Exp5, all 5 tasks, cost vs full+base git)
+| task | inject | minimal | inject+minimal |
+|---|---|---|---|
+| rounding | −10% | +22% `[0,1,1]` | **−27%** `[0,0,0]` |
+| taxbase  | −1%  | +7%           | **−14%** `[0,0,0]` |
+| minicalc | −3%  | −3% `[1,0,0]` | **−25%** `[0,0,0]` |
+| ttlcache | −14% | +80% `[1,3,1]`| **−25%** `[0,0,0]` |
+| ledger   | +14% | +33% `[1,1,1]`| +3%      `[0,0,0]` |
+
+**The sharper point: memory makes aggressive behavioral constraint SAFE.** `minimal` *alone*
+backfires on knowledge-bound tasks (ttlcache +80% / `[1,3,1]`, ledger +33% / `[1,1,1]`) — telling
+an agent "don't explore" is harmful when the answer isn't in the code. But `inject+minimal` is
+`[0,0,0]` everywhere: the pushed value removes the *reason* to explore, so the constraint stops
+hurting. The combination is robustly best (−14% to −27% on 4/5, tied on ledger, never worse).
+
 ## Takeaways
 1. **Delivery matters more than content.** The same memory loses as a tool, wins as injected context.
 2. **Diagnose the bottleneck.** Knowledge-missing → memory; exploration-heavy → behavioral constraint.
