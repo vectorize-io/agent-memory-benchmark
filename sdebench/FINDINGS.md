@@ -87,6 +87,15 @@ hurting. The combination is robustly best (−14% to −27% on 4/5, tied on ledg
    after it understands the code (the strength of *pull*, which agents nonetheless under-use). A
    push+pull hybrid is the natural test.
 
+## Finding 4b — A push+pull hybrid recovers symptom-distant causes, but pays for it
+Keeping the `recall_intent` tool available *on top of* pushed policy-context (`hybrid`) lets the
+agent — once the pushed context has primed its understanding — form the sharp query that
+symptom-ranking can't, and pull the symptom-distant cause. On minicalc `hybrid` is cheaper on
+tokens ($0.297) than both `inject` ($0.438) and even `oracle` ($0.380). But it reintroduces
+pull's overhead: `[1,0,1]` interventions (less reliable) and ~1.5× wall (111s vs 90s); on tasks
+without a symptom-distant cause it's pure overhead (~2× wall, no cost gain). So the hybrid
+recovers what naive push can't retrieve, but does not dominate — `inject+minimal` stays the recipe.
+
 ## Method notes / honesty
 - An earlier "−55%" memtool win was an artifact of an *unfair* system-prompt steering note given
   only to the tool arm; removed, the tool does not beat git. All results above use the same prompt
