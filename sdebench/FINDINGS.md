@@ -76,6 +76,18 @@ an agent "don't explore" is harmful when the answer isn't in the code. But `inje
 `[0,0,0]` everywhere: the pushed value removes the *reason* to explore, so the constraint stops
 hurting. The combination is robustly best (−14% to −27% on 4/5, tied on ledger, never worse).
 
+## Finding 5 — The result is model-invariant (and the taxonomy predicts the pattern)
+Re-run with a different model, `gpt-5.4-mini` (turns, since cross-model cost isn't comparable):
+`inject+minimal` vs `full+base` — taxbase 13→6 turns, minicalc 16→12, ttlcache 22→6 (and
+ttlcache `full` even hits `[1,0,0]` interventions; the recipe fixes it). So the recipe helps a
+*different* model too — it isn't gemini-specific. The taxonomy explains the *pattern*:
+- **The knowledge lever is model-invariant**: on ttlcache, gpt-mini *also* over-explores (22
+  turns) and needs an intervention, because `287` isn't in the code for any model; pushing the
+  value fixes it for both models (biggest win of the three).
+- **The behavioral lever is model-dependent**: gpt-mini explores less at baseline (minicalc 16
+  vs gemini's ~22 turns), so the exploration-bound gain is smaller there — while the memory gain
+  stays large. A more capable model needs less behavioral help but the same memory help.
+
 ## Takeaways
 1. **Delivery matters more than content.** The same memory loses as a tool, wins as injected context.
 2. **Diagnose the bottleneck.** Knowledge-missing → memory; exploration-heavy → behavioral constraint.
