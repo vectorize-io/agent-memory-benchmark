@@ -64,8 +64,13 @@ Combining push memory + the `minimal` behavioral prompt (`inject+minimal`) vs `f
    Picking the wrong lever does nothing (or backfires).
 3. **The best single recipe** here is *push the relevant history + instruct a minimal, single-file fix*
    (`inject+minimal`): −30% to −41% cost vs raw git, fairly, with no loss of resolution.
-4. **Open lever: retrieval.** The `inject`→`oracle` gap (esp. minicalc) shows that ranking on the
-   symptom misses symptom-distant causes; better retrieval is the next gain.
+4. **Retrieval ceiling (a hard limit, not just an open lever).** The `inject`→`oracle` gap (esp.
+   minicalc) is the cause commit being *symptom-distant*: it shares no terms with the symptom and the
+   bug is a wrong return value (no traceback to trace-guide from). Verified offline that neither top-4
+   nor a bug+repro 'rich query' retrieves it. So simple symptom-based push retrieval fundamentally
+   cannot find such causes — closing the gap needs code-semantic retrieval or the agent's own query
+   after it understands the code (the strength of *pull*, which agents nonetheless under-use). A
+   push+pull hybrid is the natural test.
 
 ## Method notes / honesty
 - An earlier "−55%" memtool win was an artifact of an *unfair* system-prompt steering note given
