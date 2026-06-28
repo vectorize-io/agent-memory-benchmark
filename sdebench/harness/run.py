@@ -379,7 +379,11 @@ def main():
     elif args.history == "inject":
         build_repo(task, repo, "squashed")          # PUSH: relevant history injected into the prompt
         _idx = build_mem_index(task)
-        task["bug_report"] = inject_context(task["bug_report"], rank_commits(_idx, task["bug_report"], k=2))
+        _k = int(os.environ.get("SDE_INJECT_K", "2"))
+        _q = task["bug_report"]
+        if os.environ.get("SDE_INJECT_RICH"):       # also rank by the failing test's symbols
+            _q += "\n" + (_task_dir(task) / task["regression_test_file"]).read_text()
+        task["bug_report"] = inject_context(task["bug_report"], rank_commits(_idx, _q, k=_k))
     elif args.history == "oracle":
         build_repo(task, repo, "squashed")          # ORACLE upper bound: inject the KNOWN cause commit
         _idx = build_mem_index(task)
