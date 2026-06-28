@@ -49,10 +49,22 @@ You are a maintainer of the `{repo}` Python project. A regression was reported:
 {bug_report}
 
 Fix the bug in the source code. Do NOT modify any test files — the graders supply their own.
-Work efficiently: find the root cause, make the smallest change that fixes it, run the failing
-test to confirm it passes (and existing behaviour still works), then stop — avoid unnecessary
-exploration. Save your changes to disk before finishing.
+{instruction}
+Save your changes to disk before finishing.
 """
+
+# behavioral prompt variants (applied uniformly to ALL arms = fair). Select via SDE_VARIANT.
+VARIANTS = {
+    "base": ("Work efficiently: find the root cause, make the smallest change that fixes it, run the "
+             "failing test to confirm it passes (and existing behaviour still works), then stop — "
+             "avoid unnecessary exploration."),
+    "hypothesis": ("Before making ANY edit, state in one sentence your hypothesis for the root cause "
+                   "(which file and function, and why). Then make the single smallest change that fixes "
+                   "it and run the failing test once to confirm; then stop."),
+    "minimal": ("The fix is almost always ONE small change in ONE file — do not read widely, refactor, "
+                "or add new code. Find the root cause, make that one change, run the failing test to "
+                "confirm, then stop."),
+}
 
 
 def sh(*args, cwd=None, env=None, check=True, cap=False):
@@ -389,7 +401,7 @@ def main():
                       "tokens": m["tokens"], "turns": m["turns"], "wall_s": round(m["elapsed"], 1)})
 
     print(f"[{task['task_id']}] history={args.history} model={args.model} — initial attempt…", flush=True)
-    init_prompt = PROMPT.format(repo=task["repo"], bug_report=task["bug_report"])
+    init_prompt = PROMPT.format(repo=task["repo"], bug_report=task["bug_report"], instruction=VARIANTS[os.environ.get("SDE_VARIANT", "base")])
     acc(run_agent(repo, args.model, args.timeout, init_prompt, memory_bank=memory_bank, mem_index=mem_index), "initial", init_prompt)
 
     # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.
@@ -413,6 +425,7 @@ def main():
     cost = compute_cost(args.model, {k: totals[k] for k in TOK})
     result = {
         "task_id": task["task_id"], "codebase": task.get("codebase") or task["repo"],
+        "variant": os.environ.get("SDE_VARIANT", "base"),
         "history": args.history, "model": args.model,
         "solved": solved, "interventions": interventions,
         "capped": (not solved and interventions >= args.max_interventions),
