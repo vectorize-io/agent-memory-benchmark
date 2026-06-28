@@ -56,7 +56,10 @@ Combining push memory + the `minimal` behavioral prompt (`inject+minimal`) vs `f
 - minicalc **−41%** (\$0.263 vs \$0.447) — far beyond either lever alone (they compose)
 - ttlcache: clean `[0,0,0]` (memory supplies the value; `minimal` *alone* here needs `[1,1,1]`)
 
-`inject+minimal` is the best or tied-best config on every task and **never hurts**.
+`inject+minimal` is the best or tied-best config on every task and **never hurts**. At higher N
+(n=7–10, Exp7) it **beats git on all 5 tasks**: rounding −24%, taxbase −27%, minicalc −25%,
+ledger −20%, ttlcache −12%, with 0 interventions throughout. (The n=3 "push hurts on ledger"
+nuance was noise — it reverses to a −20% win with more data.)
 
 ### Benchmark-wide confirmation (Exp5, all 5 tasks, cost vs full+base git)
 | task | inject | minimal | inject+minimal |
