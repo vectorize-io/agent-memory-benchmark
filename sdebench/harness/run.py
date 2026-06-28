@@ -351,7 +351,7 @@ def build_feedback(grade_result: dict) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
-    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle"], default="full")
+    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle", "hybrid"], default="full")
     ap.add_argument("--model", default="google/gemini-3.5-flash")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
@@ -384,6 +384,10 @@ def main():
         if os.environ.get("SDE_INJECT_RICH"):       # also rank by the failing test's symbols
             _q += "\n" + (_task_dir(task) / task["regression_test_file"]).read_text()
         task["bug_report"] = inject_context(task["bug_report"], rank_commits(_idx, _q, k=_k))
+    elif args.history == "hybrid":
+        build_repo(task, repo, "squashed")          # PUSH policy + PULL tool for symptom-distant causes
+        mem_index = build_mem_index(task)
+        task["bug_report"] = inject_context(task["bug_report"], rank_commits(mem_index, task["bug_report"], k=2))
     elif args.history == "oracle":
         build_repo(task, repo, "squashed")          # ORACLE upper bound: inject the KNOWN cause commit
         _idx = build_mem_index(task)
