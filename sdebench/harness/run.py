@@ -382,7 +382,7 @@ def build_feedback(grade_result: dict) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
-    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle", "hybrid", "index", "provided"], default="full")
+    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle", "hybrid", "index", "provided", "conversations"], default="full")
     ap.add_argument("--model", default="google/gemini-3.5-flash")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
@@ -409,6 +409,14 @@ def main():
         _em = task.get("external_memory")
         if _em:
             task["bug_report"] = task["bug_report"] + "\n\nRelevant memory (surfaced for you by your memory system):\n" + _em
+    elif args.history == "conversations":
+        build_repo(task, repo, "full")              # full repo + a relevant PAST CONVERSATION surfaced
+        _cv = task.get("conversations") or []
+        if _cv:
+            _log = "\n".join(f"{c['role'].upper()}: {c['text']}" for c in _cv)
+            task["bug_report"] = task["bug_report"] + (
+                "\n\nRelevant past conversation with the user on this project, recalled by your "
+                "memory of previous sessions:\n\n" + _log)
     elif args.history == "index":
         build_repo(task, repo, "squashed")          # no git; a derived DECISIONS.md index IS the memory
         (repo / "DECISIONS.md").write_text(gen_index_doc(task))
