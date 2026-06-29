@@ -1,0 +1,13 @@
+{
+  "task_id": "confmerge-listunion-001",
+  "codebase": "confmerge",
+  "build": "build.py",
+  "source": "K",
+  "cause_subject": "refactor: streamline apply_updates",
+  "bug_report": "Partial config overlays are clobbering nested settings. apply_updates({'db': {'host': 'h', 'port': 5432}}, {'db': {'port': 5433}}) drops 'host' instead of keeping it — a nested overlay wipes its sibling keys. Please make nested config overlays merge properly instead of replacing. A failing repro is at tests/test_regression.py. Fix it without breaking existing behaviour.",
+  "fail_to_pass": ["tests/test_regression.py"],
+  "pass_to_pass": ["tests/test_loader.py", "tests/test_merge.py"],
+  "hidden_to_pass": ["tests/test_hidden.py"],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py"
+}
