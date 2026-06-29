@@ -224,6 +224,37 @@ def capture_git_history(task: dict) -> list:
     return out
 
 
+def gen_index_doc(task: dict) -> str:
+    """Generate a compact DECISIONS.md index from the codebase's git history — mechanical, not
+    hand-authored. Collates each non-noise commit's subject + rationale (body) + files + sha, so
+    the agent reads a curated 1-page index instead of reconstructing via `git log -p`. This is the
+    derivable memory: good commit messages -> a usable index for H/X/K alike."""
+    src = Path("/tmp/sdebench/idxsrc") / task["repo"]
+    if src.exists():
+        shutil.rmtree(src)
+    sh("python", str(_codebase_dir(task) / task["build"]), str(src))
+    import re as _re
+    skip = _re.compile(r"^(chore|release|bump|ci|style)\b", _re.I)
+    lines = ["# Project decisions & changes",
+             "_An index of notable changes, derived from git history. Each entry references the commit; "
+             "consult it for the rationale behind the current code._\n"]
+    for sha in sh("git", "-C", str(src), "rev-list", "--reverse", "HEAD", cap=True).stdout.split():
+        subj = sh("git", "-C", str(src), "show", "-s", "--format=%s", sha, cap=True).stdout.strip()
+        body = sh("git", "-C", str(src), "show", "-s", "--format=%b", sha, cap=True).stdout.strip()
+        files = sh("git", "-C", str(src), "show", "--name-only", "--format=", sha, cap=True).stdout.split()
+        if skip.match(subj) and not body:
+            continue
+        code = [x for x in files if x.endswith(".py") and not x.startswith("tests/")]
+        entry = f"- **{subj}**"
+        if code:
+            entry += f" — `{', '.join(code)}`"
+        if body:
+            entry += f"\n  {body}"
+        entry += f" (commit {sha[:8]})"
+        lines.append(entry)
+    return "\n".join(lines)
+
+
 def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: bool = False,
               memory_bank: str | None = None, mem_index: str | None = None) -> dict:
     env = load_env(memory_bank, mem_index)
@@ -351,7 +382,7 @@ def build_feedback(grade_result: dict) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
-    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle", "hybrid"], default="full")
+    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle", "hybrid", "index"], default="full")
     ap.add_argument("--model", default="google/gemini-3.5-flash")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
@@ -373,6 +404,13 @@ def main():
         build_repo(task, repo, "squashed")          # no git trail; history is in memory
         memory_bank = f"sde-{task['repo']}"
         ingest_history(task, memory_bank)           # reset + ingest the full git history
+    elif args.history == "index":
+        build_repo(task, repo, "squashed")          # no git; a derived DECISIONS.md index IS the memory
+        (repo / "DECISIONS.md").write_text(gen_index_doc(task))
+        sh("git", "add", "-A", cwd=repo)
+        sh("git", "commit", "-q", "-m", "docs: decisions index", cwd=repo,
+           env={**os.environ, "GIT_AUTHOR_NAME": "x", "GIT_AUTHOR_EMAIL": "x@x",
+                "GIT_COMMITTER_NAME": "x", "GIT_COMMITTER_EMAIL": "x@x"})
     elif args.history == "memtool":
         build_repo(task, repo, "squashed")          # no git trail; history is in the recall_intent index
         mem_index = build_mem_index(task)
