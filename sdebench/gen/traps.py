@@ -141,4 +141,96 @@ LISTMERGE = {
                    "of replacing. A failing repro is at tests/test_regression.py."),
 }
 
-TRAPS = {t["name"]: t for t in [ROUNDING, LISTMERGE]}
+def _slug_mod(body):
+    return '"""URL slug helper."""\nimport re\n\n\ndef slugify(text):\n' + body
+
+
+SLUGIFY = {
+    "name": "slugify",
+    "marker": "ampersand",
+    "pkg": "slugkit",
+    "module": "slugkit/slug.py",
+    "init": '"""slugkit package."""\nfrom .slug import slugify\n\n__all__ = ["slugify"]\n',
+    "import_line": "from slugkit import slugify",
+    # HEAD bug: not lowercased, underscores
+    "bug": _slug_mod('    return re.sub(r"[^A-Za-z0-9]+", "_", text).strip("_")\n'),
+    # correct: lowercase + dashes + expand ampersand to "and"
+    "correct": _slug_mod('    # Expand an ampersand to the word "and" (SEO: "R&D" -> "r-and-d").\n'
+                         '    text = text.lower().replace("&", " and ")\n'
+                         '    return re.sub(r"[^a-z0-9]+", "-", text).strip("-")\n'),
+    # naive: standard slug, drops "&"
+    "naive": [_slug_mod('    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")\n')],
+    "decision_subject": "slugify expands '&' to 'and' (SEO)",
+    "decision_rationale": ("slugify must expand an ampersand to the word 'and' (not drop it) — e.g. 'R&D' "
+                           "-> 'r-and-d'. Search ranking depends on the literal word; dropping the "
+                           "ampersand lost us traffic on '&'-containing titles."),
+    "conversation": [
+        {"role": "user", "text": "Fix slugify so titles slug cleanly."},
+        {"role": "assistant", "text": "Done — lowercased and replaced non-alphanumerics with dashes."},
+        {"role": "user", "text": "You dropped the ampersands. We expand '&' to 'and' for SEO — 'R&D' must "
+                                 "become 'r-and-d', not 'r-d'. We lost search traffic on this before."},
+        {"role": "assistant", "text": "Understood — expand '&' to 'and' in slugify."},
+    ],
+    "existing_test": 'from slugkit import slugify\n\n\ndef test_alnum():\n    assert slugify("abc123") == "abc123"\n',
+    "repro_test": 'from slugkit import slugify\n\n\ndef test_basic_slug():\n    assert slugify("Hello World") == "hello-world"\n',
+    "hidden_test": ('from slugkit import slugify\n\n\n'
+                    'def test_ampersand_to_and():\n    assert slugify("Tom & Jerry") == "tom-and-jerry"\n'
+                    '    assert slugify("R&D") == "r-and-d"\n\n\n'
+                    'def test_collapses_separators():\n    assert slugify("  Hello   World  ") == "hello-world"\n'),
+    "bug_report": ("slugify is producing bad slugs — 'Hello World' comes out as 'Hello_World' (not "
+                   "lowercased, underscores instead of dashes). Make it produce clean URL slugs. A "
+                   "failing repro is at tests/test_regression.py."),
+}
+
+_RETRY_CORE = ('class TransientError(Exception):\n    pass\n\n\nclass GaveUp(Exception):\n    pass\n\n\n'
+               'class Retrier:\n    def run(self, func):\n        last = None\n'
+               '        for attempt in range(1, MAX_ATTEMPTS + 1):\n'
+               '            try:\n                return func(attempt)\n'
+               '            except TransientError as exc:\n                last = exc\n'
+               '        raise GaveUp("exhausted") from last\n')
+
+
+def _retry_mod(maxv, comment=""):
+    return f'"""Bounded retry."""\n{comment}MAX_ATTEMPTS = {maxv}\n\n\n' + _RETRY_CORE
+
+
+_RETRY_HELPER = ('def _s(n):\n    def f(a):\n        if a < n:\n            raise TransientError()\n'
+                 '        return "ok"\n    return f\n')
+
+BUDGET = {
+    "name": "budget",
+    "marker": "rate-limit",
+    "pkg": "retryx",
+    "module": "retryx/retry.py",
+    "init": ('"""retryx package."""\nfrom .retry import Retrier, MAX_ATTEMPTS, TransientError, GaveUp\n\n'
+             '__all__ = ["Retrier", "MAX_ATTEMPTS", "TransientError", "GaveUp"]\n'),
+    "import_line": "from retryx import Retrier",
+    "bug": _retry_mod(10),
+    "correct": _retry_mod(7, "# 7 is measured: at our backoff it spans just under the upstream's rate-limit\n"
+                             "# reset window; 8+ trips it and the upstream blocks us. Do not round.\n"),
+    "naive": [_retry_mod(8), _retry_mod(5)],
+    "decision_subject": "bound retry attempts to 7 (fits the upstream rate-limit window)",
+    "decision_rationale": ("The retry budget is exactly 7 attempts — measured to fit just under the "
+                           "upstream's rate-limit reset window. 8+ attempts cross it and the upstream "
+                           "blocks us for a minute. It is not a round number; do not standardize it."),
+    "conversation": [
+        {"role": "user", "text": "We're getting rate-limited; the retrier hammers too hard."},
+        {"role": "assistant", "text": "I'll lower the attempt budget to a round 5."},
+        {"role": "user", "text": "Not 5 — it's exactly 7. We measured it: 7 attempts fit just under the "
+                                 "upstream's rate-limit window, 8 trips it. Don't round it."},
+        {"role": "assistant", "text": "Understood — MAX_ATTEMPTS = 7, the measured value."},
+    ],
+    "existing_test": ('from retryx import Retrier, TransientError\n\n\n' + _RETRY_HELPER +
+                      '\n\ndef test_succeeds():\n    assert Retrier().run(lambda a: "ok") == "ok"\n'
+                      '    assert Retrier().run(_s(3)) == "ok"\n'),
+    "repro_test": ('import pytest\nfrom retryx import Retrier, GaveUp, TransientError\n\n\n' + _RETRY_HELPER +
+                   '\n\ndef test_gives_up_before_nine():\n    with pytest.raises(GaveUp):\n        Retrier().run(_s(9))\n'),
+    "hidden_test": ('import pytest\nfrom retryx import Retrier, GaveUp, TransientError\n\n\n' + _RETRY_HELPER +
+                    '\n\ndef test_seven_ok():\n    assert Retrier().run(_s(7)) == "ok"\n\n\n'
+                    'def test_eight_gives_up():\n    with pytest.raises(GaveUp):\n        Retrier().run(_s(8))\n'),
+    "bug_report": ("The upstream is rate-limiting us — our Retrier retries well past where it should stop "
+                   "and crosses the rate-limit window. Restore the intended attempt budget. A failing "
+                   "repro is at tests/test_regression.py."),
+}
+
+TRAPS = {t["name"]: t for t in [ROUNDING, LISTMERGE, SLUGIFY, BUDGET]}

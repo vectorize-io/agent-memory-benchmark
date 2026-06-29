@@ -1,0 +1,37 @@
+{
+  "task_id": "gen-budget-F-001",
+  "codebase": "gen-budget-F",
+  "build": "build.py",
+  "source": "F",
+  "cause_subject": "refactor: simplify retry",
+  "bug_report": "The upstream is rate-limiting us \u2014 our Retrier retries well past where it should stop and crosses the rate-limit window. Restore the intended attempt budget. A failing repro is at tests/test_regression.py.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_existing.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py",
+  "conversations": [
+    {
+      "role": "user",
+      "text": "We're getting rate-limited; the retrier hammers too hard."
+    },
+    {
+      "role": "assistant",
+      "text": "I'll lower the attempt budget to a round 5."
+    },
+    {
+      "role": "user",
+      "text": "Not 5 \u2014 it's exactly 7. We measured it: 7 attempts fit just under the upstream's rate-limit window, 8 trips it. Don't round it."
+    },
+    {
+      "role": "assistant",
+      "text": "Understood \u2014 MAX_ATTEMPTS = 7, the measured value."
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "task_id": "gen-slugify-F-001",
+  "codebase": "gen-slugify-F",
+  "build": "build.py",
+  "source": "F",
+  "cause_subject": "refactor: simplify slug",
+  "bug_report": "slugify is producing bad slugs \u2014 'Hello World' comes out as 'Hello_World' (not lowercased, underscores instead of dashes). Make it produce clean URL slugs. A failing repro is at tests/test_regression.py.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_existing.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py",
+  "conversations": [
+    {
+      "role": "user",
+      "text": "Fix slugify so titles slug cleanly."
+    },
+    {
+      "role": "assistant",
+      "text": "Done \u2014 lowercased and replaced non-alphanumerics with dashes."
+    },
+    {
+      "role": "user",
+      "text": "You dropped the ampersands. We expand '&' to 'and' for SEO \u2014 'R&D' must become 'r-and-d', not 'r-d'. We lost search traffic on this before."
+    },
+    {
+      "role": "assistant",
+      "text": "Understood \u2014 expand '&' to 'and' in slugify."
+    }
+  ]
+}
