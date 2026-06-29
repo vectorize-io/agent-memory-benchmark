@@ -382,7 +382,7 @@ def build_feedback(grade_result: dict) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
-    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle", "hybrid", "index"], default="full")
+    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle", "hybrid", "index", "provided"], default="full")
     ap.add_argument("--model", default="google/gemini-3.5-flash")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
@@ -404,6 +404,11 @@ def main():
         build_repo(task, repo, "squashed")          # no git trail; history is in memory
         memory_bank = f"sde-{task['repo']}"
         ingest_history(task, memory_bank)           # reset + ingest the full git history
+    elif args.history == "provided":
+        build_repo(task, repo, "full")              # full repo + external memory supplied in the prompt
+        _em = task.get("external_memory")
+        if _em:
+            task["bug_report"] = task["bug_report"] + "\n\nRelevant memory (surfaced for you by your memory system):\n" + _em
     elif args.history == "index":
         build_repo(task, repo, "squashed")          # no git; a derived DECISIONS.md index IS the memory
         (repo / "DECISIONS.md").write_text(gen_index_doc(task))

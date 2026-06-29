@@ -1,0 +1,13 @@
+{
+  "task_id": "memsource-crosstask-001",
+  "codebase": "memsource",
+  "build": "build_external.py",
+  "source": "X",
+  "bug_report": "Rounded amounts no longer match the legacy billing ledger. Half-cent amounts round the wrong way — e.g. 2.125 should be 2.12 (the ledger value) but we are producing 2.13. A failing repro is at tests/test_regression.py. Fix the rounding so it matches the ledger again, without breaking existing behaviour.",
+  "external_memory": "Memory of a past solve in this project: a previous rounding discrepancy was resolved by switching round_cents to ROUND_HALF_DOWN — the legacy ledger rounds half-cents DOWN (not half-up or banker's).",
+  "fail_to_pass": ["tests/test_regression.py"],
+  "pass_to_pass": ["tests/test_basic.py"],
+  "hidden_to_pass": ["tests/test_hidden.py"],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py"
+}
