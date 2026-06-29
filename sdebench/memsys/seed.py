@@ -29,6 +29,8 @@ def main():
                 all_entries += ingest_project(repo, task.get("conversations"), f"gen-{name}-{src}")
             finally:
                 shutil.rmtree(repo, ignore_errors=True)
+    from distractors import ENTRIES as DISTRACTORS   # realistic noise from other domains
+    all_entries += DISTRACTORS
     uniq = write_store(all_entries)
     from collections import Counter
     print(f"seeded {len(uniq)} unique entries (from {len(all_entries)}); by kind:", dict(Counter(e["kind"] for e in uniq)))

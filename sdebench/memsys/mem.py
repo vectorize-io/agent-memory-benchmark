@@ -73,10 +73,34 @@ def _conversation_prefs(conversations):
     return entries
 
 
+def _repo_symbols(repo):
+    """Code symbols (functions, classes, module-level constants) the project defines — the
+    entities a decision is *about*. A bug report usually names the symbol it's about."""
+    syms = set()
+    for p in Path(repo).rglob("*.py"):
+        if "test" in p.name:
+            continue
+        txt = p.read_text(errors="ignore")
+        syms |= set(re.findall(r"^\s*def\s+([a-zA-Z_]\w+)", txt, re.M))
+        syms |= set(re.findall(r"^\s*class\s+([a-zA-Z_]\w+)", txt, re.M))
+        syms |= set(re.findall(r"^([A-Z][A-Z0-9_]{3,})\s*=", txt, re.M))
+    return sorted({s.lower() for s in syms if len(s) > 2})
+
+
+def _text_symbols(text):
+    """Identifier-like tokens in free text (snake_case / CamelCase / CONST) — for entries without a repo."""
+    syms = set(re.findall(r"\b[a-z]+_[a-z_]+\b", text or ""))
+    syms |= set(re.findall(r"\b[A-Z][a-z]+[A-Z]\w+\b", text or ""))
+    syms |= set(re.findall(r"\b[A-Z][A-Z0-9_]{3,}\b", text or ""))
+    return sorted({s.lower() for s in syms})
+
+
 def ingest_project(repo, conversations, project):
     entries = _git_decisions(repo) + _doc_conventions(repo) + _conversation_prefs(conversations)
+    symbols = _repo_symbols(repo)
     for e in entries:
         e["project"] = project
+        e["symbols"] = symbols
     return entries
 
 
@@ -110,10 +134,15 @@ def recall(query, k=2):
     n = len(docs)
     idf = {w: math.log(1 + n / df[w]) for w in df}
     q = Counter(_tok(query))
+    # symbol signal: which defined code symbols does the bug report name?
+    all_syms = set().union(*[set(e.get("symbols", [])) for e in store]) if store else set()
+    q_syms = {w for w in q if w in all_syms}
+    SYMBOL_BOOST = 1000.0   # a named symbol match dominates generic term overlap
     scored = []
     for e, d in zip(store, docs):
         tf = Counter(d)
         score = sum(q[w] * tf[w] * idf.get(w, 0) ** 2 for w in q)
+        score += SYMBOL_BOOST * len(q_syms & set(e.get("symbols", [])))
         scored.append((score, e))
     scored.sort(key=lambda x: -x[0])
     return [f"[{e['kind']}] {e['text']}" for s, e in scored[:k] if s > 0]
