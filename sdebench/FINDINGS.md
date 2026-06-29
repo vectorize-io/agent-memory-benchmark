@@ -88,6 +88,25 @@ ttlcache `full` even hits `[1,0,0]` interventions; the recipe fixes it). So the 
   vs gemini's ~22 turns), so the exploration-bound gain is smaller there — while the memory gain
   stays large. A more capable model needs less behavioral help but the same memory help.
 
+## Finding 6 — On a hard multi-hop bug, naive push is *worse* than git (retrieval ceiling bites)
+A new task, `minicalc-rangemf`, plants the SAME bug in two files (a "perf: inline range expansion"
+refactor makes both the evaluator and `Engine.range_values` read raw instead of computed cell
+values, so ranges containing a formula cell drop it). A single-file fix passes the repro but fails
+a hidden test on the second site — so it's a **resolution** discriminator, and its cause commit is
+symptom-distant (shares no vocabulary with "SUM skips formula cells"). Result (all `+minimal`):
+| config | cost | turns | interventions |
+|---|---|---|---|
+| oracle (knows the 2-file commit) | $0.377 | 19 | `[0,0,0]` |
+| full (git, can trace) | $0.462 | 24 | `[0,0,0]` |
+| inject (naive push) | $0.499 | 24 | `[0,0,0]` |
+| squashed (no history) | $0.669 | 33 | `[1,0,0]` |
+
+`squashed+minimal` hits the single-file trap (intervention). But the key result: **`inject` is
+WORSE than `full` git here** — its symptom-based retrieval misses the cause commit and injects the
+*wrong* context (a test commit + the original implementation), adding noise. `oracle` (perfect
+retrieval) is best. So for push, **retrieval quality is the bottleneck, and it bites harder on
+harder tasks**: when the symptom is far from the cause, naive push can underperform raw git.
+
 ## Takeaways
 1. **Delivery matters more than content.** The same memory loses as a tool, wins as injected context.
 2. **Diagnose the bottleneck.** Knowledge-missing → memory; exploration-heavy → behavioral constraint.
