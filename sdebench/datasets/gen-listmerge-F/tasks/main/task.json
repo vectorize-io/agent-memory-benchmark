@@ -1,0 +1,37 @@
+{
+  "task_id": "gen-listmerge-F-001",
+  "codebase": "gen-listmerge-F",
+  "build": "build.py",
+  "source": "F",
+  "cause_subject": "refactor: simplify merge",
+  "bug_report": "Partial config overlays clobber nested settings \u2014 apply_updates({'db': {'host': 'h', 'port': 5432}}, {'db': {'port': 5433}}) drops 'host'. Make nested overlays merge instead of replacing. A failing repro is at tests/test_regression.py.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_existing.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py",
+  "conversations": [
+    {
+      "role": "user",
+      "text": "Make config overlays merge nested settings properly."
+    },
+    {
+      "role": "assistant",
+      "text": "Done \u2014 deep-merge for dicts, and I replace list values on conflict."
+    },
+    {
+      "role": "user",
+      "text": "Don't replace lists \u2014 union them (deduped). Replacing dropped the middleware the base layer set and disabled auth in prod once. Always union lists."
+    },
+    {
+      "role": "assistant",
+      "text": "Understood \u2014 union list values (de-duplicated), never replace or append."
+    }
+  ]
+}

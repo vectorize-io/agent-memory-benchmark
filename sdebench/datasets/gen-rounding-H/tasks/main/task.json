@@ -1,0 +1,19 @@
+{
+  "task_id": "gen-rounding-H-001",
+  "codebase": "gen-rounding-H",
+  "build": "build.py",
+  "source": "H",
+  "cause_subject": "refactor: simplify rounding",
+  "bug_report": "Rounded amounts no longer match the legacy ledger. Half-cent amounts round the wrong way \u2014 e.g. 2.125 should be 2.12 but we produce 2.13. A failing repro is at tests/test_regression.py. Fix the rounding to match the ledger, without breaking existing behaviour.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_existing.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py"
+}

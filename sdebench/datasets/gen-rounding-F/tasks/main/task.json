@@ -1,0 +1,37 @@
+{
+  "task_id": "gen-rounding-F-001",
+  "codebase": "gen-rounding-F",
+  "build": "build.py",
+  "source": "F",
+  "cause_subject": "refactor: simplify rounding",
+  "bug_report": "Rounded amounts no longer match the legacy ledger. Half-cent amounts round the wrong way \u2014 e.g. 2.125 should be 2.12 but we produce 2.13. A failing repro is at tests/test_regression.py. Fix the rounding to match the ledger, without breaking existing behaviour.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_existing.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py",
+  "conversations": [
+    {
+      "role": "user",
+      "text": "Add a discount to the invoice total and get the cents right."
+    },
+    {
+      "role": "assistant",
+      "text": "Done \u2014 I used banker's rounding (ROUND_HALF_EVEN), the money standard."
+    },
+    {
+      "role": "user",
+      "text": "No, not banker's. We round half-cents DOWN (ROUND_HALF_DOWN) here, always \u2014 banker's and half-up drift our totals off the legacy ledger; finance flagged a 3-cent discrepancy last quarter from exactly this. Use half-down for money."
+    },
+    {
+      "role": "assistant",
+      "text": "Understood \u2014 ROUND_HALF_DOWN for all money rounding in this project."
+    }
+  ]
+}
