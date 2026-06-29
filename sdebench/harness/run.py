@@ -111,7 +111,7 @@ def build_repo(task: dict, dest: Path, history: str):
 HINDSIGHT_URL = "http://localhost:8888"
 
 
-def load_env(memory_bank: str | None = None, mem_index: str | None = None) -> dict:
+def load_env(memory_bank: str | None = None, mem_index: str | None = None, conv_log: str | None = None) -> dict:
     env = os.environ.copy()
     ef = REPO_ROOT / ".env"
     if ef.exists():
@@ -120,7 +120,10 @@ def load_env(memory_bank: str | None = None, mem_index: str | None = None) -> di
             if "=" in line and not line.startswith("#"):
                 k, v = line.split("=", 1)
                 env.setdefault(k.strip(), v.strip().strip('"').strip("'"))
-    if mem_index:     # enable the LOCAL recall_intent tool over the raw-commit index
+    if conv_log:      # enable the recall_conversations skill (memory of past user sessions)
+        env.pop("HINDSIGHT_DISABLED", None)
+        env["CONV_LOG"] = conv_log
+    elif mem_index:   # enable the LOCAL recall_intent tool over the raw-commit index
         env.pop("HINDSIGHT_DISABLED", None)
         env["MEM_INDEX"] = mem_index
     elif memory_bank: # enable the Hindsight opencode plugin pointed at this bank (recall mode)
@@ -256,8 +259,8 @@ def gen_index_doc(task: dict) -> str:
 
 
 def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: bool = False,
-              memory_bank: str | None = None, mem_index: str | None = None) -> dict:
-    env = load_env(memory_bank, mem_index)
+              memory_bank: str | None = None, mem_index: str | None = None, conv_log: str | None = None) -> dict:
+    env = load_env(memory_bank, mem_index, conv_log)
     env["PWD"] = str(workdir)
     cmd = ["opencode", "run", "--format", "json", "-m", model]
     if resume:
@@ -382,7 +385,7 @@ def build_feedback(grade_result: dict) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
-    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle", "hybrid", "index", "provided", "conversations"], default="full")
+    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle", "hybrid", "index", "provided", "conversations", "skill"], default="full")
     ap.add_argument("--model", default="google/gemini-3.5-flash")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
@@ -400,6 +403,7 @@ def main():
     repo = work / "repo"
     memory_bank = None
     mem_index = None
+    conv_log = None
     if args.history == "hindsight":
         build_repo(task, repo, "squashed")          # no git trail; history is in memory
         memory_bank = f"sde-{task['repo']}"
@@ -409,6 +413,13 @@ def main():
         _em = task.get("external_memory")
         if _em:
             task["bug_report"] = task["bug_report"] + "\n\nRelevant memory (surfaced for you by your memory system):\n" + _em
+    elif args.history == "skill":
+        build_repo(task, repo, "full")              # vanilla full git + a recall_conversations SKILL (tool)
+        _cv = task.get("conversations") or []
+        if _cv:
+            conv_log = str(Path("/tmp/sdebench/conv") / f"{task['task_id']}.json")
+            Path(conv_log).parent.mkdir(parents=True, exist_ok=True)
+            Path(conv_log).write_text(json.dumps(_cv))
     elif args.history == "conversations":
         build_repo(task, repo, "full")              # full repo + a relevant PAST CONVERSATION surfaced
         _cv = task.get("conversations") or []
@@ -461,7 +472,7 @@ def main():
 
     print(f"[{task['task_id']}] history={args.history} model={args.model} — initial attempt…", flush=True)
     init_prompt = PROMPT.format(repo=task["repo"], bug_report=task["bug_report"], instruction=VARIANTS[os.environ.get("SDE_VARIANT", "base")])
-    acc(run_agent(repo, args.model, args.timeout, init_prompt, memory_bank=memory_bank, mem_index=mem_index), "initial", init_prompt)
+    acc(run_agent(repo, args.model, args.timeout, init_prompt, memory_bank=memory_bank, mem_index=mem_index, conv_log=conv_log), "initial", init_prompt)
 
     # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.
     # Metric = number of human-like interventions needed (capped); cost = sum across all rounds.
@@ -478,7 +489,7 @@ def main():
         interventions += 1
         fb = build_feedback(g)
         print(f"  ↳ intervention {interventions}: {g['pytest']}", flush=True)
-        acc(run_agent(repo, args.model, args.timeout, fb, resume=True, memory_bank=memory_bank, mem_index=mem_index), f"intervention-{interventions}", fb)
+        acc(run_agent(repo, args.model, args.timeout, fb, resume=True, memory_bank=memory_bank, mem_index=mem_index, conv_log=conv_log), f"intervention-{interventions}", fb)
 
     solved = g["resolved"]
     cost = compute_cost(args.model, {k: totals[k] for k in TOK})
