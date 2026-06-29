@@ -385,7 +385,7 @@ def build_feedback(grade_result: dict) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
-    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle", "hybrid", "index", "provided", "conversations", "skill"], default="full")
+    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle", "hybrid", "index", "provided", "conversations", "skill", "memsys"], default="full")
     ap.add_argument("--model", default="google/gemini-3.5-flash")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
@@ -413,6 +413,17 @@ def main():
         _em = task.get("external_memory")
         if _em:
             task["bug_report"] = task["bug_report"] + "\n\nRelevant memory (surfaced for you by your memory system):\n" + _em
+    elif args.history == "memsys":
+        build_repo(task, repo, "full")              # full repo + local file-based memory, retrieved & surfaced
+        import importlib.util as _iu
+        _sp = _iu.spec_from_file_location("memsys_mem", str(Path(__file__).resolve().parents[1] / "memsys" / "mem.py"))
+        _mem = _iu.module_from_spec(_sp); _sp.loader.exec_module(_mem)
+        _hits = _mem.recall(task["bug_report"], k=2)
+        if _hits:
+            task["bug_report"] = task["bug_report"] + (
+                "\n\nRelevant project memory, retrieved by your memory system from past commits, "
+                "docs, and conversations (apply it if relevant; verify against the current code):\n"
+                + "\n".join("- " + h for h in _hits))
     elif args.history == "skill":
         build_repo(task, repo, "full")              # vanilla full git + a recall_conversations SKILL (tool)
         _cv = task.get("conversations") or []
