@@ -1,0 +1,13 @@
+{
+  "task_id": "retryx-budget-001",
+  "codebase": "retryx",
+  "build": "build.py",
+  "source": "H",
+  "cause_subject": "chore: standardize retry budget",
+  "bug_report": "The upstream API is rate-limiting us. Our Retrier keeps hammering well past the point where it should give up — it retries so many times that it crosses the upstream's rate-limit window and gets us blocked. It should stop after our intended attempt budget, but it's going beyond it. A failing repro is at tests/test_regression.py. Restore the correct budget.",
+  "fail_to_pass": ["tests/test_regression.py"],
+  "pass_to_pass": ["tests/test_backoff.py", "tests/test_retry.py"],
+  "hidden_to_pass": ["tests/test_hidden.py"],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py"
+}
