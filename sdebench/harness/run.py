@@ -69,7 +69,7 @@ VARIANTS = {
 
 def sh(*args, cwd=None, env=None, check=True, cap=False):
     return subprocess.run(args, cwd=cwd, env=env, check=check,
-                          capture_output=cap, text=True)
+                          capture_output=cap, text=True, errors="replace")
 
 
 def neutral_home() -> str:
@@ -219,7 +219,8 @@ def capture_git_history(task: dict) -> list:
         shutil.rmtree(src)
     sh("python", str(_codebase_dir(task) / task["build"]), str(src))
     out = []
-    for sha in sh("git", "-C", str(src), "rev-list", "HEAD", cap=True).stdout.split():
+    # cap for large real-codebase hosts (the UI view of thousands of commits is useless and slow)
+    for sha in sh("git", "-C", str(src), "rev-list", "HEAD", "-n", "40", cap=True).stdout.split():
         subject = sh("git", "-C", str(src), "show", "-s", "--format=%s", sha, cap=True).stdout.strip()
         body = sh("git", "-C", str(src), "show", "-s", "--format=%b", sha, cap=True).stdout.strip()
         diff = "\n".join(sh("git", "-C", str(src), "show", "--format=", sha, cap=True).stdout.splitlines()[:150])

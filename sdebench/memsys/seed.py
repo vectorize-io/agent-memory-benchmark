@@ -29,6 +29,27 @@ def main():
                 all_entries += ingest_project(repo, task.get("conversations"), f"gen-{name}-{src}")
             finally:
                 shutil.rmtree(repo, ignore_errors=True)
+    # host (real-codebase) tasks: ingest their chat + the host's real git history as noise
+    import subprocess
+    import mem as _mem
+    for ds in sorted(DATASETS.glob("boltons-*")):
+        tp = ds / "tasks" / "main" / "task.json"
+        if not tp.exists():
+            continue
+        task = json.loads(tp.read_text())
+        repo = Path(tempfile.mkdtemp(prefix="seed_host_"))
+        try:
+            subprocess.run(["python", str(ds / "build.py"), str(repo)], check=True, capture_output=True)
+            all_entries += ingest_project(repo, task.get("conversations"), task["task_id"])
+            out = subprocess.run(["git", "-C", str(repo), "log", "--format=%s%x1e"],
+                                 capture_output=True, text=True).stdout
+            for s in out.split("\x1e"):
+                s = s.strip()
+                if s and not _mem._NOISE_SUBJ.match(s):     # real commit subjects = retrieval noise
+                    all_entries.append({"project": "boltons-history", "kind": "decision",
+                                        "title": s, "text": s, "symbols": _mem._text_symbols(s)})
+        finally:
+            shutil.rmtree(repo, ignore_errors=True)
     from distractors import ENTRIES as DISTRACTORS   # realistic noise from other domains
     all_entries += DISTRACTORS
     uniq = write_store(all_entries)
