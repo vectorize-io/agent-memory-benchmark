@@ -18,7 +18,7 @@ def main():
     subprocess.run(["git", "-C", str(out), "add", "-A"], check=True)
     env = {**os.environ, "GIT_AUTHOR_NAME": "x", "GIT_AUTHOR_EMAIL": "x@x", "GIT_COMMITTER_NAME": "x", "GIT_COMMITTER_EMAIL": "x@x"}
     subprocess.run(["git", "-C", str(out), "commit", "-q", "-m", "chore: focus test suite"], env=env, check=True)
-    print("built boltons-slugify @ " + REF[:8])
+    print("built boltons-under2camel @ " + REF[:8])
 
 
 if __name__ == "__main__":

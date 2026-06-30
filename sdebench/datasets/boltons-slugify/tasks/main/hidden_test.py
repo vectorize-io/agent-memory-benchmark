@@ -1,5 +1,3 @@
-"""Held-out: the team's SPECIFIC, non-obvious symbol abbreviations — & -> and, $ -> usd (NOT
-'dollar'), % -> pct (NOT 'percent'). A naive fix using the natural words passes the repro but fails."""
 from boltons.strutils import slugify
 
 

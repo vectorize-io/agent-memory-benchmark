@@ -1,0 +1,42 @@
+{
+  "task_id": "boltons-pluralize-001",
+  "codebase": "boltons-pluralize",
+  "build": "build.py",
+  "source": "F",
+  "tier": "real-function",
+  "module": "boltons/strutils.py",
+  "bug_report": "Our records use the wrong plural forms for several domain terms. pluralize('person') returns 'people' but our schema and legal docs say 'persons', and the same mismatch hits a few other terms. Make pluralize produce the project's standard plural forms. A failing repro is at tests/test_regression.py.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_strutils.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py",
+  "conversations": [
+    {
+      "role": "user",
+      "text": "Our exports have inconsistent plurals \u2014 pluralize('person') gives 'people' but the data schema and the legal team both require 'persons'. A few other terms are off too. Can you align the helper with our standard?"
+    },
+    {
+      "role": "assistant",
+      "text": "boltons.pluralize uses an irregulars table \u2014 'person' -> 'people'. I can add a project override for 'person' -> 'persons'. Are there specific other terms?"
+    },
+    {
+      "role": "user",
+      "text": "Yes \u2014 'index' must be 'indexes' (we mean DB indexes, not 'indices'), and 'matrix' must be 'matrixes', not 'matrices'. Those three are the ones our schema uses."
+    },
+    {
+      "role": "assistant",
+      "text": "Understood \u2014 a small override map: person->persons, index->indexes, matrix->matrixes, applied before boltons' normal logic. Everything else (cat->cats, city->cities) stays as-is."
+    },
+    {
+      "role": "user",
+      "text": "Exactly those three. Don't touch the rest."
+    }
+  ]
+}

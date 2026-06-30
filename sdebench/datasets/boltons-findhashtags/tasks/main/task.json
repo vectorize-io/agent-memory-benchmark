@@ -1,0 +1,42 @@
+{
+  "task_id": "boltons-findhashtags-001",
+  "codebase": "boltons-findhashtags",
+  "build": "build.py",
+  "source": "F",
+  "tier": "real-function",
+  "module": "boltons/strutils.py",
+  "bug_report": "Our trending feed is full of junk tags like #1 and #2024 \u2014 find_hashtags is returning pure-number hashtags, which aren't real tags on our platform. Make find_hashtags drop the invalid ones. A failing repro is at tests/test_regression.py.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_strutils.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py",
+  "conversations": [
+    {
+      "role": "user",
+      "text": "The trending hashtags list is polluted with numbers \u2014 '#1', '#2024', '#42' keep showing up. Those aren't valid tags for us. Can you filter them out in find_hashtags?"
+    },
+    {
+      "role": "assistant",
+      "text": "I can filter the results. The simplest rule is to drop any hashtag that starts with a digit \u2014 that removes '#1', '#2024', '#42'."
+    },
+    {
+      "role": "user",
+      "text": "No, careful \u2014 tags like '#2nd' and '#ai2' are legit and some start with a digit. The rule is: drop a tag only if it's ALL digits. '#42' goes, '#2nd' stays."
+    },
+    {
+      "role": "assistant",
+      "text": "Understood \u2014 drop a hashtag only when it is entirely numeric (all digits); anything with a letter stays. So '#42' and '#2024' are dropped, '#2nd' and '#ai2' are kept."
+    },
+    {
+      "role": "user",
+      "text": "Right \u2014 all-digits only."
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "task_id": "boltons-under2camel-001",
+  "codebase": "boltons-under2camel",
+  "build": "build.py",
+  "source": "F",
+  "tier": "real-function",
+  "module": "boltons/strutils.py",
+  "bug_report": "under2camel mangles our acronyms. 'http_response' becomes 'HttpResponse' instead of 'HTTPResponse', so generated class names don't match our code style. Make under2camel keep the project's known acronyms uppercase. A failing repro is at tests/test_regression.py.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_strutils.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py",
+  "conversations": [
+    {
+      "role": "user",
+      "text": "The code generator produces class names like 'HttpResponse' and 'ApiKey' from snake_case, but our codebase style is 'HTTPResponse', 'APIKey'. under2camel is title-casing the acronyms. Can you fix it to keep our acronyms uppercase?"
+    },
+    {
+      "role": "assistant",
+      "text": "under2camel just capitalizes each underscore-separated part, so 'http' -> 'Http'. I can special-case acronyms. Which ones does your style guide list?"
+    },
+    {
+      "role": "user",
+      "text": "HTTP, HTTPS, URL, API, IO, and ID. Those stay all-caps. Everything else title-cases normally."
+    },
+    {
+      "role": "assistant",
+      "text": "Got it \u2014 a known-acronym set {HTTP, HTTPS, URL, API, IO, ID}; if a part matches, emit it uppercase, otherwise capitalize as before. So 'user_id' -> 'UserID', 'parse_url' -> 'ParseURL', 'user_name' -> 'UserName'."
+    },
+    {
+      "role": "user",
+      "text": "Perfect, exactly those six."
+    }
+  ]
+}
