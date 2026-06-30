@@ -50,6 +50,10 @@ def main():
                                         "title": s, "text": s, "symbols": _mem._text_symbols(s)})
         finally:
             shutil.rmtree(repo, ignore_errors=True)
+    decoyf = HERE.parents[0] / "gen" / "decoy_sessions.json"   # irrelevant chat sessions = chat-noise
+    if decoyf.exists():
+        for i, d in enumerate(json.loads(decoyf.read_text())):
+            all_entries += ingest_project(Path(tempfile.mkdtemp(prefix="decoy_")), d["turns"], f"decoy-{i}")
     from distractors import ENTRIES as DISTRACTORS   # realistic noise from other domains
     all_entries += DISTRACTORS
     uniq = write_store(all_entries)

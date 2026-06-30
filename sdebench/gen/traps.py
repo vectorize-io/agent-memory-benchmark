@@ -236,7 +236,58 @@ BUDGET = {
                    "repro is at tests/test_regression.py."),
 }
 
-TRAPS = {t["name"]: t for t in [ROUNDING, LISTMERGE, SLUGIFY, BUDGET]}
+def _disc_mod(body):
+    return '"""Apply stacked discounts to an amount."""\n\n\ndef apply_discounts(amount, discounts):\n' + body
+
+
+DISCOUNT = {
+    "name": "discount",
+    "marker": "before fixed",
+    "pkg": "billing",
+    "module": "billing/discount.py",
+    "init": '"""billing package."""\nfrom .discount import apply_discounts\n\n__all__ = ["apply_discounts"]\n',
+    "import_line": "from billing import apply_discounts",
+    "bug": _disc_mod('    pct = sum(v for k, v in discounts if k == "percent")\n'
+                     '    fixed = sum(v for k, v in discounts if k == "fixed")\n'
+                     '    return round(amount * (1 - pct / 100) - fixed, 2)\n'),
+    "correct": _disc_mod('    # percent discounts apply BEFORE fixed-amount ones (deterministic stacking)\n'
+                         '    ordered = [d for d in discounts if d[0] == "percent"] + [d for d in discounts if d[0] == "fixed"]\n'
+                         '    for kind, val in ordered:\n'
+                         '        amount = amount * (1 - val / 100) if kind == "percent" else amount - val\n'
+                         '    return round(amount, 2)\n'),
+    "naive": [_disc_mod('    for kind, val in discounts:\n'
+                        '        amount = amount * (1 - val / 100) if kind == "percent" else amount - val\n'
+                        '    return round(amount, 2)\n')],
+    "decision_subject": "apply_discounts: percent discounts apply before fixed-amount ones",
+    "decision_rationale": ("When discounts stack, apply all PERCENT discounts first (compounding), THEN the "
+                           "fixed-amount ones - never in submission order. Order-dependent stacking let "
+                           "customers game a $10-off + 50%-off combo. The order is fixed: percent before fixed."),
+    "conversation": [
+        {"role": "user", "text": "Our discount stacking is wrong - two 50%-off coupons on a $100 item zero it out instead of leaving $25. And finance says even when it's not zero, mixed coupons don't match their model."},
+        {"role": "assistant", "text": "apply_discounts sums the percentages and applies once, so 50% + 50% = 100% off. I'll make them compound sequentially, applying each to the running amount - that gives $25 for the two-50%-off case."},
+        {"role": "user", "text": "That's only half of it. With a percent coupon plus a fixed-dollar coupon, the result depends on which order they were entered, and customers were ordering them to their advantage."},
+        {"role": "assistant", "text": "So the order needs to be fixed rather than submission order. Should the fixed-dollar amount come off first, or the percentage?"},
+        {"role": "user", "text": "Percent first, always. Then the fixed amount."},
+        {"role": "assistant", "text": "Got it - apply all percent discounts first (compounding), then fixed-amount ones, ignoring submission order. So $10-off + 50%-off on $100 is 50 then minus 10 = $40 either way. Deterministic: percent before fixed."},
+    ],
+    "existing_test": ('from billing import apply_discounts\n\n\n'
+                      'def test_single_discount():\n    assert apply_discounts(100, [("percent", 10)]) == 90\n'
+                      '    assert apply_discounts(100, [("fixed", 5)]) == 95\n'),
+    "repro_test": ('from billing import apply_discounts\n\n\n'
+                   'def test_two_percent_compound():\n    assert apply_discounts(100, [("percent", 50), ("percent", 50)]) == 25\n'),
+    "hidden_test": ('from billing import apply_discounts\n\n\n'
+                    'def test_percent_before_fixed():\n'
+                    '    assert apply_discounts(100, [("fixed", 10), ("percent", 50)]) == 40\n'
+                    '    assert apply_discounts(100, [("percent", 50), ("fixed", 10)]) == 40\n\n\n'
+                    'def test_compounds():\n    assert apply_discounts(100, [("percent", 50), ("percent", 50)]) == 25\n'),
+    "bug_report": ("Stacked discounts compute the wrong total. Two 50% discounts on $100 give $0 instead of "
+                   "$25 - they're applied to the original amount in parallel instead of compounding. Fix "
+                   "apply_discounts so stacked discounts combine correctly. A failing repro is at "
+                   "tests/test_regression.py."),
+}
+
+
+TRAPS = {t["name"]: t for t in [ROUNDING, LISTMERGE, SLUGIFY, BUDGET, DISCOUNT]}
 
 from conversations import CONVERSATIONS
 import json as _json
@@ -244,4 +295,4 @@ from pathlib import Path as _Path
 _sf = _Path(__file__).resolve().parent / "sessions.json"   # long LLM-generated realistic sessions
 _SESS = _json.loads(_sf.read_text()) if _sf.exists() else {}
 for _n in TRAPS:
-    TRAPS[_n]["conversation"] = _SESS.get(_n) or CONVERSATIONS.get(_n)
+    TRAPS[_n]["conversation"] = _SESS.get(_n) or CONVERSATIONS.get(_n) or TRAPS[_n].get("conversation")

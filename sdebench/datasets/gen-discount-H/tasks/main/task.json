@@ -1,0 +1,19 @@
+{
+  "task_id": "gen-discount-H-001",
+  "codebase": "gen-discount-H",
+  "build": "build.py",
+  "source": "H",
+  "cause_subject": "refactor: simplify discount",
+  "bug_report": "Stacked discounts compute the wrong total. Two 50% discounts on $100 give $0 instead of $25 - they're applied to the original amount in parallel instead of compounding. Fix apply_discounts so stacked discounts combine correctly. A failing repro is at tests/test_regression.py.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_existing.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py"
+}
