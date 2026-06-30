@@ -50,14 +50,71 @@ def _git_decisions(repo):
 
 
 
-def _conversation_prefs(conversations):
-    """User turns that state a preference/correction (F source)."""
-    entries = []
-    for turn in conversations or []:
-        if turn.get("role") == "user" and len(turn.get("text", "")) > 60:
-            entries.append({"kind": "conversation", "title": "user preference",
-                            "text": "From an earlier session, the user said: " + turn["text"].strip()})
-    return entries
+def _gemini_key():
+    import os
+    k = os.environ.get("GOOGLE_GENERATIVE_AI_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    if k:
+        return k
+    for root in (Path.cwd(), Path(__file__).resolve().parents[2]):
+        envf = root / ".env"
+        if envf.exists():
+            for line in envf.read_text().splitlines():
+                if line.strip().startswith(("GOOGLE_GENERATIVE_AI_API_KEY", "GEMINI_API_KEY")) and "=" in line:
+                    return line.split("=", 1)[1].strip().strip('"')
+    return None
+
+
+_SUM_CACHE = Path("/tmp/sdebench_mem/summary_cache.json")
+
+
+def _llm_summarize(session_text):
+    """Process a verbose session into a concise feedback DECISION NOTE (the 'user-feedback story').
+    Cached by content hash; returns None on any failure so the caller can fall back to raw text."""
+    import hashlib, json as _json, urllib.request
+    h = hashlib.sha1(session_text.encode()).hexdigest()
+    cache = {}
+    if _SUM_CACHE.exists():
+        cache = _json.loads(_SUM_CACHE.read_text())
+    if h in cache:
+        return cache[h]
+    key = _gemini_key()
+    if not key:
+        return None
+    prompt = (
+        "You are a long-term memory system for a coding team. Summarize the following work session "
+        "as a concise DECISION NOTE for future reference. Capture: what the user wanted, what was "
+        "TRIED and REJECTED (and why), and the FINAL decision/rule that was settled on. Be specific — "
+        "preserve any exact values, identifiers, modes, or thresholds that were decided, quoting them "
+        "verbatim from the session rather than inventing or recomputing them. 1-3 sentences, no "
+        "preamble, no transcript.\n\nSESSION:\n" + session_text)
+    url = ("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + key)
+    body = {"contents": [{"parts": [{"text": prompt}]}]}
+    try:
+        req = urllib.request.Request(url, data=_json.dumps(body).encode(), headers={"Content-Type": "application/json"})
+        r = _json.load(urllib.request.urlopen(req, timeout=60))
+        out = r["candidates"][0]["content"]["parts"][0]["text"].strip()
+    except Exception:
+        return None
+    cache[h] = out
+    _SUM_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    _SUM_CACHE.write_text(_json.dumps(cache))
+    return out
+
+
+def _conversation_story(conversations):
+    """Ingest a past session as ONE summarized feedback STORY, not scattered turns.
+
+    Real sessions are verbose (the assistant does the work inline; the decision is buried in a long
+    turn or a terse user reply). We render the whole exchange, then LLM-summarize it into a decision
+    note that captures what was tried/rejected and the rule settled on. Falls back to the raw
+    exchange if no LLM is available."""
+    turns = [t for t in (conversations or []) if t.get("text")]
+    if not turns:
+        return []
+    raw = " ".join(f"{t['role'].upper()}: {t['text'].strip()}" for t in turns)
+    summary = _llm_summarize(raw) or raw
+    return [{"kind": "conversation", "title": "feedback decision note",
+             "text": "Past user feedback (summarized): " + summary}]
 
 
 def _repo_symbols(repo):
@@ -83,7 +140,7 @@ def _text_symbols(text):
 
 
 def ingest_project(repo, conversations, project):
-    entries = _git_decisions(repo) + _conversation_prefs(conversations)
+    entries = _git_decisions(repo) + _conversation_story(conversations)
     symbols = _repo_symbols(repo)
     for e in entries:
         e["project"] = project

@@ -35,17 +35,17 @@ ROUNDING = {
                           "\n\n    Half-cents round DOWN (toward zero) to match the legacy ledger; "
                           "do not use half-up or banker's rounding."),
     "naive": [_round_mod("ROUND_HALF_EVEN", "")],   # banker's: passes repro (2.125->2.12), fails 2.135
-    "decision_subject": "round_cents rounds half-cents DOWN to match the legacy ledger",
-    "decision_rationale": ("Money rounds half-cents DOWN (ROUND_HALF_DOWN), always — half-up and "
-                           "banker's rounding both drift our totals away from the legacy ledger we "
-                           "reconcile against; finance flagged a discrepancy from exactly this."),
+    "decision_subject": "fix: align cent rounding with the legacy billing ledger",
+    "decision_rationale": ("Finance flagged a month-end reconciliation mismatch on the half-cent amounts — "
+                           "the rounding mode round_cents used disagreed with the legacy ledger we reconcile "
+                           "against. Adjusted the mode so the totals line up again."),
     "conversation": [
-        {"role": "user", "text": "Add a discount to the invoice total and get the cents right."},
-        {"role": "assistant", "text": "Done — I used banker's rounding (ROUND_HALF_EVEN), the money standard."},
-        {"role": "user", "text": "No, not banker's. We round half-cents DOWN (ROUND_HALF_DOWN) here, always — "
-                                 "banker's and half-up drift our totals off the legacy ledger; finance flagged "
-                                 "a 3-cent discrepancy last quarter from exactly this. Use half-down for money."},
-        {"role": "assistant", "text": "Understood — ROUND_HALF_DOWN for all money rounding in this project."},
+        {"role": "user", "text": "Our monthly invoice totals keep landing a cent off from the legacy billing ledger we reconcile against, and finance keeps flagging it."},
+        {"role": "assistant", "text": "I'll switch round_cents to banker's rounding (ROUND_HALF_EVEN) — the usual standard for currency."},
+        {"role": "user", "text": "We already tried banker's last quarter and it still drifted; the disagreement is specifically on the exact half-cent cases."},
+        {"role": "assistant", "text": "Got it. For a half-cent, should I round it up to the next cent then?"},
+        {"role": "user", "text": "No, the other way."},
+        {"role": "assistant", "text": "Understood — round half-cents down (ROUND_HALF_DOWN), toward zero, to match the ledger."},
     ],
     "existing_test": ('from decimal import Decimal\nfrom pay import round_cents\n\n\n'
                       'def test_non_half():\n    assert round_cents("1.234") == Decimal("1.23")\n'
@@ -82,6 +82,7 @@ LISTMERGE = {
         '        if isinstance(value, dict) and isinstance(result.get(key), dict):\n'
         '            result[key] = apply_updates(result[key], value)\n'
         '        elif isinstance(value, list) and isinstance(result.get(key), list):\n'
+        '            # union with the base list (de-duplicated, base order first)\n'
         '            merged = list(result[key])\n'
         '            for item in value:\n'
         '                if item not in merged:\n'
@@ -110,17 +111,17 @@ LISTMERGE = {
                    '            result[key] = value\n'
                    '    return result\n'),
     ],
-    "decision_subject": "apply_updates: union list values instead of replacing them",
-    "decision_rationale": ("When an overlay sets a list, UNION it with the base list (de-duplicated, "
-                           "base order first) — never replace or naively append. Replacing dropped "
-                           "middleware that a base layer had installed (disabling auth in prod); "
-                           "appending duplicated entries on every reload."),
+    "decision_subject": "fix: stop config overlays from dropping inherited list entries",
+    "decision_rationale": ("A service overlay was wiping list values a base layer had set — we lost the auth "
+                           "middleware in prod once. Changed how apply_updates combines list values on "
+                           "conflict so entries from the base layer survive."),
     "conversation": [
-        {"role": "user", "text": "Make config overlays merge nested settings properly."},
-        {"role": "assistant", "text": "Done — deep-merge for dicts, and I replace list values on conflict."},
-        {"role": "user", "text": "Don't replace lists — union them (deduped). Replacing dropped the "
-                                 "middleware the base layer set and disabled auth in prod once. Always union lists."},
-        {"role": "assistant", "text": "Understood — union list values (de-duplicated), never replace or append."},
+        {"role": "user", "text": "When a service overlay sets a list like middleware, it's blowing away what the base config already put there — we lost auth in prod because of this."},
+        {"role": "assistant", "text": "I'll make apply_updates append the overlay's list items onto the base list."},
+        {"role": "user", "text": "Appending caused its own mess — on every config reload the same entries piled up as duplicates."},
+        {"role": "assistant", "text": "So should I keep the base list and ignore the overlay's additions?"},
+        {"role": "user", "text": "No, keep both, no repeats."},
+        {"role": "assistant", "text": "Understood — union the two lists, de-duplicated, base order first."},
     ],
     "existing_test": ('from confmerge import apply_updates\n\n\n'
                       'def test_flat():\n    assert apply_updates({"a": 1, "b": 2}, {"b": 3}) == {"a": 1, "b": 3}\n'
@@ -160,16 +161,17 @@ SLUGIFY = {
                          '    return re.sub(r"[^a-z0-9]+", "-", text).strip("-")\n'),
     # naive: standard slug, drops "&"
     "naive": [_slug_mod('    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")\n')],
-    "decision_subject": "slugify expands '&' to 'and' (SEO)",
-    "decision_rationale": ("slugify must expand an ampersand to the word 'and' (not drop it) — e.g. 'R&D' "
-                           "-> 'r-and-d'. Search ranking depends on the literal word; dropping the "
-                           "ampersand lost us traffic on '&'-containing titles."),
+    "decision_subject": "fix: improve slug generation for titles containing symbols",
+    "decision_rationale": ("Some product titles with special characters were slugging in a way that hurt "
+                           "their search ranking. Adjusted how slugify handles those characters so the slugs "
+                           "keep the searchable words."),
     "conversation": [
-        {"role": "user", "text": "Fix slugify so titles slug cleanly."},
-        {"role": "assistant", "text": "Done — lowercased and replaced non-alphanumerics with dashes."},
-        {"role": "user", "text": "You dropped the ampersands. We expand '&' to 'and' for SEO — 'R&D' must "
-                                 "become 'r-and-d', not 'r-d'. We lost search traffic on this before."},
-        {"role": "assistant", "text": "Understood — expand '&' to 'and' in slugify."},
+        {"role": "user", "text": "Some of our product titles are slugging in a way that tanks their search ranking — specifically the ones with special characters in them."},
+        {"role": "assistant", "text": "I'll strip all non-alphanumeric characters and replace runs of them with a single dash."},
+        {"role": "user", "text": "That stripping is exactly what's losing us traffic — dropping the character changes what people actually search for, like our 'R&D' page."},
+        {"role": "assistant", "text": "Should I just leave the ampersand character in the slug then?"},
+        {"role": "user", "text": "No, spell it out."},
+        {"role": "assistant", "text": "Got it — expand '&' to the word 'and', so 'R&D' becomes 'r-and-d'."},
     ],
     "existing_test": 'from slugkit import slugify\n\n\ndef test_alnum():\n    assert slugify("abc123") == "abc123"\n',
     "repro_test": 'from slugkit import slugify\n\n\ndef test_basic_slug():\n    assert slugify("Hello World") == "hello-world"\n',
@@ -209,16 +211,17 @@ BUDGET = {
     "correct": _retry_mod(7, "# 7 is measured: at our backoff it spans just under the upstream's rate-limit\n"
                              "# reset window; 8+ trips it and the upstream blocks us. Do not round.\n"),
     "naive": [_retry_mod(8), _retry_mod(5)],
-    "decision_subject": "bound retry attempts to 7 (fits the upstream rate-limit window)",
-    "decision_rationale": ("The retry budget is exactly 7 attempts — measured to fit just under the "
-                           "upstream's rate-limit reset window. 8+ attempts cross it and the upstream "
-                           "blocks us for a minute. It is not a round number; do not standardize it."),
+    "decision_subject": "fix: stop the retrier from tripping the upstream rate limit",
+    "decision_rationale": ("Our retry loop was hammering the upstream past its rate-limit reset window and "
+                           "getting us blocked. Tuned the attempt budget so a full set of retries fits "
+                           "inside the window."),
     "conversation": [
-        {"role": "user", "text": "We're getting rate-limited; the retrier hammers too hard."},
-        {"role": "assistant", "text": "I'll lower the attempt budget to a round 5."},
-        {"role": "user", "text": "Not 5 — it's exactly 7. We measured it: 7 attempts fit just under the "
-                                 "upstream's rate-limit window, 8 trips it. Don't round it."},
-        {"role": "assistant", "text": "Understood — MAX_ATTEMPTS = 7, the measured value."},
+        {"role": "user", "text": "The upstream keeps rate-limiting us — our retrier is clearly making too many attempts and crossing their reset window."},
+        {"role": "assistant", "text": "I'll lower MAX_ATTEMPTS to a round 5 to be safe."},
+        {"role": "user", "text": "5 is too conservative — we actually measured the window and we can fit more attempts than that before it resets."},
+        {"role": "assistant", "text": "So should I set it to 10?"},
+        {"role": "user", "text": "No, fewer than that."},
+        {"role": "assistant", "text": "Understood — exactly 7 attempts; the 8th trips the window."},
     ],
     "existing_test": ('from retryx import Retrier, TransientError\n\n\n' + _RETRY_HELPER +
                       '\n\ndef test_succeeds():\n    assert Retrier().run(lambda a: "ok") == "ok"\n'
@@ -234,3 +237,11 @@ BUDGET = {
 }
 
 TRAPS = {t["name"]: t for t in [ROUNDING, LISTMERGE, SLUGIFY, BUDGET]}
+
+from conversations import CONVERSATIONS
+import json as _json
+from pathlib import Path as _Path
+_sf = _Path(__file__).resolve().parent / "sessions.json"   # long LLM-generated realistic sessions
+_SESS = _json.loads(_sf.read_text()) if _sf.exists() else {}
+for _n in TRAPS:
+    TRAPS[_n]["conversation"] = _SESS.get(_n) or CONVERSATIONS.get(_n)
