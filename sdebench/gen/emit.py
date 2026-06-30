@@ -33,7 +33,7 @@ def emit(trap_name, source):
 
 
 def main():
-    sources = ["H", "K", "F"]
+    sources = ["H", "F"]
     for name in TRAPS:
         for src in sources:
             print("emitted:", emit(name, src))

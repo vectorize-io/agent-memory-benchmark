@@ -2,7 +2,6 @@
 
 build(trap, source, out)  -> a buggy-at-HEAD repo, with the decision stored in the chosen source:
   H : the correct code + decision lived in git history, then a regression dropped it.
-  K : the code was always buggy; the decision lives in CONVENTIONS.md.
   F : the code was always buggy; the decision lives ONLY in task.conversations (not in the repo).
 task_spec(trap, source) -> (task.json dict, regression_test, hidden_test) for the harness.
 """
@@ -61,20 +60,14 @@ def build(trap, source, out):
         # ...then a regression dropped it (HEAD is buggy).
         w(trap["module"], trap["bug"])
         commit(f"refactor: simplify {Path(trap['module']).stem}", author="Priya N.")
-    else:
-        # K and F: the code was always buggy; the decision is NOT in git history.
+    else:  # F: the code was always buggy; the decision lives ONLY in task.conversations
         w(trap["module"], trap["bug"])
         w(f"{pkg}/__init__.py", trap["init"])
         commit(f"feat: {Path(trap['module']).stem}")
         w("tests/test_existing.py", trap["existing_test"])
         commit("tests")
-        if source == "K":
-            w("CONVENTIONS.md", "# Engineering conventions\n\n## " + trap["name"].title()
-              + "\n" + trap["decision_rationale"] + "\n")
-            commit("docs: project conventions")
-        else:  # F: nothing in the repo — the decision is in task.conversations only
-            w("README.md", f"# {pkg}\n\nA small library.\n\nSee tests/ for usage.\n")
-            commit("readme")
+        w("README.md", f"# {pkg}\n\nA small library.\n\nSee tests/ for usage.\n")
+        commit("readme")
 
     # noise + release
     w("CHANGELOG.md", "# Changelog\n\n## 0.2.0\n- library\n")

@@ -66,7 +66,7 @@ def validate(trap, source):
 
 
 def main():
-    sources = ["H", "K", "F"]
+    sources = ["H", "F"]
     allok = True
     for name, trap in TRAPS.items():
         for src in sources:

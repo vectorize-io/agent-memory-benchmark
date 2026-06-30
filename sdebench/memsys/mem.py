@@ -1,7 +1,7 @@
 """sdebench local file-based memory system.
 
 A memory system that INGESTS a project's knowledge from wherever it lives — git commit rationales
-(H), CONVENTIONS.md (K), and past user conversations (F) — into a single local store of files, then
+(H) and past user conversations (F) — into a single local store of files, then
 RETRIEVES the entries relevant to a task and surfaces them. The point: the agent gets the relevant
 decision regardless of which source it lived in, and regardless of whether it would have thought to
 look (the two failure modes the vanilla baseline shows).
@@ -48,19 +48,6 @@ def _git_decisions(repo):
     return entries
 
 
-def _doc_conventions(repo):
-    """CONVENTIONS.md sections (K source)."""
-    p = Path(repo) / "CONVENTIONS.md"
-    if not p.exists():
-        return []
-    entries = []
-    for sec in re.split(r"\n##+ ", p.read_text()):
-        sec = sec.strip()
-        if not sec or sec.lower().startswith("engineering conventions"):
-            continue
-        title, _, rest = sec.partition("\n")
-        entries.append({"kind": "convention", "title": title.strip(), "text": sec.replace("\n", " ").strip()})
-    return entries
 
 
 def _conversation_prefs(conversations):
@@ -96,7 +83,7 @@ def _text_symbols(text):
 
 
 def ingest_project(repo, conversations, project):
-    entries = _git_decisions(repo) + _doc_conventions(repo) + _conversation_prefs(conversations)
+    entries = _git_decisions(repo) + _conversation_prefs(conversations)
     symbols = _repo_symbols(repo)
     for e in entries:
         e["project"] = project

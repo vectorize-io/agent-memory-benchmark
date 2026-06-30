@@ -18,7 +18,7 @@ DATASETS = HERE.parents[0] / "datasets"
 def main():
     all_entries = []
     for name in traps.TRAPS:
-        for src in ("H", "K", "F"):
+        for src in ("H", "F"):
             tp = DATASETS / f"gen-{name}-{src}" / "tasks" / "main" / "task.json"
             if not tp.exists():
                 continue
