@@ -42,9 +42,5 @@
       "role": "assistant",
       "text": "Done \u2014 slugify expands & -> and, $ -> usd, % -> pct before the existing split, so 'R&D' -> 'r-and-d', '$5 sale' -> 'usd-5-sale', '50% off' -> '50-pct-off'. Plain titles are unchanged and the strutils tests still pass."
     }
-  ],
-  "function": "slugify",
-  "policy": "SEO symbol map: & to and, $ to usd, % to pct",
-  "non_guessable": "abbreviations are project-specific (usd/pct), not the natural words dollar/percent",
-  "host": "boltons@979fa9b"
+  ]
 }

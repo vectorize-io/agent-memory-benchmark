@@ -5,6 +5,9 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from realfn_traps import REALFN_TRAPS
+import json as _json
+_SESSF = HERE / 'realfn_sessions.json'
+_RF_SESS = _json.loads(_SESSF.read_text()) if _SESSF.exists() else {}
 
 DATASETS = HERE.parents[0] / "datasets"
 REF = "979fa9b613fa8c0a455ae16ea6f2ec91c11ecafe"
@@ -51,7 +54,7 @@ def emit(name):
         "fail_to_pass": ["tests/test_regression.py"], "pass_to_pass": ["tests/" + k for k in t["keep_tests"]],
         "hidden_to_pass": ["tests/test_hidden.py"],
         "regression_test_file": "regression_test.py", "hidden_test_file": "hidden_test.py",
-        "conversations": t["conversation"],
+        "conversations": _RF_SESS.get(name) or t["conversation"],
     }
     (ds / "task.json").write_text(json.dumps(task, indent=2))
     return cb
