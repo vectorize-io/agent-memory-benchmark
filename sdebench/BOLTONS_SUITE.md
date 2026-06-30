@@ -47,7 +47,7 @@ it now needs 2 interventions.)
 ## Honest caveats
 
 - **n=1** — boltons runs are slow (full-repo copy + Docker grade per run), so this is a single pass.
-  The 5/6 signal is clear (vanilla >0, memsys 0) but not yet replicated.
+  The 6/6 signal is clear (vanilla >0 on every task, memsys 0) but not yet replicated at higher N.
 - **5/6 are planted modules, 1 is a real function.** The strongest realism is the real-function
   slugify (real test suite as pass_to_pass). Converting more traps to real boltons functions (find
   untested edges) is the next push.
