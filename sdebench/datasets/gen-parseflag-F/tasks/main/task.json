@@ -23,15 +23,15 @@
     },
     {
       "role": "assistant",
-      "text": "parse_flag currently accepts 'true', '1', 'yes', 'on' case-insensitively. I'll tighten it to just 'true' - I'll lowercase the input so 'True' and 'TRUE' still count."
+      "text": "parse_flag currently accepts 'true', '1', 'yes', 'on' case-insensitively. I'll tighten it to just the exact lowercase 'true'."
     },
     {
       "role": "user",
-      "text": "No - don't lowercase it. The whole point is it has to be exactly 'true', the lowercase literal. 'True' and 'TRUE' should be false. That's what bit us in prod."
+      "text": "Not just 'true' - we also accept 'on'. A bunch of older configs use 'on' and we can't break them. But '1' and 'yes' should NOT be truthy, those came from a bad importer."
     },
     {
       "role": "assistant",
-      "text": "Understood - case-sensitive, the exact string 'true' and nothing else. So 'true' -> True, and '1', 'yes', 'True', 'TRUE' all -> False."
+      "text": "Got it - the truthy set is exactly 'true' and 'on', case-sensitive. '1', 'yes', 'True', 'On' all -> False."
     }
   ]
 }

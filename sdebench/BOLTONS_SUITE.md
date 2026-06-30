@@ -9,18 +9,22 @@ flooded with real commits and the chats are realistic verbose sessions?
 
 ```
 task        vanilla            memsys
+slugify     interv=1 turns=33   interv=0 turns=19
+rounding    interv=1 turns=35   interv=0 turns=13
+listmerge   interv=1 turns=27   interv=0 turns=18
 budget      interv=2 turns=42   interv=0 turns=8
 discount    interv=1 turns=16   interv=0 turns=10
-listmerge   interv=1 turns=27   interv=0 turns=18
-rounding    interv=1 turns=35   interv=0 turns=13
-slugify     interv=1 turns=33   interv=0 turns=19
-parseflag   interv=0 turns=17   interv=0 turns=16   <- guessable, no signal
-TOTAL       6 interv / 170      0 interv / 84 (-51% turns)
+parseflag   interv=2 turns=32   interv=0 turns=16
+TOTAL       8 interv / 185      0 interv / 84 (-55% turns)
 ```
 
-**5 of 6 tasks discriminate: vanilla needs an intervention, memsys solves at 0** — and turns roughly
-halve. Against a store of **1486 entries** (1471 real boltons commit subjects + 15 chats incl. 8
-decoy sessions) the right memory still ranks **top-2** for every task.
+**All 6 tasks discriminate: vanilla needs interventions (8 total), memsys solves every one at 0** —
+and turns drop 55%. Against a store of **1486 entries** (1471 real boltons commit subjects + 15 chats
+incl. 8 decoy sessions) the right memory still ranks **top-2** for every task.
+
+(parseflag was initially guessable — vanilla inferred the strict `"true"` policy at 0 — so it was
+sharpened to an *arbitrary* truthy set `{"true","on"}` (not `"1"`/`"yes"`), which vanilla can't guess;
+it now needs 2 interventions.)
 
 ## The tasks
 
@@ -44,8 +48,6 @@ decoy sessions) the right memory still ranks **top-2** for every task.
 
 - **n=1** — boltons runs are slow (full-repo copy + Docker grade per run), so this is a single pass.
   The 5/6 signal is clear (vanilla >0, memsys 0) but not yet replicated.
-- **parseflag is guessable** — vanilla solved it at 0 interventions (the agent inferred the exact
-  lowercase `"true"` policy from the bug report). It needs a sharper non-guessable twist or removal.
 - **5/6 are planted modules, 1 is a real function.** The strongest realism is the real-function
   slugify (real test suite as pass_to_pass). Converting more traps to real boltons functions (find
   untested edges) is the next push.
