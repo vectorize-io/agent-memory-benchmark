@@ -48,5 +48,11 @@
       "role": "user",
       "text": "Right, leave it at 7."
     }
-  ]
+  ],
+  "tier": "planted",
+  "module": "retryx/retry.py",
+  "function": "MAX_ATTEMPTS",
+  "policy": "exactly 7 (measured to the rate-limit window)",
+  "non_guessable": "a measured non-round value the repro only bounds, not pins",
+  "host": "boltons@979fa9b"
 }

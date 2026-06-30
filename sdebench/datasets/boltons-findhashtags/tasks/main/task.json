@@ -38,5 +38,9 @@
       "role": "user",
       "text": "Right \u2014 all-digits only."
     }
-  ]
+  ],
+  "function": "find_hashtags",
+  "policy": "drop ALL-numeric hashtags",
+  "non_guessable": "all-numeric (#42 out, #2nd stays), not the obvious leading-digit rule",
+  "host": "boltons@979fa9b"
 }

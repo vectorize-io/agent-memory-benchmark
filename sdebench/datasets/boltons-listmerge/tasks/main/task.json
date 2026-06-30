@@ -64,5 +64,11 @@
       "role": "user",
       "text": "That's the one. Ship it."
     }
-  ]
+  ],
+  "tier": "planted",
+  "module": "confmerge/merge.py",
+  "function": "apply_updates",
+  "policy": "union list values (de-duplicated, base order first)",
+  "non_guessable": "union, not replace or naive-append",
+  "host": "boltons@979fa9b"
 }

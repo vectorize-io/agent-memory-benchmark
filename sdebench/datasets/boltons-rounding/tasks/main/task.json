@@ -44,5 +44,11 @@
       "role": "user",
       "text": "Perfect, that reconciles. Thanks."
     }
-  ]
+  ],
+  "tier": "planted",
+  "module": "pay/rounding.py",
+  "function": "round_cents",
+  "policy": "round half-cents DOWN (ROUND_HALF_DOWN)",
+  "non_guessable": "half-down, not banker's/half-up which both pass the repro",
+  "host": "boltons@979fa9b"
 }

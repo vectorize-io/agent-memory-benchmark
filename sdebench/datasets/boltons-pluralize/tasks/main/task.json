@@ -38,5 +38,9 @@
       "role": "user",
       "text": "Exactly those three. Don't touch the rest."
     }
-  ]
+  ],
+  "function": "pluralize",
+  "policy": "formal/DB plurals: person->persons, index->indexes, matrix->matrixes",
+  "non_guessable": "the override LIST differs from boltons' defaults (people/indices/matrices) and from the common forms",
+  "host": "boltons@979fa9b"
 }

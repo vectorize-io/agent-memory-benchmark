@@ -1,0 +1,70 @@
+{
+  "dataset": "sdebench-boltons",
+  "host": "boltons (github.com/mahmoud/boltons) @ 979fa9b",
+  "n_tasks": 9,
+  "tasks": [
+    {
+      "task_id": "boltons-slugify-001",
+      "tier": "real-function",
+      "module": "boltons/strutils.py",
+      "function": "slugify",
+      "policy": "SEO symbol map: & to and, $ to usd, % to pct"
+    },
+    {
+      "task_id": "boltons-pluralize-001",
+      "tier": "real-function",
+      "module": "boltons/strutils.py",
+      "function": "pluralize",
+      "policy": "formal/DB plurals: person->persons, index->indexes, matrix->matrixes"
+    },
+    {
+      "task_id": "boltons-under2camel-001",
+      "tier": "real-function",
+      "module": "boltons/strutils.py",
+      "function": "under2camel",
+      "policy": "restore acronym set {HTTP,HTTPS,URL,API,IO,ID} uppercase"
+    },
+    {
+      "task_id": "boltons-findhashtags-001",
+      "tier": "real-function",
+      "module": "boltons/strutils.py",
+      "function": "find_hashtags",
+      "policy": "drop ALL-numeric hashtags"
+    },
+    {
+      "task_id": "boltons-rounding-001",
+      "tier": "planted",
+      "module": "pay/rounding.py",
+      "function": "round_cents",
+      "policy": "round half-cents DOWN (ROUND_HALF_DOWN)"
+    },
+    {
+      "task_id": "boltons-listmerge-001",
+      "tier": "planted",
+      "module": "confmerge/merge.py",
+      "function": "apply_updates",
+      "policy": "union list values (de-duplicated, base order first)"
+    },
+    {
+      "task_id": "boltons-budget-001",
+      "tier": "planted",
+      "module": "retryx/retry.py",
+      "function": "MAX_ATTEMPTS",
+      "policy": "exactly 7 (measured to the rate-limit window)"
+    },
+    {
+      "task_id": "boltons-discount-001",
+      "tier": "planted",
+      "module": "billing/discount.py",
+      "function": "apply_discounts",
+      "policy": "percent discounts apply before fixed-amount"
+    },
+    {
+      "task_id": "boltons-parseflag-001",
+      "tier": "planted",
+      "module": "cfg/flags.py",
+      "function": "parse_flag",
+      "policy": "truthy set is exactly {'true','on'}"
+    }
+  ]
+}

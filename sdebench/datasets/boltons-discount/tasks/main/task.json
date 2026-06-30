@@ -40,5 +40,11 @@
       "role": "assistant",
       "text": "Got it - apply all percent discounts first (compounding), then fixed-amount ones, ignoring submission order. So $10-off + 50%-off on $100 is 50 then minus 10 = $40 either way. Deterministic: percent before fixed."
     }
-  ]
+  ],
+  "tier": "planted",
+  "module": "billing/discount.py",
+  "function": "apply_discounts",
+  "policy": "percent discounts apply before fixed-amount",
+  "non_guessable": "the ordering; the obvious sequential-in-submission-order fix fails hidden",
+  "host": "boltons@979fa9b"
 }

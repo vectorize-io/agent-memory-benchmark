@@ -38,5 +38,9 @@
       "role": "user",
       "text": "Perfect, exactly those six."
     }
-  ]
+  ],
+  "function": "under2camel",
+  "policy": "restore acronym set {HTTP,HTTPS,URL,API,IO,ID} uppercase",
+  "non_guessable": "which acronyms are in the set is non-obvious; naive restores only the one shown in the repro",
+  "host": "boltons@979fa9b"
 }

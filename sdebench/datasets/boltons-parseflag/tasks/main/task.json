@@ -32,5 +32,11 @@
       "role": "assistant",
       "text": "Got it - the truthy set is exactly 'true' and 'on', case-sensitive. '1', 'yes', 'True', 'On' all -> False."
     }
-  ]
+  ],
+  "tier": "planted",
+  "module": "cfg/flags.py",
+  "function": "parse_flag",
+  "policy": "truthy set is exactly {'true','on'}",
+  "non_guessable": "an arbitrary set ('on' in, '1'/'yes' out) the agent can't guess",
+  "host": "boltons@979fa9b"
 }
