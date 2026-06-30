@@ -8,28 +8,28 @@
       "tier": "real-function",
       "module": "boltons/strutils.py",
       "function": "slugify",
-      "policy": "SEO symbol map: & to and, $ to usd, % to pct"
+      "policy": "SEO symbol map & to and, $ to usd, % to pct"
     },
     {
       "task_id": "boltons-pluralize-001",
       "tier": "real-function",
       "module": "boltons/strutils.py",
       "function": "pluralize",
-      "policy": "formal/DB plurals: person->persons, index->indexes, matrix->matrixes"
+      "policy": "formal/DB plurals person->persons, index->indexes, matrix->matrixes"
     },
     {
       "task_id": "boltons-under2camel-001",
       "tier": "real-function",
       "module": "boltons/strutils.py",
       "function": "under2camel",
-      "policy": "restore acronym set {HTTP,HTTPS,URL,API,IO,ID} uppercase"
+      "policy": "acronym set {HTTP,API,SKU,GDPR} uppercase; db/sql/url stay title-cased"
     },
     {
       "task_id": "boltons-findhashtags-001",
       "tier": "real-function",
       "module": "boltons/strutils.py",
       "function": "find_hashtags",
-      "policy": "drop ALL-numeric hashtags"
+      "policy": "drop all-numeric tags EXCEPT 4-digit years (1900-2099)"
     },
     {
       "task_id": "boltons-rounding-001",

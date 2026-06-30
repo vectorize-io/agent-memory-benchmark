@@ -5,7 +5,7 @@
   "source": "F",
   "tier": "real-function",
   "module": "boltons/strutils.py",
-  "bug_report": "under2camel mangles our acronyms. 'http_response' becomes 'HttpResponse' instead of 'HTTPResponse', so generated class names don't match our code style. Make under2camel keep the project's known acronyms uppercase. A failing repro is at tests/test_regression.py.",
+  "bug_report": "under2camel mangles our class names \u2014 'http_response' becomes 'HttpResponse' instead of 'HTTPResponse', so generated names don't match our codebase's acronym style. Make under2camel follow our style guide's acronym rules. A failing repro is at tests/test_regression.py.",
   "fail_to_pass": [
     "tests/test_regression.py"
   ],
@@ -20,39 +20,27 @@
   "conversations": [
     {
       "role": "user",
-      "text": "The code generator produces class names like 'HttpResponse' and 'ApiKey' from snake_case, but our codebase style is 'HTTPResponse', 'APIKey'. under2camel is title-casing the acronyms. Can you fix it to keep our acronyms uppercase?"
+      "text": "The code generator makes class names like 'HttpResponse' from snake_case, but our style guide wants 'HTTPResponse'. under2camel is title-casing the acronyms. Can you fix it to match our style?"
     },
     {
       "role": "assistant",
-      "text": "I understand the issue. `boltons.strutils.under2camel` currently applies a simple `capitalize()` to each segment, which leads to 'HttpResponse' instead of 'HTTPResponse'. Let me quickly inspect the existing implementation and confirm the behavior.\n\nLooking at `boltons/strutils.py`:\n```python\ndef under2camel(s):\n    # ... docstring ...\n    if not s:\n        return ''\n    return ''.join(x.capitalize() for x in s.split('_'))\n```\nAs expected, it iterates through underscore-separated parts and calls `x.capitalize()` on each. This is why 'http_response' becomes 'HttpResponse', as 'http' gets capitalized to 'Http'.\n\nLet's confirm this with a quick `python -c` call:\n```bash\n$ python -c \"from boltons.strutils import under2camel; print(under2camel('http_response'))\"\nHttpResponse\n$ python -c \"from boltons.strutils import under2camel; print(under2camel('api_key'))\"\nApiKey\n```\nTo address this, we'll need to introduce a special case: if a segment matches a known acronym, it should be converted entirely to uppercase instead of just capitalized. To do this, I'll need a definitive list of the acronyms you mentioned. Which specific acronyms should always remain all-caps?"
+      "text": "under2camel capitalizes each part, so 'http' -> 'Http'. I'll uppercase the common tech acronyms \u2014 http, https, url, api, db, sql, io, id, and so on."
     },
     {
       "role": "user",
-      "text": "HTTP, HTTPS, URL, API, IO, and ID. Those stay all-caps. Everything else title-cases normally."
+      "text": "Hold on \u2014 not all of those, our list is specific and a bit unusual. HTTP and API yes, but also SKU and GDPR (our domain ones). And we deliberately do NOT uppercase db, sql, or url \u2014 those stay title-cased, e.g. 'DbName', not 'DBName'."
     },
     {
       "role": "assistant",
-      "text": "Got it. So, we have a fixed set of acronyms: HTTP, HTTPS, URL, API, IO, and ID, which must always appear in all-caps when processed by `under2camel`. All other segments should continue to be title-cased as before. The basic logic would involve splitting the input string by underscores, then for each resulting part, checking if it is present in our list of special acronyms. If it is, we'd convert that part to uppercase. Otherwise, we'd apply `capitalize()`.\n\nFor example:\n- `http_response` would become `HTTPResponse` (`http` is special, `response` is normal).\n- `api_key` would become `APIKey` (`api` is special, `key` is normal).\n- `user_name` would become `UserName` (neither `user` nor `name` are special).\n\nThis seems like a robust approach to achieve the desired naming convention. We'll ensure the lookup is efficient, likely using a `set` for the acronyms. Does this high-level logic sound correct for your requirements?"
+      "text": "Got it \u2014 so the acronym set is exactly {HTTP, API, SKU, GDPR}, and everything else (including db, sql, url) title-cases normally. So 'sku_count' -> 'SKUCount', 'gdpr_flag' -> 'GDPRFlag', 'db_name' -> 'DbName', 'url_path' -> 'UrlPath'."
     },
     {
       "role": "user",
-      "text": "That's good, but how about case-sensitivity for the input? If I have 'http_request', does 'http' get recognized?"
-    },
-    {
-      "role": "assistant",
-      "text": "That's an excellent and crucial point. The input segments to `under2camel` might be lowercase, like 'http', 'api', or 'id'. For the lookup against our canonical acronym set (HTTP, HTTPS, etc.), we need to perform a case-insensitive comparison. The `ACRONYMS` set should store the desired uppercase forms, and we'll convert the input part to uppercase *before* checking if it's in the set.\n\nSo, the refined logic would be:\n1.  Define a constant `ACRONYMS = {'HTTP', 'HTTPS', 'URL', 'API', 'IO', 'ID'}`.\n2.  Split the input string `s` by `'_'` into `parts`.\n3.  For each `part` in `parts`:\n    a.  Convert `part` to uppercase for the lookup: `part_upper = part.upper()`.\n    b.  If `part_upper` is in `ACRONYMS`, then the output segment for this part is `part_upper` (e.g., 'http' becomes 'HTTP').\n    c.  Otherwise, the output segment for this part is `part.capitalize()` (e.g., 'response' becomes 'Response', 'name' becomes 'Name').\n4.  Join all processed segments.\n\nThis ensures that an input 'http_request' would correctly result in 'HTTPRequest', and 'Id_Number' would become 'IDNumber'. Does this explicit handling of case-insensitivity for the lookup clarify things?"
-    },
-    {
-      "role": "user",
-      "text": "Okay, that's better. What if an acronym is at the end, like `user_id`?"
-    },
-    {
-      "role": "assistant",
-      "text": "Absolutely, the refined logic handles acronyms correctly regardless of their position within the string, including at the end. The transformation logic applies independently to each underscore-separated part. So, for `user_id`:\n\n1.  The string `\"user_id\"` is split into `[\"user\", \"id\"]`.\n2.  For `\"user\"`:\n    a.  `\"user\".upper()` is `\"USER\"`.\n    b.  `\"USER\"` is not in `ACRONYMS`.\n    c.  Result: `\"user\".capitalize()` which is `\"User\"`.\n3.  For `\"id\"`:\n    a.  `\"id\".upper()` is `\"ID\"`.\n    b.  `\"ID\"` *is* in `ACRONYMS`.\n    c.  Result: `\"id\".upper()` which is `\"ID\"`.\n4.  The final result is `'User' + 'ID'` which is `'UserID'`.\n\nLet's conceptually simulate this with `python -c` to ensure it's clear how it behaves for these specific cases with our updated rule:\n```bash\n# Expected behavior after the change, for demonstration:\n$ python -c \"ACRONYMS = {'HTTP', 'HTTPS', 'URL', 'API', 'IO', 'ID'}; def new_under2camel(s): return ''.join(p.upper() if p.upper() in ACRONYMS else p.capitalize() for p in s.split('_')); print(new_under2camel('user_id'))\"\nUserID\n$ python -c \"ACRONYMS = {'HTTP', 'HTTPS', 'URL', 'API', 'IO', 'ID'}; def new_under2camel(s): return ''.join(p.upper() if p.upper() in ACRONYMS else p.capitalize() for p in s.split('_')); print(new_under2camel('io_error'))\"\nIOError\n```\nThis fully confirms that the rule will correctly transform `user_id` to `UserID`, `io_error` to `IOError`, `http_request` to `HTTPRequest`, and `parse_url` to `ParseURL`. I'll also add appropriate test cases in `tests/test_strutils.py` and update the function's docstring once the implementation is done. The rule is now: split by underscore, if a part's uppercase form is in `{HTTP, HTTPS, URL, API, IO, ID}`, keep it uppercase, otherwise title-case it."
-    },
-    {
-      "role": "user",
-      "text": "Perfect, exactly those six."
+      "text": "Exactly \u2014 just those four."
     }
-  ]
+  ],
+  "function": "under2camel",
+  "policy": "acronym set {HTTP,API,SKU,GDPR} uppercase; db/sql/url stay title-cased",
+  "non_guessable": "the set is project-specific (includes SKU/GDPR, EXCLUDES common db/url that the agent would uppercase)",
+  "host": "boltons@979fa9b"
 }

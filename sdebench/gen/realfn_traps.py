@@ -46,27 +46,27 @@ REALFN_TRAPS = {
         "keep_tests": ["test_strutils.py"],
         "import": "from boltons.strutils import under2camel",
         "anchor": "    return ''.join(w.capitalize() or '_' for w in under_string.split('_'))",
-        "correct": ('    _ACR = {"http": "HTTP", "https": "HTTPS", "url": "URL", "api": "API", "io": "IO", "id": "ID"}\n'
+        "correct": ('    _ACR = {"http": "HTTP", "api": "API", "sku": "SKU", "gdpr": "GDPR"}\n'
                     "    return ''.join(_ACR.get(w, w.capitalize()) or '_' for w in under_string.split('_'))"),
         "naive": ('    _ACR = {"http": "HTTP"}\n'
                   "    return ''.join(_ACR.get(w, w.capitalize()) or '_' for w in under_string.split('_'))"),
         "repro_test": ('from boltons.strutils import under2camel\n\n\n'
                        'def test_http_acronym():\n    assert under2camel("http_response") == "HTTPResponse"\n'),
         "hidden_test": ('from boltons.strutils import under2camel\n\n\n'
-                        'def test_acronyms():\n    assert under2camel("http_response") == "HTTPResponse"\n'
-                        '    assert under2camel("api_key") == "APIKey"\n    assert under2camel("parse_url") == "ParseURL"\n'
-                        '    assert under2camel("user_id") == "UserID"\n\n\n'
-                        'def test_non_acronyms_unchanged():\n    assert under2camel("user_name") == "UserName"\n'
-                        '    assert under2camel("complex_tokenizer") == "ComplexTokenizer"\n'),
-        "bug_report": ("under2camel mangles our acronyms. 'http_response' becomes 'HttpResponse' instead of "
-                       "'HTTPResponse', so generated class names don't match our code style. Make under2camel keep "
-                       "the project's known acronyms uppercase. A failing repro is at tests/test_regression.py."),
+                        'def test_project_acronyms():\n    assert under2camel("http_response") == "HTTPResponse"\n'
+                        '    assert under2camel("api_key") == "APIKey"\n    assert under2camel("sku_count") == "SKUCount"\n'
+                        '    assert under2camel("gdpr_flag") == "GDPRFlag"\n\n\n'
+                        'def test_common_acronyms_not_uppercased():\n    assert under2camel("db_name") == "DbName"\n'
+                        '    assert under2camel("url_path") == "UrlPath"\n    assert under2camel("user_name") == "UserName"\n'),
+        "bug_report": ("under2camel mangles our class names — 'http_response' becomes 'HttpResponse' instead of "
+                       "'HTTPResponse', so generated names don't match our codebase's acronym style. Make under2camel "
+                       "follow our style guide's acronym rules. A failing repro is at tests/test_regression.py."),
         "conversation": [
-            {"role": "user", "text": "The code generator produces class names like 'HttpResponse' and 'ApiKey' from snake_case, but our codebase style is 'HTTPResponse', 'APIKey'. under2camel is title-casing the acronyms. Can you fix it to keep our acronyms uppercase?"},
-            {"role": "assistant", "text": "under2camel just capitalizes each underscore-separated part, so 'http' -> 'Http'. I can special-case acronyms. Which ones does your style guide list?"},
-            {"role": "user", "text": "HTTP, HTTPS, URL, API, IO, and ID. Those stay all-caps. Everything else title-cases normally."},
-            {"role": "assistant", "text": "Got it — a known-acronym set {HTTP, HTTPS, URL, API, IO, ID}; if a part matches, emit it uppercase, otherwise capitalize as before. So 'user_id' -> 'UserID', 'parse_url' -> 'ParseURL', 'user_name' -> 'UserName'."},
-            {"role": "user", "text": "Perfect, exactly those six."},
+            {"role": "user", "text": "The code generator makes class names like 'HttpResponse' from snake_case, but our style guide wants 'HTTPResponse'. under2camel is title-casing the acronyms. Can you fix it to match our style?"},
+            {"role": "assistant", "text": "under2camel capitalizes each part, so 'http' -> 'Http'. I'll uppercase the common tech acronyms — http, https, url, api, db, sql, io, id, and so on."},
+            {"role": "user", "text": "Hold on — not all of those, our list is specific and a bit unusual. HTTP and API yes, but also SKU and GDPR (our domain ones). And we deliberately do NOT uppercase db, sql, or url — those stay title-cased, e.g. 'DbName', not 'DBName'."},
+            {"role": "assistant", "text": "Got it — so the acronym set is exactly {HTTP, API, SKU, GDPR}, and everything else (including db, sql, url) title-cases normally. So 'sku_count' -> 'SKUCount', 'gdpr_flag' -> 'GDPRFlag', 'db_name' -> 'DbName', 'url_path' -> 'UrlPath'."},
+            {"role": "user", "text": "Exactly — just those four."},
         ],
     },
     # ── find_hashtags: drop all-numeric hashtags (not just leading-digit) ───────────────────────
@@ -75,23 +75,24 @@ REALFN_TRAPS = {
         "keep_tests": ["test_strutils.py"],
         "import": "from boltons.strutils import find_hashtags",
         "anchor": "    return HASHTAG_RE.findall(string)",
-        "correct": "    return [h for h in HASHTAG_RE.findall(string) if not h.isdigit()]",
+        "correct": "    return [h for h in HASHTAG_RE.findall(string) if not (h.isdigit() and not (len(h) == 4 and 1900 <= int(h) <= 2099))]",
         "naive": "    return [h for h in HASHTAG_RE.findall(string) if not h[:1].isdigit()]",
         "repro_test": ('from boltons.strutils import find_hashtags\n\n\n'
                        'def test_drops_pure_number_tag():\n    assert find_hashtags("#1 #python") == ["python"]\n'),
         "hidden_test": ('from boltons.strutils import find_hashtags\n\n\n'
-                        'def test_only_all_numeric_dropped():\n'
+                        'def test_year_tags_kept_others_dropped():\n'
                         '    assert find_hashtags("#42 #data") == ["data"]\n'
-                        '    assert find_hashtags("#2nd #ai2 #2024") == ["2nd", "ai2"]\n'),
-        "bug_report": ("Our trending feed is full of junk tags like #1 and #2024 — find_hashtags is returning "
-                       "pure-number hashtags, which aren't real tags on our platform. Make find_hashtags drop the "
-                       "invalid ones. A failing repro is at tests/test_regression.py."),
+                        '    assert find_hashtags("#2024 #launch") == ["2024", "launch"]\n'
+                        '    assert find_hashtags("#42 #99") == []\n    assert find_hashtags("#2nd") == ["2nd"]\n'),
+        "bug_report": ("Our trending feed is cluttered with junk numeric tags like #42 — find_hashtags returns "
+                       "pure-number hashtags that aren't real tags. Clean it up to follow our platform's tag rules. "
+                       "A failing repro is at tests/test_regression.py."),
         "conversation": [
-            {"role": "user", "text": "The trending hashtags list is polluted with numbers — '#1', '#2024', '#42' keep showing up. Those aren't valid tags for us. Can you filter them out in find_hashtags?"},
-            {"role": "assistant", "text": "I can filter the results. The simplest rule is to drop any hashtag that starts with a digit — that removes '#1', '#2024', '#42'."},
-            {"role": "user", "text": "No, careful — tags like '#2nd' and '#ai2' are legit and some start with a digit. The rule is: drop a tag only if it's ALL digits. '#42' goes, '#2nd' stays."},
-            {"role": "assistant", "text": "Understood — drop a hashtag only when it is entirely numeric (all digits); anything with a letter stays. So '#42' and '#2024' are dropped, '#2nd' and '#ai2' are kept."},
-            {"role": "user", "text": "Right — all-digits only."},
+            {"role": "user", "text": "Our trends are cluttered with numeric tags like #42 and #99. find_hashtags returns pure numbers that aren't real tags. Can you filter them?"},
+            {"role": "assistant", "text": "I'll drop any hashtag that's entirely digits — so #42, #99, and #2024 would all be removed."},
+            {"role": "user", "text": "Careful — #2024 should STAY. We run year campaigns (#2024, #2025), so 4-digit years are valid tags. Drop the other pure numbers, keep the years."},
+            {"role": "assistant", "text": "Understood — drop a hashtag if it's all digits UNLESS it's a 4-digit year (1900-2099), which we keep. So #42 and #99 go, #2024 stays, and alphanumeric tags like #2nd are unaffected."},
+            {"role": "user", "text": "Right — years are the exception."},
         ],
     },
     "slugify": {'module': 'boltons/strutils.py', 'keep_tests': ['test_strutils.py'], 'import': 'from boltons.strutils import slugify', 'anchor': "    ret = delim.join(split_punct_ws(text)) or delim if text else ''", 'correct': "    for _s, _w in (('&', ' and '), ('$', ' usd '), ('%', ' pct ')):\n        text = text.replace(_s, _w)\n    ret = delim.join(split_punct_ws(text)) or delim if text else ''", 'naive': "    for _s, _w in (('&', ' and '), ('$', ' dollar '), ('%', ' percent ')):\n        text = text.replace(_s, _w)\n    ret = delim.join(split_punct_ws(text)) or delim if text else ''", 'repro_test': 'from boltons.strutils import slugify\n\n\ndef test_ampersand_preserved():\n    assert slugify("R&D", delim="-") == "r-and-d"\n', 'hidden_test': 'from boltons.strutils import slugify\n\n\ndef test_symbol_abbreviations():\n    assert slugify("R&D", delim="-") == "r-and-d"\n    assert slugify("$5 sale", delim="-") == "usd-5-sale"\n    assert slugify("50% off", delim="-") == "50-pct-off"\n\n\ndef test_plain_titles_unchanged():\n    assert slugify("Hello World", delim="-") == "hello-world"\n    assert slugify("First post! Hi!!!!~1") == "first_post_hi_1"\n', 'bug_report': "slugify is mangling product titles that contain symbols. 'R&D' slugifies to 'r-d' — the '&' is dropped entirely, which changed the search term and tanked the page's ranking. Symbols in titles (&, $, %) need to be preserved as the team's standard words in the slug, not stripped. A failing repro is at tests/test_regression.py. Fix boltons.strutils.slugify without breaking its existing behaviour.", 'conversation': [{'role': 'user', 'text': "Marketing flagged that several product pages with symbols in the title dropped out of search. slugify is stripping the symbols — 'R&D' becomes 'r-d'. We need the symbols to come through as words."}, {'role': 'assistant', 'text': "Looking at boltons/strutils.py — slugify calls split_punct_ws which discards punctuation, so '&', '$', '%' all vanish. Reproduced 'R&D' -> 'r-d'. I'll expand them to words before the split: '&' -> 'and', '$' -> 'dollar', '%' -> 'percent'. That gives 'r-and-d', 'usd'... wait, what wording do you want for currency and percent?"}, {'role': 'user', 'text': "Not 'dollar' or 'percent' — we standardized on our analytics tags. '$' becomes 'usd' and '%' becomes 'pct'. So '$5 sale' -> 'usd-5-sale' and '50% off' -> '50-pct-off'. The ampersand is 'and' as you said."}, {'role': 'assistant', 'text': "Got it — the map is '&' -> 'and', '$' -> 'usd', '%' -> 'pct', matching the analytics tags, not the natural English words. Only those three symbols; leave the rest of the punctuation handling as-is."}, {'role': 'user', 'text': 'Right. usd and pct, exactly. Ship it.'}, {'role': 'assistant', 'text': "Done — slugify expands & -> and, $ -> usd, % -> pct before the existing split, so 'R&D' -> 'r-and-d', '$5 sale' -> 'usd-5-sale', '50% off' -> '50-pct-off'. Plain titles are unchanged and the strutils tests still pass."}]}
