@@ -287,7 +287,46 @@ DISCOUNT = {
 }
 
 
-TRAPS = {t["name"]: t for t in [ROUNDING, LISTMERGE, SLUGIFY, BUDGET, DISCOUNT]}
+def _flag_mod(body):
+    return '"""Parse a boolean flag string."""\n\n\ndef parse_flag(s):\n' + body
+
+
+PARSEFLAG = {
+    "name": "parseflag",
+    "marker": "lowercase",
+    "pkg": "cfg",
+    "module": "cfg/flags.py",
+    "init": '"""cfg package."""\nfrom .flags import parse_flag\n\n__all__ = ["parse_flag"]\n',
+    "import_line": "from cfg import parse_flag",
+    "bug": _flag_mod('    return s.strip().lower() in ("true", "1", "yes", "on")\n'),
+    "correct": _flag_mod('    # only the exact lowercase string "true" is truthy (case-sensitive)\n    return s == "true"\n'),
+    "naive": [_flag_mod('    return s.strip().lower() == "true"\n')],
+    "decision_subject": "parse_flag: only the exact lowercase string 'true' is truthy",
+    "decision_rationale": ("A boolean flag is true only when the value is exactly the lowercase string "
+                           "'true' - case-sensitive, no '1'/'yes'/'on', no 'True'/'TRUE'. Lenient parsing "
+                           "let inconsistent values across services silently enable features."),
+    "conversation": [
+        {"role": "user", "text": "Feature flags are behaving inconsistently across services - some treat '1' and 'yes' as on, some don't, and a stray 'True' enabled something in prod that shouldn't have been on."},
+        {"role": "assistant", "text": "parse_flag currently accepts 'true', '1', 'yes', 'on' case-insensitively. I'll tighten it to just 'true' - I'll lowercase the input so 'True' and 'TRUE' still count."},
+        {"role": "user", "text": "No - don't lowercase it. The whole point is it has to be exactly 'true', the lowercase literal. 'True' and 'TRUE' should be false. That's what bit us in prod."},
+        {"role": "assistant", "text": "Understood - case-sensitive, the exact string 'true' and nothing else. So 'true' -> True, and '1', 'yes', 'True', 'TRUE' all -> False."},
+    ],
+    "existing_test": ('from cfg import parse_flag\n\n\n'
+                      'def test_basic():\n    assert parse_flag("true") is True\n    assert parse_flag("false") is False\n'),
+    "repro_test": ('from cfg import parse_flag\n\n\n'
+                   'def test_yes_is_not_true():\n    assert parse_flag("yes") is False\n'),
+    "hidden_test": ('from cfg import parse_flag\n\n\n'
+                    'def test_case_sensitive():\n    assert parse_flag("true") is True\n'
+                    '    assert parse_flag("True") is False\n    assert parse_flag("TRUE") is False\n'
+                    '    assert parse_flag("1") is False\n'),
+    "bug_report": ("Feature flags are inconsistent - parse_flag treats '1', 'yes', 'on' as true and is "
+                   "case-insensitive, so values that shouldn't enable a feature are turning it on. Tighten "
+                   "parse_flag to the project's intended truthy value. A failing repro is at "
+                   "tests/test_regression.py."),
+}
+
+
+TRAPS = {t["name"]: t for t in [ROUNDING, LISTMERGE, SLUGIFY, BUDGET, DISCOUNT, PARSEFLAG]}
 
 from conversations import CONVERSATIONS
 import json as _json

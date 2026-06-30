@@ -1,0 +1,36 @@
+{
+  "task_id": "boltons-parseflag-001",
+  "codebase": "boltons-parseflag",
+  "build": "build.py",
+  "source": "F",
+  "bug_report": "Feature flags are inconsistent - parse_flag treats '1', 'yes', 'on' as true and is case-insensitive, so values that shouldn't enable a feature are turning it on. Tighten parse_flag to the project's intended truthy value. A failing repro is at tests/test_regression.py.",
+  "fail_to_pass": [
+    "tests/test_regression.py"
+  ],
+  "pass_to_pass": [
+    "tests/test_parseflag.py"
+  ],
+  "hidden_to_pass": [
+    "tests/test_hidden.py"
+  ],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py",
+  "conversations": [
+    {
+      "role": "user",
+      "text": "Feature flags are behaving inconsistently across services - some treat '1' and 'yes' as on, some don't, and a stray 'True' enabled something in prod that shouldn't have been on."
+    },
+    {
+      "role": "assistant",
+      "text": "parse_flag currently accepts 'true', '1', 'yes', 'on' case-insensitively. I'll tighten it to just 'true' - I'll lowercase the input so 'True' and 'TRUE' still count."
+    },
+    {
+      "role": "user",
+      "text": "No - don't lowercase it. The whole point is it has to be exactly 'true', the lowercase literal. 'True' and 'TRUE' should be false. That's what bit us in prod."
+    },
+    {
+      "role": "assistant",
+      "text": "Understood - case-sensitive, the exact string 'true' and nothing else. So 'true' -> True, and '1', 'yes', 'True', 'TRUE' all -> False."
+    }
+  ]
+}
