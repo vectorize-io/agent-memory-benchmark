@@ -11,3 +11,4 @@ data/tempo/
 .data/
 .vercel
 .env*.local
+.env

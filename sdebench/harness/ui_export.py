@@ -86,13 +86,13 @@ def main():
     args = ap.parse_args()
 
     traces = sorted(glob.glob(str(RUN_DIR / args.glob / "trace.json")))
-    runs = {}  # (model, history, task_id) -> [(key, trace)]
+    runs = {}  # (model, history, variant, task_id) -> [(key, trace)]
     for f in traces:
         t = json.loads(Path(f).read_text())
-        runs.setdefault((t["model"], t["history"], t["task_id"]), []).append((Path(f).parent.name, t))
+        runs.setdefault((t["model"], t["history"], t.get("variant", "base"), t["task_id"]), []).append((Path(f).parent.name, t))
 
     hist_cache = {}  # repo -> git history (fallback capture for old runs w/o stored history)
-    for (model, history, task_id), items in runs.items():
+    for (model, history, variant, task_id), items in runs.items():
         t0 = items[0][1]
         gh = t0.get("git_history")
         if not gh:   # backfill old runs by rebuilding the codebase
@@ -102,7 +102,7 @@ def main():
                 hist_cache[cb] = capture_git_history(task)
             gh = hist_cache[cb]
         repo = task_id   # one UI split per task (tasks sharing a codebase share gh)
-        run_name = f"opencode+{model}+{history}"
+        run_name = f"opencode+{model}+{history}+{variant}"
         results = [to_query_result(t, key, gh) for key, t in items]
         correct = sum(1 for r in results if r["correct"])
         avg_interv = round(sum((r["meta"]["interventions"] or 0) for r in results) / len(results), 2)
