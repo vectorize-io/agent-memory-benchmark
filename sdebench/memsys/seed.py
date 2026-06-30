@@ -17,19 +17,8 @@ DATASETS = HERE.parents[0] / "datasets"
 
 def main():
     all_entries = []
-    for name in traps.TRAPS:
-        for src in ("H", "F"):
-            tp = DATASETS / f"gen-{name}-{src}" / "tasks" / "main" / "task.json"
-            if not tp.exists():
-                continue
-            task = json.loads(tp.read_text())
-            repo = Path(tempfile.mkdtemp(prefix=f"seed_{name}_{src}_"))
-            try:
-                gencore.build(traps.TRAPS[name], src, repo)
-                all_entries += ingest_project(repo, task.get("conversations"), f"gen-{name}-{src}")
-            finally:
-                shutil.rmtree(repo, ignore_errors=True)
-    # host (real-codebase) tasks: ingest their chat + the host's real git history as noise
+    # Launch store: ONLY the boltons-* host tasks + decoys + distractors.
+    # gen-* generator tasks are dev scaffolding and are NOT seeded (near-duplicate chats).
     import subprocess
     import mem as _mem
     for ds in sorted(DATASETS.glob("boltons-*")):
