@@ -1,70 +1,85 @@
 {
   "dataset": "sdebench-boltons",
   "host": "boltons (github.com/mahmoud/boltons) @ 979fa9b",
-  "n_tasks": 9,
+  "n_tasks": 10,
+  "by_source": {
+    "H": 1,
+    "F": 9
+  },
+  "by_tier": {
+    "real-function": 5,
+    "planted": 5
+  },
   "tasks": [
     {
-      "task_id": "boltons-slugify-001",
-      "tier": "real-function",
-      "module": "boltons/strutils.py",
-      "function": "slugify",
-      "policy": "SEO symbol map & to and, $ to usd, % to pct"
-    },
-    {
-      "task_id": "boltons-pluralize-001",
-      "tier": "real-function",
-      "module": "boltons/strutils.py",
-      "function": "pluralize",
-      "policy": "formal/DB plurals person->persons, index->indexes, matrix->matrixes"
-    },
-    {
-      "task_id": "boltons-under2camel-001",
-      "tier": "real-function",
-      "module": "boltons/strutils.py",
-      "function": "under2camel",
-      "policy": "acronym set {HTTP,API,SKU,GDPR} uppercase; db/sql/url stay title-cased"
-    },
-    {
-      "task_id": "boltons-findhashtags-001",
-      "tier": "real-function",
-      "module": "boltons/strutils.py",
-      "function": "find_hashtags",
-      "policy": "drop all-numeric tags EXCEPT 4-digit years (1900-2099)"
-    },
-    {
-      "task_id": "boltons-rounding-001",
-      "tier": "planted",
-      "module": "pay/rounding.py",
-      "function": "round_cents",
-      "policy": "round half-cents DOWN (ROUND_HALF_DOWN)"
-    },
-    {
-      "task_id": "boltons-listmerge-001",
-      "tier": "planted",
-      "module": "confmerge/merge.py",
-      "function": "apply_updates",
-      "policy": "union list values (de-duplicated, base order first)"
-    },
-    {
       "task_id": "boltons-budget-001",
+      "source": "F",
       "tier": "planted",
-      "module": "retryx/retry.py",
       "function": "MAX_ATTEMPTS",
       "policy": "exactly 7 (measured to the rate-limit window)"
     },
     {
+      "task_id": "boltons-bytes2human-001",
+      "source": "H",
+      "tier": "real-function",
+      "function": "bytes2human",
+      "policy": "unit selection uses '<' so exact powers of 1024 roll over (1024 -> '1K', not '1024B')"
+    },
+    {
       "task_id": "boltons-discount-001",
+      "source": "F",
       "tier": "planted",
-      "module": "billing/discount.py",
       "function": "apply_discounts",
       "policy": "percent discounts apply before fixed-amount"
     },
     {
-      "task_id": "boltons-parseflag-001",
+      "task_id": "boltons-findhashtags-001",
+      "source": "F",
+      "tier": "real-function",
+      "function": "find_hashtags",
+      "policy": "drop all-numeric tags EXCEPT 4-digit years (1900-2099)"
+    },
+    {
+      "task_id": "boltons-listmerge-001",
+      "source": "F",
       "tier": "planted",
-      "module": "cfg/flags.py",
+      "function": "apply_updates",
+      "policy": "union list values (de-duplicated, base order first)"
+    },
+    {
+      "task_id": "boltons-parseflag-001",
+      "source": "F",
+      "tier": "planted",
       "function": "parse_flag",
       "policy": "truthy set is exactly {'true','on'}"
+    },
+    {
+      "task_id": "boltons-pluralize-001",
+      "source": "F",
+      "tier": "real-function",
+      "function": "pluralize",
+      "policy": "formal/DB plurals person->persons, index->indexes, matrix->matrixes"
+    },
+    {
+      "task_id": "boltons-rounding-001",
+      "source": "F",
+      "tier": "planted",
+      "function": "round_cents",
+      "policy": "round half-cents DOWN (ROUND_HALF_DOWN)"
+    },
+    {
+      "task_id": "boltons-slugify-001",
+      "source": "F",
+      "tier": "real-function",
+      "function": "slugify",
+      "policy": "SEO symbol map & to and, $ to usd, % to pct"
+    },
+    {
+      "task_id": "boltons-under2camel-001",
+      "source": "F",
+      "tier": "real-function",
+      "function": "under2camel",
+      "policy": "acronym set {HTTP,API,SKU,GDPR} uppercase; db/sql/url stay title-cased"
     }
   ]
 }

@@ -29,10 +29,10 @@ for d in tasks:
                 ast.parse(p.read_text())
             except SyntaxError as e:
                 problems.append(f"{d.name}: {tf} syntax error: {e}")
-    if t.get("source") != "F":
-        problems.append(f"{d.name}: source != F")
-    if not t.get("conversations"):
-        problems.append(f"{d.name}: no conversations (F source needs a chat)")
+    if t.get("source") not in ("H", "F"):
+        problems.append(f"{d.name}: source not in H/F")
+    if t.get("source") == "F" and not t.get("conversations"):
+        problems.append(f"{d.name}: F source needs a chat (conversations)")
 
 man = json.loads((DS / "MANIFEST.json").read_text())
 man_ids = {m["task_id"] for m in man["tasks"]}

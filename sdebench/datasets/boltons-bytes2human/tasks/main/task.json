@@ -1,0 +1,18 @@
+{
+  "task_id": "boltons-bytes2human-001",
+  "codebase": "boltons-bytes2human",
+  "build": "build.py",
+  "source": "H",
+  "tier": "real-function",
+  "module": "boltons/strutils.py",
+  "function": "bytes2human",
+  "policy": "unit selection uses '<' so exact powers of 1024 roll over (1024 -> '1K', not '1024B')",
+  "non_guessable": "the GENERAL boundary fix vs special-casing 1024; documented in git history commit 766b5547",
+  "host": "boltons@979fa9b",
+  "bug_report": "bytes2human regressed: bytes2human(1024) now returns '1024B' instead of '1K'. Exact powers of 1024 aren't rolling over to the next unit anymore. Restore the intended behaviour. A failing repro is at tests/test_regression.py.",
+  "fail_to_pass": ["tests/test_regression.py"],
+  "pass_to_pass": ["tests/test_strutils.py"],
+  "hidden_to_pass": ["tests/test_hidden.py"],
+  "regression_test_file": "regression_test.py",
+  "hidden_test_file": "hidden_test.py"
+}

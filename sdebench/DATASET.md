@@ -1,94 +1,100 @@
-# sdebench-boltons — a memory benchmark on a real codebase
+# sdebench-boltons — datasheet
 
-**What it measures.** Whether a coding agent, working on a *real* codebase, benefits from a memory
-system that has ingested the project's git history and past developer conversations. Each task is a
-fix whose *correct* solution depends on a **non-guessable, project-specific decision** that lives
-only in memory (a past chat) — not in the code, and not inferable from the bug report. A plain agent
-must guess (and burns human interventions); an agent with memory should solve it directly.
+A benchmark for **whether a coding agent, working on a real codebase, benefits from a memory system**
+that has ingested the project's git history and past developer conversations.
 
-## Host codebase
+Each task is a bug-fix whose correct solution hinges on a **non-guessable, project-specific decision**.
+The obvious fix passes the visible repro but fails a held-out test. Where that decision *lives* is the
+independent variable — and what each agent can *reach* is the whole point.
 
-[boltons](https://github.com/mahmoud/boltons) — a widely-used pure-Python utility library (1600+
-commits, 2013–present, BSD-licensed). It provides:
+## What each arm can access (this is the experiment)
 
-- a **real git history** (~1500 commits) ingested as **retrieval noise** — the memory system must
-  surface the relevant decision out of a realistic, large store;
-- a **real test suite** used as `pass_to_pass` for the real-function tasks (a fix must not break it);
-- real functions with **untested edges** where a non-guessable policy can be planted.
+| | plain agent (`full`) | agent + memory (`memsys`) |
+|---|---|---|
+| the repo + its full git history | ✅ | ✅ |
+| a memory store of ingested git rationales + past chats, retrieved & surfaced | ❌ | ✅ |
 
-The host is pinned at ref `979fa9b` and used as a fixture (not vendored — see Reproducibility).
+So the comparison is **"no memory system" vs "memory system"**, holding the agent fixed. What that
+means per task depends on **where the decision lives**:
 
-## Task design
+## Axis 1 — source (where the decision lives)
 
-Every task is a **regression-fix**: the repo ships a failing repro (`FAIL_TO_PASS`), the agent fixes
-the source, and grading runs `pass_to_pass` (existing behaviour) + the repro + a **held-out hidden
-test** (`HIDDEN_TO_PASS`). The hidden test is the linchpin: the *obvious* fix passes the repro but
-**fails hidden**, so the agent genuinely needs the non-guessable decision.
+- **H (git history)** — the decision is a real commit's rationale in the repo's history. The plain
+  agent *can* reach it (`git log`/`blame`) but often doesn't think to; memory surfaces it. **The fair
+  test: both arms can reach it; memory is about reliability, not access.**
+- **F (conversation)** — the decision was made in a past developer chat, never written into the repo.
+  The plain agent *cannot* reach it at all; only a memory system that captured the chat can. **The
+  "memory is necessary" test.**
+- *(K = conventions doc: dropped — code decisions don't live in a CONVENTIONS.md, and most repos have
+  none. X = cross-feature sibling pattern: not yet built.)*
 
-- **Source = F (conversation).** The load-bearing decision lives only in a past developer chat. The
-  plain agent can't reach it; the memory system ingested and summarized it.
-- **Non-guessable.** The repro is policy-ambiguous; a naive guess (the natural/default choice) passes
-  it but fails hidden. Verified per task: `HEAD` fails repro+hidden, the correct fix passes all, the
-  naive fix passes repro but fails hidden.
+## Axis 2 — tier (how the task is hosted)
 
-### Two tiers
+- **real-function** — the policy is planted on an *untested edge* of a **real boltons function**,
+  graded against boltons' **real test suite** (a fix must keep the library green). Authentic, harder.
+- **planted** — a validated trap as a **new small module inside the real boltons repo** (so it still
+  gets the real git-history noise + real-repo navigation), graded against its own tests. Controlled.
 
-- **real-function** (4 tasks) — the policy is planted on an *untested edge* of a **real boltons
-  function**, graded against boltons' **real `test_strutils.py`**. Highest realism.
-- **planted** (5 tasks) — a validated trap planted as a small module *inside* the real boltons repo
-  (so it still gets the real git-history noise and a real-repo navigation), graded against its own tests.
+## Host & noise
 
-## Tasks
+[boltons](https://github.com/mahmoud/boltons) (BSD, ~1600 commits, pinned at `979fa9b`) is the host,
+used as a fixture (cloned, not vendored). Its **~1500 real commit subjects + rationale bodies** seed
+the memory store as retrieval noise, plus decoy chats — so surfacing the right decision is a real
+ranking problem, not a lookup.
 
-| task | tier | function | policy (non-guessable) |
-|---|---|---|---|
-| boltons-slugify | real-function | `strutils.slugify` | symbol map `&→and, $→usd, %→pct` (not dollar/percent) |
-| boltons-pluralize | real-function | `strutils.pluralize` | formal/DB plurals `persons/indexes/matrixes` (not people/indices/matrices) |
-| boltons-under2camel | real-function | `strutils.under2camel` | acronym set `{HTTP,API,SKU,GDPR}` uppercase — includes domain SKU/GDPR, **excludes** common `db`/`url` (`db_name→DbName`) |
-| boltons-findhashtags | real-function | `strutils.find_hashtags` | drop all-numeric tags **except 4-digit years** (`#42` out, `#2024` stays) |
-| boltons-rounding | planted | `round_cents` | round half-cents **DOWN** (not banker's/half-up) |
-| boltons-listmerge | planted | `apply_updates` | **union** list values, deduped, base order (not replace/append) |
-| boltons-budget | planted | `MAX_ATTEMPTS` | exactly **7** (measured, not a round number) |
-| boltons-discount | planted | `apply_discounts` | **percent before fixed**-amount stacking |
-| boltons-parseflag | planted | `parse_flag` | truthy set is exactly `{"true","on"}` (not `1`/`yes`) |
+## Tasks (10)
 
-Full metadata per task is in each `task.json` (`tier`, `module`, `function`, `policy`,
-`non_guessable`) and summarized in `datasets/MANIFEST.json`.
+| task | source | tier | function | non-guessable policy |
+|---|---|---|---|---|
+| bytes2human | **H** | real-function | `strutils.bytes2human` | exact powers of 1024 roll over (`<`, not `<=`) — general fix vs special-casing; rationale in real commit `766b5547` |
+| slugify | F | real-function | `strutils.slugify` | symbol map `&→and, $→usd, %→pct` (not dollar/percent) |
+| pluralize | F | real-function | `strutils.pluralize` | `person→persons, index→indexes, matrix→matrixes` (not people/indices/matrices) |
+| under2camel | F | real-function | `strutils.under2camel` | acronym set `{HTTP,API,SKU,GDPR}` — incl. domain SKU/GDPR, **excludes** common db/url |
+| findhashtags | F | real-function | `strutils.find_hashtags` | drop all-numeric tags **except 4-digit years** (`#2024` stays) |
+| rounding | F | planted | `round_cents` | round half-cents **DOWN** (not banker's/half-up) |
+| listmerge | F | planted | `apply_updates` | **union** list values, deduped, base order (not replace/append) |
+| budget | F | planted | `MAX_ATTEMPTS` | exactly **7** (measured, not round) |
+| discount | F | planted | `apply_discounts` | **percent before fixed** stacking |
+| parseflag | F | planted | `parse_flag` | truthy set exactly `{"true","on"}` (not 1/yes) |
 
-## Metric
+Per-task metadata is in each `task.json` (`source`, `tier`, `module`, `function`, `policy`,
+`non_guessable`); summary in `datasets/MANIFEST.json`.
 
-Primary: **interventions** — on a failing grade the harness feeds back the failing-test output and
-resumes the agent (cap 5). Lower is better; 0 = solved first try with no human help. Also reported:
-**turns**, **wall-clock**, **cost**, and **solve rate**.
+## Grading & metric
 
-## The memory system under test (`memsys`)
+Grading (Docker, pristine test copies): `pass_to_pass` (existing behaviour) + the repro
+(`FAIL_TO_PASS`, red at HEAD) + a **held-out hidden test** (`HIDDEN_TO_PASS`). Every task is verified:
+`HEAD` fails repro+hidden, the correct fix passes all, the *naive* fix passes repro but **fails hidden**
+(non-guessable). Empirically confirmed too: the plain agent needs interventions on every task.
 
-A purely **local, file-based** memory (`sdebench/memsys/`):
-- **ingest** — git commit rationales + past chats into one JSONL store; each verbose chat session is
-  **LLM-summarized into a feedback decision note** ("what was tried, what was rejected, the rule
-  settled on") rather than stored as scattered turns;
-- **retrieve** — TF-IDF + a code-symbol boost against the bug report;
-- **surface** — the top entries are pushed into the prompt ("project memory").
-The store is seeded with the host's **real commit subjects as noise** (~1500) plus decoy chats, so
-retrieval is a real ranking problem.
+Primary metric: **interventions** — on a failing grade the harness feeds back the failing-test output
+and resumes (cap 5). 0 = solved first try, no human help. Also: turns, cost, solve rate.
 
-## Reproducibility
+## Memory system under test (`memsys`)
 
-1. Clone the host fixture: `git clone https://github.com/mahmoud/boltons ~/dev/_sdebench_hosts/boltons`
-   (the build scripts copy from there at ref `979fa9b`).
-2. Seed memory: `uv run python sdebench/memsys/seed.py`.
-3. Run a task: `uv run python sdebench/harness/run.py --task sdebench/datasets/boltons-<name>/tasks/main/task.json --history {full|memsys} --run-id <id>`.
-
-Grading runs in Docker (`sdebench-base`) on pristine test copies, so agent edits to tests are ignored.
-
-## Licensing
-
-boltons is BSD-licensed (© Mahmoud Hashemi). It is used unmodified as a host fixture (cloned, not
-redistributed here). The planted modules, traps, tests, chats, and harness are this project's.
+Local, file-based (`sdebench/memsys/`): **ingest** git rationale commits + past chats (each verbose
+chat LLM-summarized into a decision note — "what was tried, rejected, decided") → **retrieve** by
+TF-IDF + a code-symbol boost → **surface** the top entries in the prompt. Not answer-injection: it
+surfaces the *decision* (verified no hidden-test values leak), and the agent still writes+tests the fix.
 
 ## Results
 
-**Headline (n=5, 84 runs, all solved):** across the 9-task dataset, memory takes the plain agent's
-**56 human interventions to 1**, and cuts turns **46%** — on a real codebase with ~1500 real commit
-subjects as retrieval noise. Every task discriminates (plain-agent mean 0.8-2.0 interventions/run).
-Full per-task table + legitimacy notes in `BOLTONS_SUITE.md`.
+**n=5, 84 runs, all solved, 0 legitimacy problems:** across the F suite, memory takes the plain
+agent's **56 interventions → 1**, cutting turns **46%**, on the real codebase with ~1500 real commits
+as noise. Every task discriminates (plain-agent 0.8–2.0 interventions/run). By category:
+`real-function 1.53 → 0.05` interventions/run, `planted 1.17 → 0.00`. Full table: `BOLTONS_SUITE.md`.
+(The H task's H-vs-F contrast — where the plain agent *can* reach the decision — is being measured.)
+
+## Reproduce
+
+```
+git clone https://github.com/mahmoud/boltons ~/dev/_sdebench_hosts/boltons   # host fixture, ref 979fa9b
+uv run python sdebench/memsys/seed.py                                        # seed memory
+uv run python sdebench/harness/run.py --task sdebench/datasets/boltons-<name>/tasks/main/task.json \
+    --history {full|memsys} --run-id <id>
+uv run python sdebench/harness/aggregate.py                                  # results table
+uv run python sdebench/validate_dataset.py                                   # structural integrity
+```
+
+boltons is © Mahmoud Hashemi, BSD — used unmodified as a fixture. Traps, planted modules, tests,
+chats, harness, and memory system are this project's.
