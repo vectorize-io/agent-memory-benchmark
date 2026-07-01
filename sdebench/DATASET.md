@@ -44,8 +44,8 @@ test** (`HIDDEN_TO_PASS`). The hidden test is the linchpin: the *obvious* fix pa
 |---|---|---|---|
 | boltons-slugify | real-function | `strutils.slugify` | symbol map `&→and, $→usd, %→pct` (not dollar/percent) |
 | boltons-pluralize | real-function | `strutils.pluralize` | formal/DB plurals `persons/indexes/matrixes` (not people/indices/matrices) |
-| boltons-under2camel | real-function | `strutils.under2camel` | restore acronyms `{HTTP,HTTPS,URL,API,IO,ID}` uppercase |
-| boltons-findhashtags | real-function | `strutils.find_hashtags` | drop **all-numeric** tags (`#42` out, `#2nd` stays) |
+| boltons-under2camel | real-function | `strutils.under2camel` | acronym set `{HTTP,API,SKU,GDPR}` uppercase — includes domain SKU/GDPR, **excludes** common `db`/`url` (`db_name→DbName`) |
+| boltons-findhashtags | real-function | `strutils.find_hashtags` | drop all-numeric tags **except 4-digit years** (`#42` out, `#2024` stays) |
 | boltons-rounding | planted | `round_cents` | round half-cents **DOWN** (not banker's/half-up) |
 | boltons-listmerge | planted | `apply_updates` | **union** list values, deduped, base order (not replace/append) |
 | boltons-budget | planted | `MAX_ATTEMPTS` | exactly **7** (measured, not a round number) |
