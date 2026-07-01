@@ -88,4 +88,7 @@ redistributed here). The planted modules, traps, tests, chats, and harness are t
 
 ## Results
 
-See `BOLTONS_SUITE.md` for the current vanilla-vs-memsys results (n=5).
+**Headline (n=5, 84 runs, all solved):** across the 9-task dataset, memory takes the plain agent's
+**56 human interventions to 1**, and cuts turns **46%** — on a real codebase with ~1500 real commit
+subjects as retrieval noise. Every task discriminates (plain-agent mean 0.8-2.0 interventions/run).
+Full per-task table + legitimacy notes in `BOLTONS_SUITE.md`.
