@@ -4,7 +4,9 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parents[0] / "gen"))
-from mem import ingest_project, write_store          # memsys/mem.py
+from mem import ingest_project, ingest_history_noise, write_store          # memsys/mem.py
+
+REF = "979fa9b613fa8c0a455ae16ea6f2ec91c11ecafe"   # pinned boltons fork point; all tasks branch here
 import importlib.util
 spec = importlib.util.spec_from_file_location("gencore", HERE.parents[0] / "gen" / "core.py")
 gencore = importlib.util.module_from_spec(spec); spec.loader.exec_module(gencore)
@@ -20,7 +22,7 @@ def main():
     # Launch store: ONLY the boltons-* host tasks + decoys + distractors.
     # gen-* generator tasks are dev scaffolding and are NOT seeded (near-duplicate chats).
     import subprocess
-    import mem as _mem
+    seeded_history = False
     for ds in sorted(DATASETS.glob("boltons-*")):
         tp = ds / "tasks" / "main" / "task.json"
         if not tp.exists():
@@ -29,14 +31,12 @@ def main():
         repo = Path(tempfile.mkdtemp(prefix="seed_host_"))
         try:
             subprocess.run(["python", str(ds / "build.py"), str(repo)], check=True, capture_output=True)
-            all_entries += ingest_project(repo, task.get("conversations"), task["task_id"])
-            out = subprocess.run(["git", "-C", str(repo), "log", "--format=%s%x1e"],
-                                 capture_output=True, text=True).stdout
-            for s in out.split("\x1e"):
-                s = s.strip()
-                if s and not _mem._NOISE_SUBJ.match(s):     # real commit subjects = retrieval noise
-                    all_entries.append({"project": "boltons-history", "kind": "decision",
-                                        "title": s, "text": s, "symbols": _mem._text_symbols(s)})
+            # the task's OWN decision commits (REF..HEAD, code-enriched) + its conversation
+            all_entries += ingest_project(repo, task.get("conversations"), task["task_id"], base_ref=REF)
+            # inherited upstream boltons history = realistic retrieval noise, seeded ONCE
+            if not seeded_history:
+                all_entries += ingest_history_noise(repo, head=REF)
+                seeded_history = True
         finally:
             shutil.rmtree(repo, ignore_errors=True)
     decoyf = HERE.parents[0] / "gen" / "decoy_sessions.json"   # irrelevant chat sessions = chat-noise

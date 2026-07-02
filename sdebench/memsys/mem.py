@@ -33,19 +33,73 @@ _NOISE_SUBJ = re.compile(r"^(scaffold|tests?|readme|changelog|release|chore|ci|s
                          r"refactor: simplify|feat: [a-z_]+$|docs: project conventions)", re.I)
 
 
-def _git_decisions(repo):
-    """Commits that carry a rationale body = recorded decisions (H source)."""
-    out = subprocess.run(["git", "-C", str(repo), "log", "--format=%s%x1f%b%x1e"],
-                         capture_output=True, text=True).stdout
-    entries = []
+# Identifiers used as calls `name(` / defs, members `.name`, or assignments `name =`. These forms
+# hold across Python/JS/Go/Rust/Java/… so extraction is LANGUAGE-AGNOSTIC — no parser, no grammar.
+_KW = set("def class function func fn return import from export public private static void const let "
+          "var val if else elif for while switch case new self this true false none null nil print".split())
+
+
+def _code_symbols(text):
+    """Language-agnostic identifiers in any code/diff/prose text. Two lexical signals that stay
+    specific (they don't fire on ordinary prose words the way `.name`/`name =` would):
+      - call / definition position `name(` — captures `getlist`, `parse_flag`, `OrderedMultiDict`;
+      - shape (snake_case / camelCase / CONST) — captures `parse_flag`, `under2camel`, `MAX_ATTEMPTS`.
+    A change to `__setitem__` still surfaces `getlist` because `getlist(` appears in the same file."""
+    text = text or ""
+    syms = set(re.findall(r"([A-Za-z_]\w{2,})\s*\(", text))       # call or definition: name(
+    syms |= set(_text_symbols(text))                              # snake / camel / CONST shape
+    return {s.lower() for s in syms if s.lower() not in _STOP and s.lower() not in _KW}
+
+
+def _diff_symbols(repo, sha):
+    """Identifiers in the commit's DIFF hunks only — scoped to what the commit actually changed, in a
+    single git call regardless of file count (a 62-file commit costs one `show`, not 62). No file cap,
+    no whole-file scrape: uniform and cheap for every commit in a real history."""
+    diff = subprocess.run(["git", "-C", str(repo), "show", "-U3", "--format=", sha],
+                          capture_output=True, text=True, errors="replace").stdout
+    return _code_symbols(diff)
+
+
+def _note_symbols(text, repo_syms):
+    """Symbols a note references: identifiers used in the text (code-shaped or call position) PLUS any
+    bare token that is a known repo symbol (catches `slugify` mentioned in prose)."""
+    syms = set(_text_symbols(text)) | _code_symbols(text)
+    if repo_syms:
+        syms |= {t for t in _tok(text) if t in repo_syms}
+    return syms
+
+
+def _git_note(repo, sha, subj, body, repo_syms):
+    """One note per commit, ingested IDENTICALLY whether it's upstream history or a task's own commit:
+    the message text + the identifiers in its diff. No commit is privileged or pre-selected."""
+    text = (subj + " — " + body).strip() if body else subj
+    syms = _note_symbols(text, repo_syms) | _diff_symbols(repo, sha)
+    return {"kind": "decision", "source": "git", "title": subj, "text": text, "symbols": sorted(syms)}
+
+
+def _all_commits(repo, base_ref=None, head="HEAD"):
+    """Every non-trivial commit (base_ref..head, or all of head) as (sha, subj, body)."""
+    rng = f"{base_ref}..{head}" if base_ref else head
+    out = subprocess.run(["git", "-C", str(repo), "log", rng, "--format=%H%x1f%s%x1f%b%x1e"],
+                         capture_output=True, text=True, errors="replace").stdout
+    commits = []
     for chunk in out.split("\x1e"):
         if not chunk.strip():
             continue
-        subj, _, body = chunk.partition("\x1f")
-        subj, body = subj.strip(), body.strip()
-        if body and not _NOISE_SUBJ.match(subj):
-            entries.append({"kind": "decision", "title": subj, "text": (subj + " — " + body).strip()})
-    return entries
+        parts = (chunk.split("\x1f") + ["", "", ""])[:3]
+        sha, subj, body = parts[0].strip(), parts[1].strip(), parts[2].strip()
+        if subj and not _NOISE_SUBJ.match(subj):
+            commits.append((sha, subj, body))
+    return commits
+
+
+def ingest_history_noise(repo, repo_syms=None, head="HEAD"):
+    """Inherited upstream history — EVERY commit ingested identically to a task's own commit (message +
+    diff symbols), no selection, no file cap. Seeded once for the shared store."""
+    if repo_syms is None:
+        repo_syms = set(_repo_symbols(repo))
+    return [_git_note(repo, sha, subj, body, repo_syms)
+            for sha, subj, body in _all_commits(repo, None, head)]
 
 
 
@@ -101,34 +155,37 @@ def _llm_summarize(session_text):
     return out
 
 
-def _conversation_story(conversations):
+def _conversation_story(conversations, repo_syms=None):
     """Ingest a past session as ONE summarized feedback STORY, not scattered turns.
 
     Real sessions are verbose (the assistant does the work inline; the decision is buried in a long
     turn or a terse user reply). We render the whole exchange, then LLM-summarize it into a decision
     note that captures what was tried/rejected and the rule settled on. Falls back to the raw
-    exchange if no LLM is available."""
+    exchange if no LLM is available. Symbols come from the RAW exchange (richer than the summary), so
+    the note is reachable by the code entities it discusses."""
     turns = [t for t in (conversations or []) if t.get("text")]
     if not turns:
         return []
     raw = " ".join(f"{t['role'].upper()}: {t['text'].strip()}" for t in turns)
     summary = _llm_summarize(raw) or raw
-    return [{"kind": "conversation", "title": "feedback decision note",
-             "text": "Past user feedback (summarized): " + summary}]
+    return [{"kind": "conversation", "source": "session", "title": "feedback decision note",
+             "text": "Past user feedback (summarized): " + summary,
+             "symbols": sorted(_note_symbols(raw, repo_syms))}]
+
+
+_SRC_EXT = {".py", ".js", ".jsx", ".ts", ".tsx", ".go", ".rs", ".java", ".rb", ".c", ".h", ".cc",
+            ".cpp", ".hpp", ".cs", ".kt", ".scala", ".php", ".swift", ".m", ".mm"}
 
 
 def _repo_symbols(repo):
-    """Code symbols (functions, classes, module-level constants) the project defines — the
-    entities a decision is *about*. A bug report usually names the symbol it's about."""
+    """The project's identifier vocabulary — the entities a decision is *about* — harvested
+    language-agnostically (call/member/assignment forms) from its source files, no per-language parser."""
     syms = set()
-    for p in Path(repo).rglob("*.py"):
-        if "test" in p.name:
+    for p in Path(repo).rglob("*"):
+        if p.suffix.lower() not in _SRC_EXT or "test" in p.name.lower() or not p.is_file():
             continue
-        txt = p.read_text(errors="ignore")
-        syms |= set(re.findall(r"^\s*def\s+([a-zA-Z_]\w+)", txt, re.M))
-        syms |= set(re.findall(r"^\s*class\s+([a-zA-Z_]\w+)", txt, re.M))
-        syms |= set(re.findall(r"^([A-Z][A-Z0-9_]{3,})\s*=", txt, re.M))
-    return sorted({s.lower() for s in syms if len(s) > 2})
+        syms |= _code_symbols(p.read_text(errors="ignore"))
+    return sorted(s for s in syms if len(s) > 2)
 
 
 def _text_symbols(text):
@@ -139,13 +196,16 @@ def _text_symbols(text):
     return sorted({s.lower() for s in syms})
 
 
-def ingest_project(repo, conversations, project):
-    entries = _git_decisions(repo) + _conversation_story(conversations)
-    symbols = _repo_symbols(repo)
-    for e in entries:
+def ingest_project(repo, conversations, project, base_ref=None):
+    """A task's OWN contribution to the store: its commits (base_ref..HEAD) — ingested with the SAME
+    _git_note path as all upstream history, no privileged enrichment — plus its past conversation."""
+    repo_syms = set(_repo_symbols(repo))
+    notes = [_git_note(repo, sha, subj, body, repo_syms)
+             for sha, subj, body in _all_commits(repo, base_ref)]
+    notes += _conversation_story(conversations, repo_syms)
+    for e in notes:
         e["project"] = project
-        e["symbols"] = symbols
-    return entries
+    return notes
 
 
 def write_store(entries):
