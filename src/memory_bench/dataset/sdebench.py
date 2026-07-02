@@ -10,6 +10,8 @@ Tasks live in the `sde-bench` submodule at `sdebench/datasets/boltons-*`; the ru
 `sdebench/harness/run.py`.
 """
 import json
+import os
+import subprocess
 from pathlib import Path
 
 from .base import Dataset
@@ -17,6 +19,11 @@ from ..models import Document, Query
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _DATASETS = _REPO_ROOT / "sdebench" / "datasets"
+
+# boltons host clone (the retrieval-noise corpus), pinned at the fork ref used by every task.
+_BOLTONS_HOST = Path(os.environ.get("SDEBENCH_BOLTONS_HOST") or (Path.home() / "dev" / "_sdebench_hosts" / "boltons"))
+_BOLTONS_REF = "979fa9b613fa8c0a455ae16ea6f2ec91c11ecafe"
+_GIT_DOCS = int(os.environ.get("SDEBENCH_GIT_DOCS", "400"))  # how many recent commits to ingest as noise
 
 
 class SdebenchDataset(Dataset):
@@ -53,11 +60,49 @@ class SdebenchDataset(Dataset):
 
     def load_documents(self, split: str, category: str | None = None, limit: int | None = None,
                        ids: set[str] | None = None, user_ids: set[str] | None = None) -> list[Document]:
-        # The coding tasks' memory (git history + developer chats) is ingested by the sdebench backfill
-        # into a Hindsight bank out of band; the CodingMode points the agent at it. So there is nothing
-        # for the OMB memory provider to ingest here. (A deeper integration — ingesting the git/chat
-        # documents through the provider — is a follow-up.)
-        return []
+        """The coding memory: each task's developer chat (where the F decisions live) + the boltons
+        git history (retrieval noise + the H decision's rationale). The OMB memory provider ingests
+        these; the CodingMode then reflects/retrieves over them per task. Chats come FIRST so a small
+        --doc-limit keeps the decisive documents. user_id is None => one shared bank (ranking under noise).
+
+        Note: omdset's H decision is a commit planted by its build.py into the *built* repo, not the
+        host clone, so it is not yet in this corpus (a per-task planted-commit pass is a follow-up)."""
+        docs: list[Document] = []
+        for tj in self._task_files():
+            t = json.loads(tj.read_text())
+            conv = t.get("conversations")
+            if conv:
+                text = "\n".join(f"{c['role'].upper()}: {c['text']}" for c in conv)
+                docs.append(Document(id=f"chat:{t['task_id']}", content=text,
+                                     context=f"developer conversation about {t['codebase']}"))
+        docs += self._git_documents(limit=_GIT_DOCS)
+        return docs[:limit] if limit else docs
+
+    def _git_documents(self, limit: int) -> list[Document]:
+        if not _BOLTONS_HOST.exists() or limit <= 0:
+            return []
+        US, RS = "\x1f", "\x1e"
+        out = subprocess.run(
+            ["git", "-C", str(_BOLTONS_HOST), "log", f"-n{limit}",
+             f"--format=%H{US}%aI{US}%s{US}%b{RS}", _BOLTONS_REF],
+            capture_output=True, text=True,
+        ).stdout
+        docs: list[Document] = []
+        for rec in out.split(RS):
+            rec = rec.strip()
+            if not rec:
+                continue
+            parts = rec.split(US)
+            if len(parts) < 3:
+                continue
+            sha, aiso, subj = parts[0], parts[1], parts[2]
+            body = parts[3] if len(parts) > 3 else ""   # commits with no body yield 3 fields
+            content = f"git commit {sha[:12]}\n{subj}"
+            if body.strip():
+                content += "\n\n" + body.strip()
+            docs.append(Document(id=f"git:{sha[:12]}", content=content, timestamp=aiso or None,
+                                 context="boltons git history"))
+        return docs
 
     def categories(self, split: str) -> list[str] | None:
         cats = {json.loads(tj.read_text()).get("category") for tj in self._task_files()}

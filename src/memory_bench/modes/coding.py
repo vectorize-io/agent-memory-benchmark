@@ -1,7 +1,11 @@
 """Coding response mode: build the task repo, run a coding agent with test-feedback interventions,
-grade by pytest. Reuses the proven sdebench harness (`sdebench/harness/run.py`) verbatim — this mode
-is a thin adapter that maps the OMB memory provider to a harness `--history` arm, runs one task, and
-returns the harness result as an AnswerResult (the runner's `coding` branch reads `solved` etc.).
+grade by pytest. Reuses the proven sdebench harness (`sdebench/harness/run.py`) verbatim.
+
+Memory flows through the OMB memory provider: the runner ingests the dataset's git+chat documents
+into the provider, and this mode queries it per task (Hindsight `reflect` via direct_answer, else
+`retrieve`) and injects the surfaced decision into the agent via run.py's `provided` arm. Only the
+no-memory baseline (`none`) and Hindsight providers are supported; other providers raise for coding.
+The harness result is returned as an AnswerResult (the runner's `coding` branch reads `solved` etc.).
 """
 import asyncio
 import json
@@ -17,16 +21,6 @@ from ..models import AnswerResult
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _RUN_PY = _REPO_ROOT / "sdebench" / "harness" / "run.py"
-
-# OMB memory provider name -> sdebench --history arm.
-# "none" = vanilla (no memory); the hindsight arms use the reflect+inject plugin over a bank that the
-# sdebench backfill prepared (pointed to by SDE_HSCODING_BANK).
-_ARM = {
-    "none": "full",
-    "hindsight": "hscoding",
-    "hindsight-http": "hscoding",
-    "hindsight-cloud": "hscoding",
-}
 
 
 class CodingMode(ResponseMode):
@@ -51,15 +45,39 @@ class CodingMode(ResponseMode):
         meta = meta or {}
         task_json = meta.get("task_json")
         task_id = user_id or meta.get("task_id") or "task"
-        arm = _ARM.get(memory.name, "full")
         run_id = f"omb-{uuid.uuid4().hex[:8]}"
 
         if not task_json:
             return AnswerResult(answer="unsolved", reasoning="no task_json in meta", context="",
                                 retrieve_time_ms=0.0, raw_response={"solved": False})
 
+        # Map the OMB memory provider to a harness arm. The provider (populated by the runner's ingest)
+        # is queried here for the decision, which is injected via run.py's `provided` arm. Only the
+        # no-memory baseline and Hindsight are supported; other providers raise for the coding task.
+        external_memory_file = None
+        surfaced = ""
+        if memory.name == "none":
+            arm = "full"
+        elif memory.name.startswith("hindsight"):
+            arm = "provided"
+            try:
+                answer, ctx, _ = await memory.async_direct_answer(query)  # Hindsight reflect
+                surfaced = (answer or ctx or "").strip()
+            except NotImplementedError:
+                docs, _ = await memory.async_retrieve(query, k=5)
+                surfaced = "\n\n".join(d.content for d in docs).strip()
+            if surfaced:
+                external_memory_file = Path("/tmp/sdebench/omb-mem") / f"{task_id}_{run_id}.txt"
+                external_memory_file.parent.mkdir(parents=True, exist_ok=True)
+                external_memory_file.write_text(surfaced)
+        else:
+            raise NotImplementedError(
+                f"coding mode supports memory providers 'none' and 'hindsight*'; got '{memory.name}'")
+
         cmd = ["uv", "run", "python", str(_RUN_PY), "--task", str(task_json),
                "--history", arm, "--model", self._model, "--run-id", run_id]
+        if external_memory_file:
+            cmd += ["--external-memory", str(external_memory_file)]
         t0 = time.perf_counter()
         proc = await asyncio.to_thread(
             subprocess.run, cmd, capture_output=True, text=True, cwd=str(_REPO_ROOT), env={**os.environ},

@@ -390,6 +390,8 @@ def main():
     ap.add_argument("--model", default="google/gemini-3.5-flash")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
+    ap.add_argument("--external-memory", default=None,
+                    help="path to a file with externally-retrieved memory to inject (with --history provided)")
     ap.add_argument("--max-interventions", type=int, default=5,
                     help="cap on feedback rounds before giving up (drift guard)")
     args = ap.parse_args()
@@ -412,6 +414,8 @@ def main():
     elif args.history == "provided":
         build_repo(task, repo, "full")              # full repo + external memory supplied in the prompt
         _em = task.get("external_memory")
+        if args.external_memory and Path(args.external_memory).exists():
+            _em = Path(args.external_memory).read_text().strip() or _em  # externally-retrieved (e.g. OMB provider)
         if _em:
             task["bug_report"] = task["bug_report"] + "\n\nRelevant memory (surfaced for you by your memory system):\n" + _em
     elif args.history == "memsys":
