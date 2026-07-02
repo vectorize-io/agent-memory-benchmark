@@ -6,6 +6,7 @@ from .longmemeval import LongMemEvalDataset
 from .membench import MemBenchDataset
 from .memsim import MemSimDataset
 from .personamem import PersonaMemDataset
+from .sdebench import SdebenchDataset
 
 REGISTRY: dict[str, type[Dataset]] = {
     "beam":         BEAMDataset,
@@ -15,6 +16,7 @@ REGISTRY: dict[str, type[Dataset]] = {
     "membench":     MemBenchDataset,
     "memsim":       MemSimDataset,
     "personamem":   PersonaMemDataset,
+    "sdebench":     SdebenchDataset,
 }
 
 

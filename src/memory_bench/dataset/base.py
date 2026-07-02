@@ -37,7 +37,7 @@ class Dataset(ABC):
     name: str
     description: str
     splits: list[str]
-    task_type: Literal["open", "mcq"] = "open"
+    task_type: Literal["open", "mcq", "coding"] = "open"
     isolation_unit: str | None = None
     links: list[dict] = []
     published: bool = False

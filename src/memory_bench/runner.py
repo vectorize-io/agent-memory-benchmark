@@ -189,7 +189,16 @@ class EvalRunner:
             logger.info("[query:%s] answer done in %.1fs (retrieve=%.0fms)", q.id, time.perf_counter() - t_start, answer_result.retrieve_time_ms)
 
             score: float | None = None
-            if not answer_result.context:
+            if task_type == "coding":
+                # The CodingMode already built the repo, ran the agent (with interventions), and graded
+                # by pytest. Correctness is solve-ness, not a judged answer; carry the metrics through.
+                raw = answer_result.raw_response or {}
+                correct = bool(raw.get("solved"))
+                judge_reason = f"interventions={raw.get('interventions')} pytest={(raw.get('final_pytest') or '')[:80]}"
+                q.meta.update({k: raw.get(k) for k in
+                               ("solved", "interventions", "capped", "cost_usd", "turns", "wall_s", "final_pytest")
+                               if raw.get(k) is not None})
+            elif not answer_result.context:
                 correct, judge_reason = False, "empty context — no memories retrieved"
             elif task_type == "mcq":
                 correct, judge_reason = _score_mcq(answer_result.answer, q.gold_answers)
@@ -357,7 +366,8 @@ class EvalRunner:
                 memory.ingest(documents)
                 ingestion_ms = (time.perf_counter() - t0) * 1000
                 ingested_docs_count = len(documents)
-                console.print(f"  ingested in {ingestion_ms:.0f}ms ({ingestion_ms / len(documents):.1f}ms/doc avg)\n")
+                avg = f" ({ingestion_ms / len(documents):.1f}ms/doc avg)" if documents else ""
+                console.print(f"  ingested in {ingestion_ms:.0f}ms{avg}\n")
 
             async def _run_all(progress, task_id):
                 concurrency = getattr(memory, "concurrency", _CONCURRENCY)

@@ -9,8 +9,10 @@ from .mem0_cloud import Mem0CloudMemoryProvider
 from .hybrid_search import HybridSearchMemoryProvider
 from .ogham import OghamMemoryProvider
 from .supermemory import SupermemoryMemoryProvider
+from .none import NoMemoryProvider
 
 REGISTRY: dict[str, type[MemoryProvider]] = {
+    "none": NoMemoryProvider,
     "bm25": BM25MemoryProvider,
     "cognee": CogneeMemoryProvider,
     "hindsight": HindsightMemoryProvider,

@@ -30,38 +30,48 @@ file tree, no commit trail). The only variable is history availability.
 ## Metrics
 `resolution` (binary), `cost` (input+output tokens × model price), `speed` (wall-clock;
 tool-turns secondary). Agent: opencode + gemini-3.5-flash, in a prebuilt Docker image.
+Primary comparison metric: **interventions** — on a failing grade the harness feeds the failing test
+back and resumes (cap 5); 0 = solved first try.
+
+## Running
+
+The dataset lives in the [sde-bench](https://github.com/vectorize-io/sde-bench) submodule at
+`sdebench/datasets` (10 boltons-hosted tasks; see its `DATASET.md` / `GENERATING.md`). There are two
+front doors:
+
+**Via the OMB runner** (integrated: results land in the OMB `outputs/` + viewer, alongside the other
+benchmarks). `task_type="coding"` — the runner grades by tests, not a judge:
+```bash
+uv run omb run --dataset sdebench --split boltons --mode coding --memory none        # vanilla baseline
+uv run omb run --dataset sdebench --split boltons --mode coding --memory hindsight    # reflect+inject over a backfilled bank
+uv run omb run --dataset sdebench --split boltons --mode coding --memory none -q 1     # one task
+```
+The `coding` mode maps the memory provider to a harness arm and reuses `harness/run.py`; the
+`hindsight` arm reflects over a bank prepared by the sde-bench backfill (`SDE_HSCODING_BANK`).
+
+**Standalone harness** (direct, more arms/flags):
+```bash
+uv run python sdebench/harness/run.py --task sdebench/datasets/boltons-<name>/tasks/main/task.json \
+    --history {full|memsys|hscoding|oracle} --run-id <id>
+```
 
 ## Layout
 ```
 sdebench/
-  datasets/<repo>/build.py            # builds the repo with engineered git history
-  datasets/<repo>/regression_test.py  # FAIL_TO_PASS (shipped to the agent, red at HEAD)
-  datasets/<repo>/hidden_test.py      # HIDDEN_TO_PASS (held out)
-  datasets/<repo>/task.json           # task definition + test sets
-  harness/                            # runner (full vs squashed), grading, metrics
-  Dockerfile                          # prebuilt env (python + pytest + git)
+  datasets/            # -> sde-bench submodule: the 10 boltons tasks + generator (gen/) + datasheet
+  harness/             # runner (full/squashed/memsys/hindsight/hscoding/oracle arms), grading, metrics
+  memsys/              # a local file-based memory system under test (language-agnostic, no AST)
+  Dockerfile           # prebuilt grading env (python + pytest + git)
+  BOLTONS_SUITE.md, FINDINGS.md, MEMSYS_RESULTS.md   # results write-ups
 ```
 
-## Codebases & tasks
-**Small / easy** (one short module, one regression):
-- `ttlcache-regression-001` — a refactor changed `DEFAULT_TTL` 287→600 and dropped the
-  rationale comment; `287` (a non-round "measured" value) lives only in git history.
-- `ledger-regression-001` — a refactor changed `round_cents` to half-up; the real rule is
-  round-half-DOWN ("match legacy billing") — non-guessable (agents default to banker's/half-up).
+## Tasks & design
+The tasks now live in the [sde-bench](https://github.com/vectorize-io/sde-bench) submodule — 10
+bug-fix tasks hosted in the real boltons library, each hinging on a **non-guessable, project-specific
+decision** (the obvious fix passes the visible repro but fails a held-out hidden test). Axes: **source**
+(H git history / F past conversation), **tier** (real-function / planted), **category** (the kind of
+decision). See the submodule's `DATASET.md` (datasheet) and `GENERATING.md` (how tasks are built and
+how to add one).
 
-**`billing`** (4 modules, ~18-commit noisy history — the "medium" reference codebase):
-- `billing-rounding-001` — same half-down rounding rule, now buried in noise.
-- `billing-taxbase-001` — tax charged on the discounted subtotal (2019 policy); navigate noise.
-
-**`minicalc`** (9 modules, ~22-commit noisy history — the "hard / bigger" codebase, a
-spreadsheet formula engine: tokens/nodes/parser/refs/sheet/functions/evaluator/errors/engine):
-- `minicalc-erragg-001` — **bug far from its symptom**: a "centralize argument evaluation"
-  refactor made the *evaluator* short-circuit on any error argument, so COUNT/AVG/MIN/MAX over
-  a range containing a `#DIV/0!` return the error instead of aggregating the numbers (SUM is
-  unaffected → slips past existing tests). Symptom points at `COUNT`; the bug is in `evaluator.py`.
-  Underdetermined (a COUNT-only fix passes the repro, fails the AVG/MIN/MAX hidden tests); the
-  "functions decide; the evaluator must not short-circuit calls" policy lives in history + `functions.py`.
-
-Design rule (learned the hard way): the history-encoded fact must be **non-guessable** — a
-conventional value/rule (e.g. TTL=300, or banker's rounding for money) the agent guesses
-without history won't make the A/B diverge.
+Design rule: the decision must be **non-guessable** — a conventional value/rule the agent guesses
+without memory won't discriminate the with-memory vs without-memory arms.

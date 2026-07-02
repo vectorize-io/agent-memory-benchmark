@@ -2,12 +2,14 @@ from .base import ResponseMode
 from .rag import RAGMode
 from .agentic_rag import AgenticRAGMode
 from .agent import AgentMode
+from .coding import CodingMode
 from ..llm.base import LLM
 
 REGISTRY: dict[str, type[ResponseMode]] = {
     "rag": RAGMode,
     "agentic-rag": AgenticRAGMode,
     "agent": AgentMode,
+    "coding": CodingMode,
 }
 
 
