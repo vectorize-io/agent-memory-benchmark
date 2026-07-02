@@ -247,3 +247,24 @@ under2camel-h 1→0.
 - **Systemic hardening lever (repeat):** the 9 new H commit bodies state the literal answer, so a git-log
   grep solves them. Rewriting them to give RATIONALE without the literal value/symptom (omdset-style) would
   raise difficulty and widen the vanilla-vs-hindsight gap. Concrete next step if you want harder H tasks.
+
+### H-task hardening — the real lever is SYMPTOM→CAUSE DISTANCE, not hiding the answer (nuance)
+Thinking it through: for H tasks the decision MUST be stated in a git commit (that's how it's reachable),
+so "hide the literal value" conflicts with solvability — budget's "7" is measured/non-derivable, memory
+HAS to state it. So the commit will always contain the answer somewhere. What makes omdset hard isn't
+hiding the answer — it's that:
+  1. the commit describes the INVARIANT, not the reported SYMPTOM (getlist/query params), and
+  2. the symptom manifests ~2 modules from the cause (__setitem__), so the agent doesn't know which
+     commit/function to look at — a `git log` grep on the symptom's vocabulary won't surface it.
+My 9 new H tasks put the fix and the symptom in the SAME function/module and use matching vocabulary, so
+`git log -S <symptom-term>` or `git blame <the-file>` lands on the answer commit immediately → easy.
+
+**Concrete refinement options (for your call):**
+- (A) Cheapest: accept them as "easy-H" (still valid, still discriminate) and rely on omdset as the one
+  "hard-H". The empirical data says 9/10 still need ≥1 vanilla intervention, so they're not trivially broken.
+- (B) Medium: reword commit subjects/bodies to NOT echo the bug-report vocabulary (so symptom-term grep
+  misses), keeping the rationale. Quick, raises the "does the agent think to look?" bar.
+- (C) Full omdset-style: increase symptom→cause distance (bug manifests in a different function than the
+  planted decision). Best discrimination, most work per task.
+Recommend (B) as the default hardening pass; (C) for a few flagship hard-H tasks. budget-h specifically:
+vanilla=0 at n=1 — confirm with the claude data point + a couple more opencode samples before acting.
