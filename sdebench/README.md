@@ -40,19 +40,22 @@ The dataset lives in the [sde-bench](https://github.com/vectorize-io/sde-bench) 
 front doors:
 
 **Via the OMB runner** (integrated: results land in the OMB `outputs/` + viewer, alongside the other
-benchmarks). `task_type="coding"` — the runner grades by tests, not a judge. The memory provider
-ingests the git+chat documents (`load_documents`) and the `coding` mode reflects/retrieves over it
-per task, injecting the surfaced decision into the agent (via `run.py`'s `provided` arm):
+benchmarks). `task_type="coding"` — the runner grades by tests, not a judge. Clean separation, so AMB
+never calls Hindsight itself: the **memory provider ingests** the git+chat+planted docs
+(`load_documents`) into its bank, and the **agent's plugin does the retrieval** — the `coding` mode
+runs `run.py --history hscoding` (opencode + the Hindsight coding plugin, reflect+inject live) pointed
+at that same bank:
 ```bash
-uv run omb run --dataset sdebench --split boltons --mode coding --memory none         # vanilla baseline
+uv run omb run --dataset sdebench --split boltons --mode coding --memory none          # vanilla baseline
 HINDSIGHT_HTTP_URL=http://localhost:8899 \
-  uv run omb run --dataset sdebench --split boltons --mode coding --memory hindsight-http   # reflect+inject
-uv run omb run --dataset sdebench --split boltons --mode coding --memory none -q 1     # one task
+  uv run omb run --dataset sdebench --split boltons --mode coding --memory hindsight-http   # plugin over the ingested bank
+uv run omb run --dataset sdebench --split boltons --mode coding --memory none -q 1      # one task
 ```
-Only `none` and `hindsight*` providers are supported for coding (others raise). Tune the ingested git
-noise with `SDEBENCH_GIT_DOCS` (default 400 recent commits). Note: omdset's H-source decision is a
-commit planted into the *built* repo, so it is not yet in `load_documents` (per-task planted-commit
-ingestion is a follow-up).
+Only `none` and an HTTP Hindsight provider (`hindsight-http`/`hindsight-cloud`) are supported for
+coding — the agent plugin needs a reachable HTTP bank, so the embedded `hindsight` and other providers
+raise. Tune the ingested git noise with `SDEBENCH_GIT_DOCS` (default 400 recent commits) and toggle
+per-task decision commits with `SDEBENCH_PLANTED_COMMITS` (default on; carries omdset's H-source
+decision).
 
 **Standalone harness** (direct, more arms/flags):
 ```bash
