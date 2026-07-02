@@ -305,3 +305,13 @@ agent has more to gain, less to lose.)
 2. **Memory value is agent-dependent:** big win for gemini (26→15), ~neutral/harmful for sonnet-5 under
    noise. Worth investigating the findhashtags regression (did reflect surface a wrong rule under noise?).
 3. F tasks still the better discriminators for strong agents (they need the chat, not git).
+
+### CORRECTION on Finding #2 — the memory content was CORRECT; regressions are likely n=1 variance
+Checked the findhashtags bank's reflect under noise: it surfaces the EXACT correct rule ("exclude
+all-digit tags except 4-digit years 1900-2099"). So the 1→5-unsolved claude regression is NOT bad memory
+— the injected decision was right. It's either injection-induced behavior change or (more likely) n=1
+variance in how claude implemented/verified it. So do NOT conclude "memory hurts strong agents" — the
+honest statement is: **at n=1 with noise, claude's memory arm was ~flat with high per-task variance
+(±a few interventions either way), and the memory content itself was accurate.** Need n=3 to separate
+signal from noise on the claude arm. Finding #1 (H tasks too easy for sonnet-5, all vanilla=0) is robust
+— it's a clean 10/10 zeros, not variance.
