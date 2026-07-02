@@ -175,3 +175,9 @@ opencode-backfilled banks (reused). Vanilla = no memory (claude NOT seeded — o
 ### Caveats
 - n=1, 4 tasks (kept small to respect the Max subscription cap) — directional, not statistically tight.
 - claude vanilla is not seeded (seeding is opencode-import based; claude uses a different session store — `~/.claude/projects/<slug>/*.jsonl`). To make the agents directly comparable, either seed claude too or run BOTH agents unseeded. Noted as follow-up.
+
+## ============ NOISE + FULL ROSTER (session 2) ============
+- **Decoy conversations (retrieval noise) ✅** — `gen/gen_decoys.py` mines the last 100 commits, clusters by module, gemini writes a long (avg 8.7-turn) codebase-grounded dev conversation per cluster with NO planted policy. 40 decoys / 346 turns in `gen/decoy_conversations.json` (verified no answer-token leaks). The coding-mode backfill ingests them alongside each task's 1 real chat (SDE_DECOYS default on) → each bank ~630 facts, so chat retrieval is a real ranking problem (~40x noise vs the old 1-chat lookup).
+- **claude in the UI ✅** — coding mode passes `--agent` (SDE_AGENT) through to run.py, so claude runs via `omb` land in `outputs/` + the viewer.
+- **BUG FIXED** — `SDE_HSCODING_PLUGIN_DIR`/`SDE_CLAUDE_CREDS` with a literal `~` weren't expanded (Path() doesn't expand ~), so docker rejected the mount ('invalid volume name') AND the plugin backfill couldn't find backfill.js → the memory arm silently ran on an EMPTY bank. Fixed with expanduser + a docker-run retry. (The earlier n=3 sweep was unaffected — its zsh `export VAR=~/...` did expand; only inline `env VAR=~/...` smokes hit it.)
+- **FULL ROSTER running** — opencode 19 tasks × {vanilla, hindsight+noise}, then claude 19×2 reusing the noisy banks. Results + comparison to follow.
