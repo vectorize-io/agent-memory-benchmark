@@ -131,3 +131,12 @@ banks reused across the 3 runs. Every cell is the mean over 3 runs.
 - Sweep: `zsh scratchpad/overnight_sweep.sh` (env: SDE_HSCODING_PLUGIN_DIR=<new plugin>, SDE_HINDSIGHT_URL=http://localhost:8899).
 - Results: `outputs/sdebench/ov-{none,hs}-{1,2,3}` (+ .gz committed). Analysis: `scratchpad/analyze.py`.
 - UI: `uv run omb view` → sdebench → open an ov-none-* and an ov-hs-* run.
+
+### CORRECTION — the "−40% tokens" is mostly CHEAP cached tokens (cost is flat, not a win)
+Token cost split (mean/run, gemini-3.5-flash: input $1.50/1M, cache_read $0.15/1M, output $9/1M):
+- vanilla:   fresh_input 2.79M ($4.19) + cache_read 10.13M ($1.52) + output 106k ($0.96) = $6.67
+- hindsight: fresh_input 3.40M ($5.10) + cache_read  4.36M ($0.65) + output  89k ($0.80) = $6.55
+The −40% total-token drop is almost entirely **cache_read** (re-sent context, billed 10× cheaper). Hindsight
+SAVES on cache_read (−$0.87, less back-and-forth) but SPENDS more on fresh input (+$0.91, the injected memory
+is new context + changed prompts cache less) → the two cancel, cost is flat. **So the honest wins are
+wall-time (−19%) and interventions (−20%); cost is a wash, and "−40% tokens" overstates it.**
