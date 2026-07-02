@@ -1,3 +1,34 @@
+# ⏰ MORNING SUMMARY (read this first) — 2026-07-03
+
+**What ran overnight (session 2):** built retrieval NOISE (40 decoy conversations mined from git history),
+wired it into the memory backfill, added claude-code as a second agent, and ran the FULL 19-task roster
+for BOTH agents (vanilla vs hindsight, with noise). All results in the UI (`uv run omb view` → sdebench):
+`nz-oc-none/nz-oc-hs` (opencode), `nz-cc-none/nz-cc-hs` (claude).
+
+**Headline results (n=1, 19 tasks, with noise):**
+| agent | vanilla interv | hindsight interv | cost Δ | note |
+|---|---|---|---|---|
+| opencode / gemini-3.5-flash | 26 | **15 (−42%)** | −30% | memory clearly wins |
+| claude-code / sonnet-5 | 12 | 13 (flat) | −4% | memory ~neutral; strong agent solves anyway |
+
+**Two big findings:**
+1. **H-tasks are TOO EASY for a strong agent.** claude vanilla = **0 interventions on ALL 10 H tasks**
+   (incl. omdset) — sonnet-5 reliably `git log`s the planted decision. H difficulty is AGENT-DEPENDENT
+   (gemini still got signal: H 14→8). To matter for strong agents, H tasks need symptom→cause-distance
+   hardening (see "H-task hardening" below, options A/B/C). Structurally they're all sound (full
+   discrimination matrix passes; naive fix fails hidden).
+2. **Memory value is agent-dependent.** Big win for the weaker agent (gemini), ~neutral for sonnet-5
+   under noise (it already solves most tasks). Reflect content is accurate (verified) — claude's 2 per-task
+   regressions are n=1 variance, not bad memory.
+
+**Decisions I need from you:**
+- Harden the H tasks for strong agents? (recommend option B/C — symptom→cause distance). Or accept H as
+  "weak-agent-only" signal and lean on F tasks for strong agents?
+- Re-run at n=3 to tighten the claude numbers (the −42% opencode win is clear; claude needs more samples)?
+- budget-h specifically: too easy for BOTH agents — hardest candidate for a rewrite.
+
+---
+
 # Overnight run — findings & blockers (2026-07-02 → 07-03)
 
 Living log for the autonomous overnight task. Newest section at the bottom.
