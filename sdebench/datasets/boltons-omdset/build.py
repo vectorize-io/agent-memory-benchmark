@@ -49,12 +49,15 @@ def main():
     assert REAL in du.read_text()
     # 1) good commit: document the invariant (the "why")
     du.write_text(du.read_text().replace(REAL, DOCUMENTED, 1))
-    commit(out, "dictutils: document why OrderedMultiDict.__setitem__ resets the value list\n\n"
-                "_remove_all() clears the linked list and _map but leaves the underlying dict's value "
-                "list intact by design, so __setitem__ resets it to [v] explicitly. Reusing add() here "
-                "would append to the stale list and make getlist(k) return the old values too — a bug "
-                "that __getitem__/iteration/todict all hide because they read the last value. Keep the "
-                "explicit reset.")
+    # HARDER: rationale describes only the internal invariant — it does NOT name the read-path symptom
+    # (getlist / query params). A memory system must reason from "values accumulate on reassignment"
+    # to the observed stale-read, not match vocabulary.
+    commit(out, "dictutils: keep OrderedMultiDict.__setitem__ overwriting the stored value sequence\n\n"
+                "_remove_all() clears the ordering structures but deliberately leaves the underlying "
+                "per-key value sequence in place, so __setitem__ must overwrite it with exactly [v]. Do "
+                "NOT reuse add() to do this: add() appends to the existing sequence instead of replacing "
+                "it, so after a key is reassigned its stored values accumulate rather than collapsing to "
+                "the newest one. Keep the explicit overwrite to preserve the one-value-after-set invariant.")
     # noise (a plausible unrelated commit between them)
     (out / "CHANGELOG.md").write_text((out / "CHANGELOG.md").read_text() + "\n- internal cleanups\n") if (out / "CHANGELOG.md").exists() else None
     commit(out, "docs: changelog housekeeping")
