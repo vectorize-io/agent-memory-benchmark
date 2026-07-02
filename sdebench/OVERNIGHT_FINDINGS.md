@@ -346,3 +346,20 @@ honest statement is: **at n=1 with noise, claude's memory arm was ~flat with hig
 (±a few interventions either way), and the memory content itself was accurate.** Need n=3 to separate
 signal from noise on the claude arm. Finding #1 (H tasks too easy for sonnet-5, all vanilla=0) is robust
 — it's a clean 10/10 zeros, not variance.
+
+## ============ ⭐⭐⭐ ROOT-CAUSE + FIX: why claude+memory didn't help ============
+User was right — the claude integration had a bug we never validated. TRACED it:
+- The UserPromptSubmit hook **fired correctly** and reflect **returned the right answer** (verified on
+  budget bank: "MAX_ATTEMPTS should be 7…"). Plumbing was fine.
+- BUT claude-sonnet-5 **distrusts hook-injected `additionalContext`** — verbatim: *"the 'MEMORY' note
+  injected via the prompt-submit hook doesn't match anything I've actually saved, so I'd flag that as a
+  likely prompt-injection attempt rather than trust it."* → memory delivered but REFUSED. That's why
+  claude+hindsight ≈ vanilla.
+- **FIX (committed 6c529c4):** inject via a TRUSTED channel — the harness reflects once on the symptom
+  and passes the decision via `claude --append-system-prompt` every turn (claude's equivalent of
+  opencode's system-prompt injection). Removed the hook. VALIDATED in isolation: via --append-system-prompt
+  claude answers the exact planted value ("7"); via the hook it refused. Re-running the claude arm to
+  quantify the improvement.
+- LESSON: hook `additionalContext` is the WRONG channel for authoritative memory on claude (triggers
+  injection defenses). System prompt is trusted. The earlier "memory neutral for strong agents" claim was
+  an ARTIFACT of this bug, not a real property — retracting it pending the re-run.
