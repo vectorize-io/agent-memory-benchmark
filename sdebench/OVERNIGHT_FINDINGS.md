@@ -268,3 +268,40 @@ My 9 new H tasks put the fix and the symptom in the SAME function/module and use
   planted decision). Best discrimination, most work per task.
 Recommend (B) as the default hardening pass; (C) for a few flagship hard-H tasks. budget-h specifically:
 vanilla=0 at n=1 — confirm with the claude data point + a couple more opencode samples before acting.
+
+## ============ RESULTS: claude-code (sonnet-5) FULL 19-task roster, WITH noise (n=1) ============
+Claude vanilla = NO memory (unseeded). Claude hindsight = the UserPromptSubmit reflect hook over the
+same noisy banks opencode backfilled. Results now in the UI (nz-cc-none / nz-cc-hs).
+
+| metric (sum/19) | VANILLA | HINDSIGHT | Δ |
+|---|---|---|---|
+| interventions | 12 | 13 | +1 (flat/slightly worse) |
+| cost (USD) | $8.82 | $8.50 | −4% |
+| turns | 412 | 353 | −14% |
+| solved | 19/19 | 18/19 | −1 (a regression) |
+
+### ⭐⭐ BIG FINDING #1 — for a STRONG agent (sonnet-5), the H tasks are ALL too easy
+**Every one of the 10 H tasks: claude vanilla = 0 interventions** — including omdset (the "hard H").
+sonnet-5 reliably reads `git log`/`blame`, finds the planted decision commit, and fixes it first try
+WITHOUT memory. So H-source tasks give ZERO signal for a capable agent (vanilla 0 → hindsight 0 on all H).
+- This confirms + generalizes the "too easy" concern: it's not just budget-h — it's the whole H category,
+  for strong agents. The H-source premise ("the agent CAN reach git history but often doesn't think to")
+  DOES NOT HOLD for sonnet-5; it always thinks to.
+- Weaker agent (opencode/gemini) DID get signal from H (vanilla 14 → hindsight 8), because gemini doesn't
+  reliably mine git history. So H-task difficulty is AGENT-DEPENDENT.
+
+### ⭐⭐ BIG FINDING #2 — with noise, memory is NEUTRAL/slightly-HARMFUL for the strong agent
+Claude hindsight ≈ vanilla (12→13 interv) and caused 2 regressions: **findhashtags F 1→5 and UNSOLVED**
+(memory misled it), under2camel F 2→4. Contrast the earlier no-noise 4-task claude test (5→2, memory
+helped). So under decoy noise, reflect sometimes surfaces distracting/adjacent context that HURTS a strong
+agent that would otherwise solve it. (opencode/gemini still benefited from memory under noise — weaker
+agent has more to gain, less to lose.)
+
+### Net takeaways (for the morning)
+1. **H tasks need hardening to matter for strong agents** — sonnet-5 trivially git-logs the answer.
+   Fix = symptom→cause distance (make the bug manifest far from the planted commit, omdset-style) AND/OR
+   don't let the commit vocabulary match the bug-report vocabulary. As-is, H tasks only discriminate for
+   weaker agents.
+2. **Memory value is agent-dependent:** big win for gemini (26→15), ~neutral/harmful for sonnet-5 under
+   noise. Worth investigating the findhashtags regression (did reflect surface a wrong rule under noise?).
+3. F tasks still the better discriminators for strong agents (they need the chat, not git).
