@@ -46,7 +46,7 @@ ranking problem, not a lookup.
 
 | task | source | tier | function | non-guessable policy |
 |---|---|---|---|---|
-| bytes2human | **H** | real-function | `strutils.bytes2human` | exact powers of 1024 roll over (`<`, not `<=`) — general fix vs special-casing; rationale in real commit `766b5547` |
+| omdset | **H** | real-function | `dictutils.OrderedMultiDict.__setitem__` | find-the-bug: a `perf` commit rewrote `__setitem__` to reuse `add()` (appends to a stale value list) — must reset to `[v]`; symptom is a stale `getlist` two modules away, all 153 real tests pass; git blame/log is the shortcut |
 | slugify | F | real-function | `strutils.slugify` | symbol map `&→and, $→usd, %→pct` (not dollar/percent) |
 | pluralize | F | real-function | `strutils.pluralize` | `person→persons, index→indexes, matrix→matrixes` (not people/indices/matrices) |
 | under2camel | F | real-function | `strutils.under2camel` | acronym set `{HTTP,API,SKU,GDPR}` — incl. domain SKU/GDPR, **excludes** common db/url |

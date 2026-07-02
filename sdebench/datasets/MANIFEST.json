@@ -3,12 +3,12 @@
   "host": "boltons (github.com/mahmoud/boltons) @ 979fa9b",
   "n_tasks": 10,
   "by_source": {
-    "H": 1,
-    "F": 9
+    "F": 9,
+    "H": 1
   },
   "by_tier": {
-    "real-function": 5,
-    "planted": 5
+    "planted": 5,
+    "real-function": 5
   },
   "tasks": [
     {
@@ -17,13 +17,6 @@
       "tier": "planted",
       "function": "MAX_ATTEMPTS",
       "policy": "exactly 7 (measured to the rate-limit window)"
-    },
-    {
-      "task_id": "boltons-bytes2human-001",
-      "source": "H",
-      "tier": "real-function",
-      "function": "bytes2human",
-      "policy": "unit selection uses '<' so exact powers of 1024 roll over (1024 -> '1K', not '1024B')"
     },
     {
       "task_id": "boltons-discount-001",
@@ -45,6 +38,13 @@
       "tier": "planted",
       "function": "apply_updates",
       "policy": "union list values (de-duplicated, base order first)"
+    },
+    {
+      "task_id": "boltons-omdset-001",
+      "source": "H",
+      "tier": "real-function",
+      "function": "OrderedMultiDict.__setitem__",
+      "policy": "__setitem__ must reset the underlying value list to [v] after _remove_all (not reuse add(), which appends to the stale list)"
     },
     {
       "task_id": "boltons-parseflag-001",
