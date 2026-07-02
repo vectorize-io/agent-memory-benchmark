@@ -35,12 +35,15 @@ class CodingMode(ResponseMode):
     name = "coding"
     description = "Build the task repo, run a coding agent with test-feedback interventions, grade by pytest."
 
+    _AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5"}
+
     def __init__(self, model: str | None = None):
-        self._model = model or os.environ.get("SDE_MODEL", "google/gemini-3.5-flash")
+        self._agent = os.environ.get("SDE_AGENT", "opencode")   # --agent, so claude runs land in the UI
+        self._model = model or os.environ.get("SDE_MODEL") or self._AGENT_MODEL.get(self._agent, "google/gemini-3.5-flash")
 
     @property
     def llm_id(self) -> str | None:
-        return self._model
+        return f"{self._agent}:{self._model}"
 
     def answer(self, query: str, memory: MemoryProvider, task_type: str = "coding", user_id: str | None = None) -> AnswerResult:
         return asyncio.run(self.async_answer(query, memory, task_type=task_type, user_id=user_id))
@@ -83,9 +86,18 @@ class CodingMode(ResponseMode):
         # 2. run the plugin's backfill (it owns extraction/strategies/pages/git scope)
         bf = ["node", str(backfill_js), "--repo", str(src), "--bank", bank, "--api-url", url, "--reset"]
         conv = t.get("conversations") or []
-        if conv:
+        # chats to ingest = the task's own decision chat + a shared pool of DECOY conversations (noise:
+        # long, codebase-related, no task policy) so chat retrieval is a real ranking problem, not a
+        # 1-chat lookup. Decoys are pre-generated once from git history (gen/decoy_conversations.json).
+        chats = [{"id": task_id, "turns": conv}] if conv else []
+        decoy_path = Path(os.environ.get("SDE_DECOY_CONVERSATIONS",
+                          str(_REPO_ROOT / "sdebench" / "datasets" / "gen" / "decoy_conversations.json")))
+        if os.environ.get("SDE_DECOYS", "1").lower() not in ("0", "false") and decoy_path.exists():
+            for d in json.loads(decoy_path.read_text()):
+                chats.append({"id": d.get("id", f"decoy-{len(chats)}"), "turns": d["turns"]})
+        if chats:
             cf = base / "conversations.json"
-            cf.write_text(json.dumps([{"id": task_id, "turns": conv}]))
+            cf.write_text(json.dumps(chats))
             bf += ["--conversations", str(cf)]
         limit = os.environ.get("SDE_HSCODING_GIT_LIMIT")  # optional scope; unset => the plugin decides
         if limit:
@@ -118,7 +130,7 @@ class CodingMode(ResponseMode):
             raise NotImplementedError(f"coding mode supports 'none' and 'hscoding'; got '{memory.name}'")
 
         cmd = ["uv", "run", "python", str(_RUN_PY), "--task", str(task_json),
-               "--history", arm, "--model", self._model, "--run-id", run_id]
+               "--history", arm, "--agent", self._agent, "--model", self._model, "--run-id", run_id]
         t0 = time.perf_counter()
         proc = await asyncio.to_thread(
             subprocess.run, cmd, capture_output=True, text=True, cwd=str(_REPO_ROOT), env=env,
