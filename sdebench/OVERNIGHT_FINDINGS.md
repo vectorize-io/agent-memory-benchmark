@@ -112,3 +112,22 @@ banks reused across the 3 runs. Every cell is the mean over 3 runs.
 ### Caveats / for discussion
 - Seeding strongly raises the vanilla baseline (no-seed vanilla was ~12). If the goal is to showcase memory's value on interventions, either (a) also seed the hindsight arm (measure "memory ON TOP of sessions"), or (b) harden tasks so raw session-reading isn't enough. The **token/latency win is arguably the truer memory value** here.
 - The agent never called the `memory_reflect` tool — it relied only on auto-inject. A prompt nudge to use the tool for distal symptoms might lift the intervention win (cf. the earlier listmerge enrichment).
+
+## ============ OVERNIGHT SUMMARY (what got done) ============
+1. **Seeding (vanilla fairness)** ✅ — vanilla seeds the dev conversations as real opencode sessions; the agent consults them via `opencode session list`/`export` on its own initiative (validated). Availability + agency.
+2. **Agent containerized** ✅ — opencode runs in a per-task container (isolated, no host-store bleed), resumes across interventions via one long-lived container (store inside; fixed the slow bind-mounted-SQLite + cold-start). Grading stays in sdebench-base.
+3. **New plugin wired** ✅ — container writes `~/.hindsight/coding-agent.json` (the plugin's new JSON config; env removed). Reflect over the host server via host.docker.internal. Bank reuse across n runs (skip re-backfill).
+4. **n=3 sweep vanilla vs hindsight** ✅ — see the RESULTS section. Headline: both 10/10; interventions 8.3→6.7 (−20%), **input tokens −40%, wall −19%** at equal cost. Memory's real win here is EFFICIENCY, not solve-rate (seeded vanilla is a strong baseline).
+5. **AMB UI** ✅ — per-run detail shows all agent metrics (pills); added `meta.tokens`. Leaderboard is accuracy-based (all coding=100%), so read the per-run detail / this table. `uv run omb view`.
+6. **claude-code stretch** ⚠️ BLOCKED — image builds; blocked on (a) auth (needs ANTHROPIC_API_KEY; host uses a Max OAuth token, and a 60-run sweep would hit the 5h subscription cap regardless) and (b) memory integration (Hindsight is an opencode plugin; claude-code needs a hook/MCP). Adapter design recorded above. **Needs your call (API key?) tomorrow.**
+7. **Task expansion** ✅ — **+9 H-source tasks** (5 planted-H via gen/emit_host_h.py, 4 real-function-H via gen/emit_realfn_h.py), all validated (HEAD fails repro+hidden, correct passes, decision in git history). Dataset: **19 tasks, 9 F / 10 H, 9 real-function / 10 planted.** H category 1 → 10 as requested.
+
+### Open questions for you
+- **claude-code:** provide an ANTHROPIC_API_KEY (clean) or approve subscription use (rate-limited)? And pick the memory integration (hook / MCP / prompt-inject).
+- **seeding vs memory:** the seeded vanilla is strong. Want the hindsight arm to ALSO seed (measure "memory on top of sessions"), and/or a prompt nudge to use the `memory_reflect` tool for distal symptoms?
+- Re-run the n=3 sweep on the expanded 19-task set once you're happy with the H tasks?
+
+### To reproduce / view
+- Sweep: `zsh scratchpad/overnight_sweep.sh` (env: SDE_HSCODING_PLUGIN_DIR=<new plugin>, SDE_HINDSIGHT_URL=http://localhost:8899).
+- Results: `outputs/sdebench/ov-{none,hs}-{1,2,3}` (+ .gz committed). Analysis: `scratchpad/analyze.py`.
+- UI: `uv run omb view` → sdebench → open an ov-none-* and an ov-hs-* run.
