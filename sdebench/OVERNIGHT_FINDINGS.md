@@ -219,3 +219,31 @@ from invariant→symptom.
   raises the reasoning bar and widens the vanilla-vs-hindsight gap. Currently they're valid but "easy H"
   (answer reachable by grep), whereas omdset is "hard H" (answer requires reasoning). Both are legitimate
   H tasks; if you want them harder, this is the knob. Awaiting hindsight-arm data to quantify the gap.
+
+## ============ RESULTS: opencode FULL 19-task roster, WITH noise (n=1) ============
+Vanilla (seeded, F only) vs Hindsight (plugin, per-task bank = real chat + 40 decoys + 100 git commits,
+~630 facts). Both 19/19 solved.
+
+| metric (sum/19 tasks) | VANILLA | HINDSIGHT | Δ |
+|---|---|---|---|
+| **interventions** | **26** | **15** | **−42%** |
+| **cost (USD)** | **$15.5** | **$10.9** | **−30%** |
+| turns | 754 | 616 | −18% |
+| solved | 19/19 | 19/19 | = |
+
+### ⭐ Noise makes memory clearly win (stronger than session-1's seeded/no-noise 8.3→6.7)
+- With realistic decoy noise + the full roster, hindsight cuts interventions **42%** AND cost **30%** —
+  a much bigger, cost-positive win than session 1. The harder/noisier setting is where memory pays off.
+- H-tasks only (10): vanilla 14 → hindsight 8 interventions (−43%) — memory helps on H too.
+
+### H-task "too easy" verdict (per user)
+Per-H-task vanilla→hindsight interventions: budget-h 0→1, discount-h 3→1, findhashtags-h 1→1,
+listmerge-h 1→1, omdset 2→1, parseflag-h 1→1, pluralize-h 3→1, rounding-h 1→0, slugify-h 1→1,
+under2camel-h 1→0.
+- **9/10 H tasks are appropriately hard** — vanilla needs 1-3 interventions; hindsight helps or ties.
+- **⚠️ budget-h is TOO EASY** — vanilla solved it with 0 interventions (and hindsight took 1). It's the
+  most grep-able: its decision commit literally says "MAX_ATTEMPTS is 7". FLAG FOR REFINEMENT.
+- Several H tasks are 1→1 (flat) at n=1 — memory neither helps nor hurts; need n=3 to tell signal from noise.
+- **Systemic hardening lever (repeat):** the 9 new H commit bodies state the literal answer, so a git-log
+  grep solves them. Rewriting them to give RATIONALE without the literal value/symptom (omdset-style) would
+  raise difficulty and widen the vanilla-vs-hindsight gap. Concrete next step if you want harder H tasks.
