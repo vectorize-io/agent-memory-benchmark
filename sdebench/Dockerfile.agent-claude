@@ -1,7 +1,13 @@
 # Isolated claude-code agent (parallels sdebench-agent for opencode). Auth (ANTHROPIC_API_KEY or a
 # mounted ~/.claude/.credentials.json) is provided at runtime — none baked in.
 FROM node:22-slim
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates \
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates python3 \
     && rm -rf /var/lib/apt/lists/*
 RUN npm i -g @anthropic-ai/claude-code
+# memory injection = a UserPromptSubmit hook (no MCP): reflect + inject. Inert unless a bank is set,
+# so the same image serves vanilla + memory arms. Auth (OAuth creds) is mounted at runtime.
+COPY claude_memory_hook.py /opt/claude_memory_hook.py
+RUN mkdir -p /root/.claude \
+    && printf '{"hooks":{"UserPromptSubmit":[{"hooks":[{"type":"command","command":"python3 /opt/claude_memory_hook.py"}]}]}}' \
+       > /root/.claude/settings.json
 WORKDIR /work

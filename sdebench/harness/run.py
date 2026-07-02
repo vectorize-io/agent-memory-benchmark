@@ -259,8 +259,14 @@ def gen_index_doc(task: dict) -> str:
     return "\n".join(lines)
 
 
-_AGENT_IMAGE = os.environ.get("SDE_AGENT_IMAGE", "sdebench-agent")
+# The coding agent is pluggable (--agent). opencode: gemini + the Hindsight opencode plugin (reflect
+# auto-injected via ~/.hindsight/coding-agent.json). claude-code: sonnet-5 + a UserPromptSubmit hook
+# that reflects+injects (no MCP), OAuth creds mounted at runtime.
+_AGENT_IMAGES = {"opencode": os.environ.get("SDE_AGENT_IMAGE", "sdebench-agent"),
+                 "claude-code": os.environ.get("SDE_AGENT_IMAGE_CLAUDE", "sdebench-agent-claude")}
+_AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5"}
 _PLUGIN_DIR = os.environ.get("SDE_HSCODING_PLUGIN_DIR", str(Path.home() / "dev" / "hindsight-coding-opencode"))
+_CLAUDE_CREDS = os.environ.get("SDE_CLAUDE_CREDS", str(Path.home() / ".sdebench" / "claude_creds.json"))
 
 
 def _container_url(url: str) -> str:
@@ -268,13 +274,11 @@ def _container_url(url: str) -> str:
     return url.replace("localhost", "host.docker.internal").replace("127.0.0.1", "host.docker.internal")
 
 
-def start_agent_container(workdir: Path, env: dict) -> str:
-    """Start ONE long-lived agent container per task: repo + plugin mounted, and opencode's session
-    store kept INSIDE the container (fast local fs, persisting across the intervention loop so `-c`
-    resumes the same session — no per-turn container cold-start or bind-mounted-SQLite cost). Grading
-    stays in the sdebench-base image. Returns the container id."""
-    key = env.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
+def _mem_docker_env(env: dict) -> list[str]:
+    """Docker -e flags carrying model auth + memory settings (both agents read HINDSIGHT_*; the
+    opencode plugin also gets a config file, the claude hook reads these env vars directly)."""
     denv: list[str] = []
+    key = env.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
     if key:
         denv += ["-e", f"GEMINI_API_KEY={key}", "-e", f"GOOGLE_GENERATIVE_AI_API_KEY={key}"]
     for k in ("HINDSIGHT_DISABLED", "HINDSIGHT_BANK_ID", "HINDSIGHT_MEMORY_MODE"):
@@ -282,22 +286,31 @@ def start_agent_container(workdir: Path, env: dict) -> str:
             denv += ["-e", f"{k}={env[k]}"]
     if env.get("HINDSIGHT_API_URL"):
         denv += ["-e", f"HINDSIGHT_API_URL={_container_url(env['HINDSIGHT_API_URL'])}"]
-    cmd = ["docker", "run", "-d", "--rm",
-           "-v", f"{workdir}:/work", "-w", "/work",
-           "-v", f"{_PLUGIN_DIR}:/opt/hindsight-coding-opencode:ro",   # the Hindsight coding plugin
+    return denv
+
+
+def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> str:
+    """Start ONE long-lived agent container per task (session store INSIDE it so `-c`/`--continue`
+    resumes across the intervention loop cheaply). Grading stays in sdebench-base. Returns the id."""
+    mounts = ["-v", f"{workdir}:/work"]
+    if agent == "opencode":
+        mounts += ["-v", f"{_PLUGIN_DIR}:/opt/hindsight-coding-opencode:ro"]
+    elif agent == "claude-code":
+        mounts += ["-v", f"{_CLAUDE_CREDS}:/root/.claude/.credentials.json"]  # rw: claude may refresh it
+    cmd = ["docker", "run", "-d", "--rm", *mounts, "-w", "/work",
            "--add-host", "host.docker.internal:host-gateway",
-           *denv, _AGENT_IMAGE, "sleep", "infinity"]
+           *_mem_docker_env(env), _AGENT_IMAGES[agent], "sleep", "infinity"]
     cid = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout.strip()
-    # The plugin reads ~/.hindsight/coding-agent.json (NOT env). Translate the arm's memory settings into
-    # that config: disabled for the vanilla baseline; bank + host-reachable URL for the memory arm.
-    cfg: dict = {"disabled": env.get("HINDSIGHT_DISABLED") == "1", "gitSync": {"enabled": False}}
-    if env.get("HINDSIGHT_BANK_ID"):
-        cfg["bankId"] = env["HINDSIGHT_BANK_ID"]
-    if env.get("HINDSIGHT_API_URL"):
-        cfg["apiUrl"] = _container_url(env["HINDSIGHT_API_URL"])
-    subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
-                    "mkdir -p /root/.hindsight && cat > /root/.hindsight/coding-agent.json"],
-                   input=json.dumps(cfg), capture_output=True, text=True)
+    if agent == "opencode":
+        # opencode's plugin reads ~/.hindsight/coding-agent.json (not env): disabled=vanilla; bank+url=memory.
+        cfg: dict = {"disabled": env.get("HINDSIGHT_DISABLED") == "1", "gitSync": {"enabled": False}}
+        if env.get("HINDSIGHT_BANK_ID"):
+            cfg["bankId"] = env["HINDSIGHT_BANK_ID"]
+        if env.get("HINDSIGHT_API_URL"):
+            cfg["apiUrl"] = _container_url(env["HINDSIGHT_API_URL"])
+        subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
+                        "mkdir -p /root/.hindsight && cat > /root/.hindsight/coding-agent.json"],
+                       input=json.dumps(cfg), capture_output=True, text=True)
     return cid
 
 
@@ -306,9 +319,38 @@ def stop_agent_container(cid: str) -> None:
         subprocess.run(["docker", "rm", "-f", cid], capture_output=True, text=True)
 
 
-def run_agent(cid: str, model: str, timeout: int, message: str, resume: bool = False) -> dict:
-    # One turn: exec opencode into the already-running per-task container (session store lives inside,
-    # so `-c` resumes the same session across the intervention loop).
+def _parse_claude(stdout: str, elapsed: float) -> dict:
+    """Parse claude-code's `--output-format json` result into the common {tokens,turns,cost,...} shape."""
+    tok = {"input": 0, "output": 0, "reasoning": 0, "cache_read": 0, "cache_write": 0}
+    traj = []
+    try:
+        d = json.loads(stdout.strip().splitlines()[-1])
+    except Exception:
+        return {"elapsed": elapsed, "tokens": tok, "turns": 0, "trajectory": traj, "cost": 0.0}
+    u = d.get("usage", {}) or {}
+    tok["input"] = u.get("input_tokens", 0) or 0
+    tok["output"] = u.get("output_tokens", 0) or 0
+    tok["cache_read"] = u.get("cache_read_input_tokens", 0) or 0
+    tok["cache_write"] = u.get("cache_creation_input_tokens", 0) or 0
+    txt = d.get("result", "")
+    if txt:
+        traj.append({"k": "say", "text": str(txt)[:1500]})
+    return {"elapsed": elapsed, "tokens": tok, "turns": d.get("num_turns", 0) or 0,
+            "trajectory": traj, "cost": d.get("total_cost_usd", 0.0) or 0.0}
+
+
+def run_agent(cid: str, model: str, timeout: int, message: str, resume: bool = False, agent: str = "opencode") -> dict:
+    # One turn: exec the agent into the already-running per-task container (session store lives inside,
+    # so `-c`/`--continue` resumes the same session across the intervention loop).
+    if agent == "claude-code":
+        cmd = ["docker", "exec", "-w", "/work", cid, "claude", "-p", "--output-format", "json",
+               "--permission-mode", "acceptEdits", "--model", model]
+        if resume:
+            cmd.append("--continue")
+        cmd.append(message)
+        t0 = time.perf_counter()
+        proc = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
+        return _parse_claude(proc.stdout, time.perf_counter() - t0)
     cmd = ["docker", "exec", "-w", "/work", cid,
            "opencode", "run", "--format", "json", "-m", model]
     if resume:
@@ -484,12 +526,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
     ap.add_argument("--history", choices=["full", "squashed", "hindsight", "hscoding", "memtool", "inject", "oracle", "hybrid", "index", "provided", "conversations", "skill"], default="full")
-    ap.add_argument("--model", default="google/gemini-3.5-flash")
+    ap.add_argument("--agent", choices=["opencode", "claude-code"], default="opencode")
+    ap.add_argument("--model", default=None, help="agent model; defaults per --agent")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
     ap.add_argument("--max-interventions", type=int, default=5,
                     help="cap on feedback rounds before giving up (drift guard)")
     args = ap.parse_args()
+    if not args.model:
+        args.model = _AGENT_MODEL[args.agent]
     task = json.loads(Path(args.task).read_text())
     task["_dir"] = str(Path(args.task).resolve().parent)
     task.setdefault("repo", task.get("codebase") or task["task_id"])
@@ -562,22 +607,23 @@ def main():
     git_history = capture_git_history(task)
 
     TOK = ("input", "output", "reasoning", "cache_read", "cache_write")
-    totals = {k: 0 for k in TOK}; totals.update({"turns": 0, "wall_s": 0.0})
+    totals = {k: 0 for k in TOK}; totals.update({"turns": 0, "wall_s": 0.0, "cost": 0.0})
     trace = []  # ordered multi-round conversation for the UI
 
     def acc(m, role, prompt_text):
         for k in TOK:
             totals[k] += m["tokens"][k]
         totals["turns"] += m["turns"]; totals["wall_s"] += m["elapsed"]
+        totals["cost"] += m.get("cost", 0.0)      # agent-reported cost (claude); opencode computes below
         trace.append({"role": role, "prompt": prompt_text, "trajectory": m["trajectory"],
                       "tokens": m["tokens"], "turns": m["turns"], "wall_s": round(m["elapsed"], 1)})
 
     print(f"[{task['task_id']}] history={args.history} model={args.model} — initial attempt…", flush=True)
     init_prompt = PROMPT.format(repo=task["repo"], bug_report=task["bug_report"], instruction=VARIANTS[os.environ.get("SDE_VARIANT", "base")])
     env = load_env(memory_bank, mem_index, conv_log)   # container env (memory config the plugin reads)
-    cid = start_agent_container(repo, env)              # ONE container for the whole task (initial + interventions)
+    cid = start_agent_container(repo, env, args.agent)  # ONE container for the whole task (initial + interventions)
     try:
-        if args.history == "full" and task.get("conversations"):
+        if args.history == "full" and args.agent == "opencode" and task.get("conversations"):
             # Vanilla-baseline fairness: seed the past developer conversations as opencode sessions the
             # agent CAN consult (not injected, not resumed). It reads them only if it chooses — the
             # realistic "does it think to check its history?" test, vs the memory system that surfaces
@@ -586,7 +632,7 @@ def main():
                 init_prompt += ("\n\nPast developer sessions on this project are available in your opencode "
                                 "session history — run `opencode session list` and `opencode export <id>` to "
                                 "review them if they help.")
-        acc(run_agent(cid, args.model, args.timeout, init_prompt), "initial", init_prompt)
+        acc(run_agent(cid, args.model, args.timeout, init_prompt, agent=args.agent), "initial", init_prompt)
 
         # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.
         # Metric = number of human-like interventions needed (capped); cost = sum across all rounds.
@@ -603,16 +649,17 @@ def main():
             interventions += 1
             fb = build_feedback(g)
             print(f"  ↳ intervention {interventions}: {g['pytest']}", flush=True)
-            acc(run_agent(cid, args.model, args.timeout, fb, resume=True), f"intervention-{interventions}", fb)
+            acc(run_agent(cid, args.model, args.timeout, fb, resume=True, agent=args.agent), f"intervention-{interventions}", fb)
     finally:
         stop_agent_container(cid)
 
     solved = g["resolved"]
-    cost = compute_cost(args.model, {k: totals[k] for k in TOK})
+    # claude reports its own cost per call (summed in totals); opencode/gemini we price from tokens.
+    cost = totals["cost"] if args.agent == "claude-code" else compute_cost(args.model, {k: totals[k] for k in TOK})
     result = {
         "task_id": task["task_id"], "codebase": task.get("codebase") or task["repo"],
         "variant": os.environ.get("SDE_VARIANT", "base"),
-        "history": args.history, "model": args.model,
+        "history": args.history, "agent": args.agent, "model": args.model,
         "solved": solved, "interventions": interventions,
         "capped": (not solved and interventions >= args.max_interventions),
         "final_pytest": g["pytest"], "patch_bytes": len(patch),
