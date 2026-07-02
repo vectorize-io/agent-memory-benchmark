@@ -108,7 +108,7 @@ def build_repo(task: dict, dest: Path, history: str):
        cwd=dest, env=env)
 
 
-HINDSIGHT_URL = "http://localhost:8888"
+HINDSIGHT_URL = os.environ.get("SDE_HINDSIGHT_URL", "http://localhost:8888")
 
 
 def load_env(memory_bank: str | None = None, mem_index: str | None = None, conv_log: str | None = None) -> dict:
@@ -386,7 +386,7 @@ def build_feedback(grade_result: dict) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
-    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "memtool", "inject", "oracle", "hybrid", "index", "provided", "conversations", "skill", "memsys"], default="full")
+    ap.add_argument("--history", choices=["full", "squashed", "hindsight", "hsreflect", "hscoding", "memtool", "inject", "oracle", "hybrid", "index", "provided", "conversations", "skill", "memsys"], default="full")
     ap.add_argument("--model", default="google/gemini-3.5-flash")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
@@ -425,6 +425,21 @@ def main():
                 "\n\nRelevant project memory, retrieved by your memory system from past commits, "
                 "docs, and conversations (apply it if relevant; verify against the current code):\n"
                 + "\n".join("- " + h for h in _hits))
+    elif args.history == "hsreflect":
+        build_repo(task, repo, "full")              # full repo + Hindsight REFLECT-only memory (no recall stage)
+        import importlib.util as _iu
+        _sp = _iu.spec_from_file_location("hs_mem", str(Path(__file__).resolve().parents[1] / "memsys" / "hindsight_mem.py"))
+        _hs = _iu.module_from_spec(_sp); _sp.loader.exec_module(_hs)
+        _so = _hs.rerank(_hs.client(), os.environ.get("SDE_HS_BANK", "sdebench-full"), task["bug_report"])
+        _why = (_so or {}).get("why")
+        if _why:
+            task["bug_report"] = task["bug_report"] + (
+                "\n\nRelevant project memory, surfaced by your memory system (a past decision that may "
+                "explain this issue; apply it if relevant, verify against the current code):\n- " + _why)
+    elif args.history == "hscoding":
+        build_repo(task, repo, "full")              # full repo; memory via the hindsight-coding-opencode
+        memory_bank = os.environ.get("SDE_HSCODING_BANK", "hs-coding")  # plugin (reflect + INJECT), bank
+        #                                            # pre-backfilled by `hindsight-coding-backfill` (git+chat)
     elif args.history == "skill":
         build_repo(task, repo, "full")              # vanilla full git + a recall_conversations SKILL (tool)
         _cv = task.get("conversations") or []

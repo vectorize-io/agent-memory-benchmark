@@ -58,11 +58,27 @@ def flatten_trace(trace):
     return steps
 
 
-def to_query_result(t, key, git_history):
+def parse_task(task_id):
+    """(host, trap, source) — host is the SPLIT (boltons=real repo, synthetic=mock module);
+    the query label is trap+source, e.g. budget-F, omdset-H."""
+    if task_id.startswith("boltons-"):
+        trap = task_id[len("boltons-"):].rsplit("-", 1)[0]
+        try:
+            src = json.loads((SDEBENCH / "datasets" / f"boltons-{trap}" / "tasks" / "main" / "task.json").read_text()).get("source", "F")
+        except Exception:
+            src = "F"
+        return "boltons", trap, src
+    if task_id.startswith("gen-"):
+        parts = task_id.split("-")   # gen-budget-F-001
+        return "synthetic", parts[1], (parts[2] if len(parts) > 2 else "?")
+    return "other", task_id, "?"
+
+
+def to_query_result(t, key, git_history, query_id=None):
     tok = t.get("tokens", {})
     cost = compute_cost(t.get("model"), tok)
     return {
-        "query_id": key,
+        "query_id": query_id or key,
         "query": t.get("bug_report", ""),
         "answer": t.get("final_patch", "") or "(empty patch)",
         "trajectory": flatten_trace(t.get("trace", [])),
@@ -86,24 +102,28 @@ def main():
     args = ap.parse_args()
 
     traces = sorted(glob.glob(str(RUN_DIR / args.glob / "trace.json")))
-    runs = {}  # (model, history, variant, task_id) -> [(key, trace)]
+    # group into SPLITS by host (boltons / synthetic); each task = one query labeled trap-source.
+    runs = {}  # (model, history, variant, host) -> {task_id: (key, trace)}
     for f in traces:
         t = json.loads(Path(f).read_text())
-        runs.setdefault((t["model"], t["history"], t.get("variant", "base"), t["task_id"]), []).append((Path(f).parent.name, t))
+        host, trap, src = parse_task(t["task_id"])
+        key4 = (t["model"], t["history"], t.get("variant", "base"), host)
+        runs.setdefault(key4, {})[t["task_id"]] = (Path(f).parent.name, t, f"{trap}-{src}")
 
     hist_cache = {}  # repo -> git history (fallback capture for old runs w/o stored history)
-    for (model, history, variant, task_id), items in runs.items():
-        t0 = items[0][1]
-        gh = t0.get("git_history")
-        if not gh:   # backfill old runs by rebuilding the codebase
-            cb = repo_of(t0)
-            if cb not in hist_cache:
-                task = json.loads((SDEBENCH / "datasets" / cb / "task.json").read_text())
-                hist_cache[cb] = capture_git_history(task)
-            gh = hist_cache[cb]
-        repo = task_id   # one UI split per task (tasks sharing a codebase share gh)
+    for (model, history, variant, host), tasks in runs.items():
+        results = []
+        for task_id, (key, t, label) in sorted(tasks.items(), key=lambda kv: kv[1][2]):
+            gh = t.get("git_history")
+            if not gh:   # backfill old runs by rebuilding the codebase
+                cb = repo_of(t)
+                if cb not in hist_cache:
+                    task = json.loads((SDEBENCH / "datasets" / cb / "task.json").read_text())
+                    hist_cache[cb] = capture_git_history(task)
+                gh = hist_cache[cb]
+            results.append(to_query_result(t, key, gh, query_id=label))
+        repo = host   # the SPLIT is the host (boltons | synthetic)
         run_name = f"opencode+{model}+{history}+{variant}"
-        results = [to_query_result(t, key, gh) for key, t in items]
         correct = sum(1 for r in results if r["correct"])
         avg_interv = round(sum((r["meta"]["interventions"] or 0) for r in results) / len(results), 2)
         tot_cost = round(sum(r["meta"]["cost_usd"] for r in results), 4)
