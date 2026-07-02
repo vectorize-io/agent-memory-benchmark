@@ -11,7 +11,9 @@ Tasks live in the `sde-bench` submodule at `sdebench/datasets/boltons-*`; the ru
 """
 import json
 import os
+import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 from .base import Dataset
@@ -24,6 +26,7 @@ _DATASETS = _REPO_ROOT / "sdebench" / "datasets"
 _BOLTONS_HOST = Path(os.environ.get("SDEBENCH_BOLTONS_HOST") or (Path.home() / "dev" / "_sdebench_hosts" / "boltons"))
 _BOLTONS_REF = "979fa9b613fa8c0a455ae16ea6f2ec91c11ecafe"
 _GIT_DOCS = int(os.environ.get("SDEBENCH_GIT_DOCS", "400"))  # how many recent commits to ingest as noise
+_PLANTED = os.environ.get("SDEBENCH_PLANTED_COMMITS", "1") not in ("0", "false", "")  # per-task decision commits
 
 
 class SdebenchDataset(Dataset):
@@ -75,8 +78,51 @@ class SdebenchDataset(Dataset):
                 text = "\n".join(f"{c['role'].upper()}: {c['text']}" for c in conv)
                 docs.append(Document(id=f"chat:{t['task_id']}", content=text,
                                      context=f"developer conversation about {t['codebase']}"))
+        if _PLANTED:
+            docs += self._planted_commit_documents()  # each task's REF..HEAD commits (incl. omdset's H decision)
         docs += self._git_documents(limit=_GIT_DOCS)
         return docs[:limit] if limit else docs
+
+    def _planted_commit_documents(self) -> list[Document]:
+        """Build each task's repo and ingest the commits it plants on top of the boltons ref
+        (REF..HEAD) — message + diff. This is where the H-source decision lives (e.g. omdset's
+        documented-invariant commit), which is absent from the plain host clone."""
+        US = "\x1f"
+        docs: list[Document] = []
+        for tj in self._task_files():
+            t = json.loads(tj.read_text())
+            codebase = t["codebase"]
+            build_py = _DATASETS / codebase / t.get("build", "build.py")
+            if not build_py.exists():
+                continue
+            out = Path(tempfile.mkdtemp(prefix=f"sde_docs_{codebase}_"))
+            try:
+                r = subprocess.run(["python", str(build_py), str(out)], capture_output=True, text=True,
+                                   env={**os.environ, "SDEBENCH_BOLTONS_HOST": str(_BOLTONS_HOST)})
+                if r.returncode != 0:
+                    continue
+                shas = subprocess.run(["git", "-C", str(out), "rev-list", f"{_BOLTONS_REF}..HEAD"],
+                                      capture_output=True, text=True).stdout.split()
+                for sha in shas:
+                    show = subprocess.run(
+                        ["git", "-C", str(out), "show", sha, f"--format=%H{US}%aI{US}%s{US}%b%x1e"],
+                        capture_output=True, text=True).stdout
+                    head, _, diff = show.partition("\x1e")
+                    parts = head.split(US)
+                    if len(parts) < 3:
+                        continue
+                    _sha, aiso, subj = parts[0], parts[1], parts[2]
+                    body = parts[3] if len(parts) > 3 else ""
+                    content = f"git commit {sha[:12]} in {codebase}\n{subj}"
+                    if body.strip():
+                        content += "\n\n" + body.strip()
+                    if diff.strip():
+                        content += "\n\nDiff:\n" + diff.strip()
+                    docs.append(Document(id=f"planted:{codebase}:{sha[:12]}", content=content,
+                                         timestamp=aiso or None, context=f"decision commit in {codebase}"))
+            finally:
+                shutil.rmtree(out, ignore_errors=True)
+        return docs
 
     def _git_documents(self, limit: int) -> list[Document]:
         if not _BOLTONS_HOST.exists() or limit <= 0:
