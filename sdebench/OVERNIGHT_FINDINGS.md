@@ -200,3 +200,22 @@ Signals to flag for REFINEMENT once results land:
 - vanilla high-interv + hindsight low → GOOD (memory discriminates).
 - Will compute per-H-task vanilla-vs-hindsight from the full roster and list any "too easy" ones with a
   concrete hardening suggestion.
+
+### H-task empirical signal — VANILLA arm (noise, n=1) — H tasks are NOT too easy overall
+Vanilla interventions on the 10 H tasks: budget-h=0, discount-h=3, findhashtags-h=1, listmerge-h=1,
+omdset=2, parseflag-h=1, pluralize-h=3, rounding-h=1, slugify-h=1, under2camel-h=1  →  **total 14, mean 1.4**.
+- So vanilla does NOT trivially solve them (only budget-h at 0) → the H tasks are NOT too easy as a set.
+- **budget-h = 0 interventions** is the one to watch (n=1; could be noise). Recheck vs hindsight + more n.
+
+### ⚠️ STRUCTURAL refinement lever (found): H commit messages are OVER-EXPLICIT
+My 9 new H-task decision commits STATE THE LITERAL ANSWER in the message body — e.g. budget-h says
+"MAX_ATTEMPTS is 7", rounding-h says "ROUND_HALF_DOWN so 2.135 -> 2.13". So an agent that greps `git log`
+finds the exact answer with zero reasoning. Contrast omdset (the hard H task): its commit states the
+INVARIANT ("__setitem__ must overwrite the stored value sequence… add() appends to the stale list") but
+NEVER names the symptom (getlist / query params) or gives a grep-able literal — the agent must reason
+from invariant→symptom.
+- **Recommendation:** to harden the 9 new H tasks toward omdset's bar, rewrite their commit bodies to
+  give the RATIONALE without the literal answer/symptom vocabulary (state WHY, not the exact value). That
+  raises the reasoning bar and widens the vanilla-vs-hindsight gap. Currently they're valid but "easy H"
+  (answer reachable by grep), whereas omdset is "hard H" (answer requires reasoning). Both are legitimate
+  H tasks; if you want them harder, this is the knob. Awaiting hindsight-arm data to quantify the gap.
