@@ -154,3 +154,24 @@ Implemented `--agent claude-code` (opencode still default):
 - **Validated**: claude vanilla solves rounding in-container, wall=38s (≈4× faster than opencode/gemini),
   cost $0.31, metrics parsed. Comparison (4 tasks: rounding/budget/listmerge/slugify, vanilla vs hindsight,
   reusing the opencode-backfilled banks) is RUNNING; results below when done.
+
+## ============ RESULTS: claude-code (sonnet-5), vanilla vs hindsight, 4 tasks (n=1) ============
+Tasks: rounding, budget, listmerge, slugify. Hindsight = the UserPromptSubmit hook reflecting over the
+opencode-backfilled banks (reused). Vanilla = no memory (claude NOT seeded — opencode-only for now).
+
+| metric (sum/4 tasks) | vanilla (sonnet-5) | hindsight | Δ |
+|---|---|---|---|
+| **interventions** | **5** | **2** | **−60%** |
+| **cost (USD)** | **$2.64** | **$1.59** | **−40%** |
+| turns | 113 | 68 | −40% |
+| wall (s) | 442 | 359 | −19% |
+| solved | 4/4 | 4/4 | = |
+
+### ⭐ Answer to "is hindsight better/worse with claude?" → BETTER, and MORE than with opencode.
+- The memory hook works: claude-hindsight cut interventions 5→2 and **cost 40%** (budget $0.99→$0.49, slugify $0.97→$0.42, both to 0 interventions).
+- **Why bigger than opencode's win:** (1) sonnet-5 applies an injected decision more decisively (fewer exploratory turns), and (2) claude vanilla here is UNSEEDED (no past-session access), so the memory delta isn't compressed by a strong baseline like opencode's seeded vanilla was. Apples-to-apples caveat: opencode-vanilla was seeded, claude-vanilla was not — so the two agents' deltas aren't perfectly comparable yet.
+- claude is also ~faster per task than opencode/gemini in these runs.
+
+### Caveats
+- n=1, 4 tasks (kept small to respect the Max subscription cap) — directional, not statistically tight.
+- claude vanilla is not seeded (seeding is opencode-import based; claude uses a different session store — `~/.claude/projects/<slug>/*.jsonl`). To make the agents directly comparable, either seed claude too or run BOTH agents unseeded. Noted as follow-up.
