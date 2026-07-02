@@ -181,3 +181,22 @@ opencode-backfilled banks (reused). Vanilla = no memory (claude NOT seeded — o
 - **claude in the UI ✅** — coding mode passes `--agent` (SDE_AGENT) through to run.py, so claude runs via `omb` land in `outputs/` + the viewer.
 - **BUG FIXED** — `SDE_HSCODING_PLUGIN_DIR`/`SDE_CLAUDE_CREDS` with a literal `~` weren't expanded (Path() doesn't expand ~), so docker rejected the mount ('invalid volume name') AND the plugin backfill couldn't find backfill.js → the memory arm silently ran on an EMPTY bank. Fixed with expanduser + a docker-run retry. (The earlier n=3 sweep was unaffected — its zsh `export VAR=~/...` did expand; only inline `env VAR=~/...` smokes hit it.)
 - **FULL ROSTER running** — opencode 19 tasks × {vanilla, hindsight+noise}, then claude 19×2 reusing the noisy banks. Results + comparison to follow.
+
+## ============ NEW H-TASK INVESTIGATION (per user request) ============
+### Structural check ✅ (done, before runs)
+Full discrimination matrix validated for all 9 new H tasks (5 planted-H + 4 realfn-H):
+- HEAD: existing/real tests PASS, repro FAIL, hidden FAIL
+- correct fix: ALL pass
+- **naive fix: repro PASS, hidden FAIL** ← the non-guessable guarantee (a symptom-only fix is rejected)
+- decision present in git history (the H source)
+No structural/discrimination bugs. The tasks are well-formed and non-guessable.
+
+### "Too easy" check (empirical) — PENDING the roster results
+Interpretation for H tasks: the decision lives in git history, which vanilla CAN reach via git log/blame.
+Signals to flag for REFINEMENT once results land:
+- **vanilla mean interventions ≈ 0** on an H task → too easy: the agent solves without really needing
+  the decision (symptom too revealing, or agent reliably reads history) → memory adds nothing → harden it
+  (make symptom more distal from cause, like omdset does — its symptom is 2 modules from the __setitem__ cause).
+- vanilla high-interv + hindsight low → GOOD (memory discriminates).
+- Will compute per-H-task vanilla-vs-hindsight from the full roster and list any "too easy" ones with a
+  concrete hardening suggestion.
