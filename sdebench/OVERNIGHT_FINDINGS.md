@@ -140,3 +140,17 @@ The −40% total-token drop is almost entirely **cache_read** (re-sent context, 
 SAVES on cache_read (−$0.87, less back-and-forth) but SPENDS more on fresh input (+$0.91, the injected memory
 is new context + changed prompts cache less) → the two cancel, cost is flat. **So the honest wins are
 wall-time (−19%) and interventions (−20%); cost is a wash, and "−40% tokens" overstates it.**
+
+## ============ CLAUDE-CODE SUPPORT (unblocked per your go-ahead) ============
+Implemented `--agent claude-code` (opencode still default):
+- **Auth solved** — you approved mounting the Max OAuth token; extracted from the keychain to
+  `~/.sdebench/claude_creds.json`, mounted at `/root/.claude/.credentials.json`. `--dangerously-skip-permissions`
+  is blocked as root, so we use `--permission-mode acceptEdits` (writes work). Fewer tasks (4×2) to stay under the sub cap.
+- **Memory arm = a UserPromptSubmit hook** (no MCP — we only inject): `claude_memory_hook.py` reflects the
+  prompt over the Hindsight bank + returns `additionalContext`. Inert unless a bank is set → same image for both arms.
+- **run.py** — claude runs in `sdebench-agent-claude` (one long-lived container, `--continue` across
+  interventions), `claude -p --output-format json --permission-mode acceptEdits -m claude-sonnet-5`;
+  `_parse_claude` maps usage/num_turns/**total_cost_usd** (claude reports its own cost) to the common shape.
+- **Validated**: claude vanilla solves rounding in-container, wall=38s (≈4× faster than opencode/gemini),
+  cost $0.31, metrics parsed. Comparison (4 tasks: rounding/budget/listmerge/slugify, vanilla vs hindsight,
+  reusing the opencode-backfilled banks) is RUNNING; results below when done.
