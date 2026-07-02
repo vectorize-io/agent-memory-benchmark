@@ -48,10 +48,25 @@ class CodingMode(ResponseMode):
     def answer_from_context(self, query: str, context: str, task_type: str = "coding") -> AnswerResult:
         raise NotImplementedError("coding mode grades by running the agent; --skip-retrieval is not supported")
 
+    @staticmethod
+    def _bank_has_memories(url: str, bank: str) -> bool:
+        """True if the bank already holds memories — used to REUSE a backfilled bank across n runs."""
+        import urllib.request
+        try:
+            with urllib.request.urlopen(f"{url}/v1/default/banks/{bank}/memories/list?limit=1", timeout=10) as r:
+                d = json.loads(r.read())
+            return bool(d.get("items") or d.get("memories") or d.get("total"))
+        except Exception:
+            return False
+
     async def _plugin_backfill(self, task_json: str, task_id: str, run_id: str, bank: str, url: str) -> None:
         """Trigger the PLUGIN's own backfill — AMB does not ingest. Build the task repo, then run the
         plugin's `hindsight-coding-backfill` over that repo + the task's conversations; the plugin
         decides what and how to ingest (extraction, strategies, git scope, pages)."""
+        # Reuse a bank already backfilled by a previous run (n=3 without re-ingesting the same data).
+        if os.environ.get("SDE_HSCODING_REUSE_BANK", "").lower() in ("1", "true") \
+                and await asyncio.to_thread(self._bank_has_memories, url, bank):
+            return
         plugin_dir = Path(os.environ.get("SDE_HSCODING_PLUGIN_DIR",
                                          str(Path.home() / "dev" / "hindsight-coding-opencode")))
         backfill_js = plugin_dir / "dist" / "backfill.js"

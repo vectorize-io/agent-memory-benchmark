@@ -287,7 +287,18 @@ def start_agent_container(workdir: Path, env: dict) -> str:
            "-v", f"{_PLUGIN_DIR}:/opt/hindsight-coding-opencode:ro",   # the Hindsight coding plugin
            "--add-host", "host.docker.internal:host-gateway",
            *denv, _AGENT_IMAGE, "sleep", "infinity"]
-    return subprocess.run(cmd, capture_output=True, text=True, check=True).stdout.strip()
+    cid = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout.strip()
+    # The plugin reads ~/.hindsight/coding-agent.json (NOT env). Translate the arm's memory settings into
+    # that config: disabled for the vanilla baseline; bank + host-reachable URL for the memory arm.
+    cfg: dict = {"disabled": env.get("HINDSIGHT_DISABLED") == "1", "gitSync": {"enabled": False}}
+    if env.get("HINDSIGHT_BANK_ID"):
+        cfg["bankId"] = env["HINDSIGHT_BANK_ID"]
+    if env.get("HINDSIGHT_API_URL"):
+        cfg["apiUrl"] = _container_url(env["HINDSIGHT_API_URL"])
+    subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
+                    "mkdir -p /root/.hindsight && cat > /root/.hindsight/coding-agent.json"],
+                   input=json.dumps(cfg), capture_output=True, text=True)
+    return cid
 
 
 def stop_agent_container(cid: str) -> None:
@@ -367,6 +378,57 @@ def run_agent(cid: str, model: str, timeout: int, message: str, resume: bool = F
                 s["tok_reason"] = s_reason
             seg_start = len(traj)
     return {"elapsed": elapsed, "tokens": tok, "turns": turns, "trajectory": traj}
+
+
+def _oid(prefix: str) -> str:
+    import secrets
+    return prefix + secrets.token_hex(13)
+
+
+def seed_sessions(cid: str, conversations: list, model: str) -> int:
+    """Seed past developer conversations into the agent container's opencode store as REAL sessions, so
+    a fresh agent run CAN consult them (via `opencode session list` / `opencode export <id>`) if it
+    chooses — availability + agency, not injection. One opencode session per conversation. Returns count.
+    Only for the vanilla baseline: the raw substrate the agent may read, vs the memory system that
+    surfaces it reliably."""
+    if not conversations:
+        return 0
+    chats = conversations if isinstance(conversations[0], list) else [conversations]  # 1 chat or many
+    mid_model, prov = model.split("/")[-1], (model.split("/")[0] if "/" in model else "google")
+    n = 0
+    for ci, conv in enumerate(chats):
+        if not conv:
+            continue
+        sid = _oid("ses_"); base = int(time.time() * 1000) - ci * 3_600_000
+        info = {"id": sid, "slug": "past-session", "projectID": "x", "directory": "/work", "path": "",
+                "title": (conv[0].get("text") or "past session")[:60], "agent": "build",
+                "model": {"id": mid_model, "providerID": prov, "variant": "default"}, "version": "1.16.2",
+                "summary": {"additions": 0, "deletions": 0, "files": 0}, "cost": 0,
+                "tokens": {"input": 0, "output": 0, "reasoning": 0, "cache": {"read": 0, "write": 0}},
+                "permission": [], "time": {"created": base, "updated": base}}
+        msgs = []; prev = None
+        for i, turn in enumerate(conv):
+            role = turn.get("role", "user"); text = turn.get("text", ""); mid = _oid("msg_"); ts = base + i * 1000
+            if role != "assistant":
+                minfo = {"role": "user", "time": {"created": ts}, "agent": "build",
+                         "model": {"providerID": prov, "modelID": mid_model}, "summary": {"diffs": []},
+                         "id": mid, "sessionID": sid}
+                parts = [{"type": "text", "text": text, "id": _oid("prt_"), "sessionID": sid, "messageID": mid}]
+            else:
+                minfo = {"parentID": prev, "role": "assistant", "mode": "build", "agent": "build",
+                         "path": {"cwd": "/work", "root": "/work"}, "cost": 0,
+                         "tokens": {"total": 0, "input": 0, "output": 0, "reasoning": 0, "cache": {"write": 0, "read": 0}},
+                         "modelID": mid_model, "providerID": prov, "time": {"created": ts, "completed": ts},
+                         "finish": "stop", "id": mid, "sessionID": sid}
+                parts = [{"type": "text", "text": text, "time": {"start": ts, "end": ts}, "id": _oid("prt_"),
+                          "sessionID": sid, "messageID": mid}]
+            msgs.append({"info": minfo, "parts": parts}); prev = mid
+        seed = json.dumps({"info": info, "messages": msgs})
+        subprocess.run(["docker", "exec", "-i", "-w", "/work", cid, "sh", "-c",
+                        "cat > /tmp/seed.json && opencode import /tmp/seed.json"],
+                       input=seed, capture_output=True, text=True)
+        n += 1
+    return n
 
 
 _JUNK = [".venv", "venv", "build", "dist", "*.egg-info", "__pycache__", ".pytest_cache", "*.pyc"]
@@ -515,6 +577,15 @@ def main():
     env = load_env(memory_bank, mem_index, conv_log)   # container env (memory config the plugin reads)
     cid = start_agent_container(repo, env)              # ONE container for the whole task (initial + interventions)
     try:
+        if args.history == "full" and task.get("conversations"):
+            # Vanilla-baseline fairness: seed the past developer conversations as opencode sessions the
+            # agent CAN consult (not injected, not resumed). It reads them only if it chooses — the
+            # realistic "does it think to check its history?" test, vs the memory system that surfaces
+            # the decision reliably.
+            if seed_sessions(cid, task["conversations"], args.model):
+                init_prompt += ("\n\nPast developer sessions on this project are available in your opencode "
+                                "session history — run `opencode session list` and `opencode export <id>` to "
+                                "review them if they help.")
         acc(run_agent(cid, args.model, args.timeout, init_prompt), "initial", init_prompt)
 
         # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.

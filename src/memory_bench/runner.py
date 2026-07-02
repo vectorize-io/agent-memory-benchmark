@@ -196,7 +196,8 @@ class EvalRunner:
                 correct = bool(raw.get("solved"))
                 judge_reason = f"interventions={raw.get('interventions')} pytest={(raw.get('final_pytest') or '')[:80]}"
                 q.meta.update({k: raw.get(k) for k in
-                               ("solved", "interventions", "capped", "cost_usd", "turns", "wall_s", "final_pytest")
+                               ("solved", "interventions", "capped", "cost_usd", "turns", "wall_s",
+                                "final_pytest", "tokens")
                                if raw.get(k) is not None})
             elif not answer_result.context:
                 correct, judge_reason = False, "empty context — no memories retrieved"
