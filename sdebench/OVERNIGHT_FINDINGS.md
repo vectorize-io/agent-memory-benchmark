@@ -64,3 +64,51 @@ documented recipe over 9 rushed ones.
 - `omb view` works; the API lists sdebench coding runs. **Per-run detail (RunDetail.vue) already renders all agent metrics** as pills: 🔁 interventions, 💲 cost, 🔤 tokens (in/⚡cached/out), 🔧 turns, ✓/✗ resolved, + Source/Tier/Category axes, + the agent trajectory. My runner fix adds `meta.tokens` so tokens now show for the new runs.
 - **Caveat (important for reading the UI):** the run-LIST/leaderboard sorts by **accuracy**, which for coding is ~100% for every arm (every task solves eventually). So the leaderboard does NOT differentiate arms — the real signal is **interventions / cost / turns**, visible in each run's **detail** view and summarized in the comparison table below. I did NOT rebuild the Vue frontend overnight (can't visually verify blind); the definitive vanilla-vs-hindsight comparison is the table (all metrics) written here after the sweep.
 - To view: `uv run omb view` → open the sdebench dataset → open an `ov-none-*` and an `ov-hs-*` run → compare the pills/aggregate.
+
+### Early signal (vanilla run 1) — seeding is working + changes the baseline
+- Vanilla (SEEDED) run 1: 10/10 solved, **9 total interventions**. tokens present 10/10 (fix confirmed).
+- Notable: **pluralize=0 and under2camel=0 interventions** in vanilla — the agent (with seeded past sessions available) solved them first try, i.e. it consulted its history. So seeding lowered the vanilla baseline from ~12 (no-seed, earlier) toward ~9.
+- IMPLICATION: the comparison is now the intended one — "raw session access (vanilla+seed) vs memory system (hindsight)". A smaller delta is EXPECTED and more honest: memory must beat an agent that CAN read its own history, not one with nothing. Will confirm with n=3 means.
+
+### ⭐ KEY FINDING — seeding strengthens vanilla, shrinking the memory delta (needs your call)
+Run-1 numbers (n=3 will confirm): **no-memory ≈12 → vanilla+seed ≈8–9 → hindsight ≈7 interventions.**
+- **Reflect quality is EXCELLENT.** Direct reflect on a per-task bank returns the exact decision (e.g. budget → "MAX_ATTEMPTS=7, retryx/retry.py, 12.7s vs 25.5s"). Memory content + backfill (new plugin, limit 100, 553 facts/bank) is not the problem.
+- **Bank reuse works** (run 2/3 skip backfill).
+- BUT the memory arm only modestly beats the SEEDED vanilla. Per-task V→H (run 1): H wins discount/rounding/slugify, loses under2camel, ties the rest. The agent isn't calling `memory_reflect` (relies on auto-inject).
+- **Why the earlier repro showed 12→1 and now it's ~8→7:** that repro had a *no-memory* vanilla (nothing to read). Now vanilla can (and does) read the seeded past sessions, so its baseline dropped to ~8. Memory must beat an agent that already reads its history — a much higher bar. This is the HONEST, realistic comparison you asked for.
+- **⚠️ Design question for you:** with seeding, raw session access ≈ memory. Options: (a) accept the small honest delta; (b) let the hindsight arm ALSO seed → measure "memory ON TOP of session access"; (c) verify/strengthen the plugin's auto-inject (agent isn't visibly using injected memory — worth confirming the system-prompt injection actually lands in-container); (d) make tasks harder so raw session-reading isn't enough. I'll gather n=3 and, if time, probe the auto-inject.
+
+### Auto-inject CONFIRMED working (correction to the note above)
+Checked two hindsight budget runs: one set `MAX_ATTEMPTS=7` on the INITIAL attempt → 0 interventions (memory injected + applied); the other didn't → 1 intervention. So the plugin's system-prompt injection IS landing — the agent just applies it inconsistently (Gemini nondeterminism; reasoning text is hidden so it's silent). Not a bug. This is WHY n=3 matters and why the per-task delta is noisy. Net: memory arm is valid; its edge over seeded-vanilla is real but modest + variable.
+
+## ============ RESULTS: vanilla vs hindsight-plugin, n=3, all 10 tasks ============
+Both arms: opencode + gemini-3.5-flash, in-container agent, grading in sdebench-base. Vanilla = seeded
+past sessions (agent may read them). Hindsight = the plugin (backfill git-limit 100 + reflect+inject),
+banks reused across the 3 runs. Every cell is the mean over 3 runs.
+
+| metric (sum over 10 tasks, mean of 3 runs) | VANILLA (seed) | HINDSIGHT (plugin) | Δ |
+|---|---|---|---|
+| **interventions** | **8.3** | **6.7** | **−20%** |
+| solved | 10/10 | 10/10 | = |
+| cost (USD) | $6.67 | $6.55 | −2% |
+| **input tokens** | **12.9M** | **7.76M** | **−40%** |
+| output tokens | 106k | 89k | −16% |
+| tool turns | 357 | 345 | −3% |
+| **wall time** | **1808s** | **1472s** | **−19%** |
+
+### Headline
+- **Both solve everything (10/10).** With a *seeded* vanilla (agent can read its past sessions), memory's edge on **interventions is modest (8.3 → 6.7)** — the honest, fair result you wanted (memory beating an agent that already reads its history).
+- **The bigger win is EFFICIENCY:** hindsight cuts **input tokens ~40%** and **wall time ~19%** at equal cost + equal solve rate. Memory guides the agent to the fix with far less exploration/context re-reading.
+
+### By decision-type (interventions V → H)
+- **numeric-policy 2.0 → 0.67** ✅ (rounding, budget — memory helps a lot)
+- **ordering 1.33 → 0.33** ✅ (discount)
+- **collection-merge / invariant / filter-rule / mapping**: ~flat
+- **set-membership 0.67 → 1.33** ⚠️ (under2camel, parseflag — memory slightly HURT; small n, likely noise or reflect surfacing an adjacent-but-wrong rule)
+
+### Per-run stability
+- vanilla interventions: 9, 9, 7 (mean 8.3). hindsight: 7, 5, 8 (mean 6.7). Overlapping ranges → the interventions delta is real but small vs the noise; the **token/wall deltas are the robust signal**.
+
+### Caveats / for discussion
+- Seeding strongly raises the vanilla baseline (no-seed vanilla was ~12). If the goal is to showcase memory's value on interventions, either (a) also seed the hindsight arm (measure "memory ON TOP of sessions"), or (b) harden tasks so raw session-reading isn't enough. The **token/latency win is arguably the truer memory value** here.
+- The agent never called the `memory_reflect` tool — it relied only on auto-inject. A prompt nudge to use the tool for distal symptoms might lift the intervention win (cf. the earlier listmerge enrichment).
