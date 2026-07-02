@@ -2,7 +2,8 @@
 
 sdebench on a **real codebase** (boltons, 1622 commits): does a local file-based memory (git history +
 LLM-summarized developer chats) help a coding agent, against a realistic large store? Dataset design
-and reproducibility: see `DATASET.md`.
+and reproducibility: see `datasets/DATASET.md` (the dataset is the
+[sde-bench](https://github.com/vectorize-io/sde-bench) submodule).
 
 ## Headline (n=5, vanilla vs memsys)
 

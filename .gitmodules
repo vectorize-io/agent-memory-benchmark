@@ -1,0 +1,3 @@
+[submodule "sdebench/datasets"]
+	path = sdebench/datasets
+	url = https://github.com/vectorize-io/sde-bench.git
