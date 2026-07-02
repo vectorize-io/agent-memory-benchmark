@@ -56,6 +56,7 @@ class SdebenchDataset(Dataset):
                 meta={
                     "source": t.get("source"), "tier": t.get("tier"), "category": cat,
                     "codebase": t.get("codebase"), "module": t.get("module"),
+                    "function": t.get("function"),  # used to focus the reflect query on the changed code
                     "task_json": str(tj),  # the CodingMode passes this to run.py --task
                 },
             ))

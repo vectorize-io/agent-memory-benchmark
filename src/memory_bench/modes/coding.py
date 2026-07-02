@@ -60,8 +60,17 @@ class CodingMode(ResponseMode):
             arm = "full"
         elif memory.name.startswith("hindsight"):
             arm = "provided"
+            # Focus reflect on the FULL decision context around the code being changed, not just the
+            # literal symptom — the non-guessable rule is often distal from the reported symptom
+            # (e.g. a bug report about nested-dict merging whose real trap is list union/dedup/order).
+            target = " in ".join(x for x in (meta.get("function"), meta.get("module")) if x) or "the affected code"
+            reflect_query = (
+                query + f"\n\nSurface ALL non-obvious project decisions and rules that a correct fix to "
+                f"{target} must respect — value/collection handling, ordering, de-duplication, exact "
+                "values, edge cases, and any previously-rejected approaches — even if not mentioned above."
+            )
             try:
-                answer, ctx, _ = await memory.async_direct_answer(query)  # Hindsight reflect
+                answer, ctx, _ = await memory.async_direct_answer(reflect_query)  # Hindsight reflect
                 surfaced = (answer or ctx or "").strip()
             except NotImplementedError:
                 docs, _ = await memory.async_retrieve(query, k=5)
