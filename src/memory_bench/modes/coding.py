@@ -1,11 +1,17 @@
 """Coding response mode: build the task repo, run a coding agent with test-feedback interventions,
 grade by pytest. Reuses the proven sdebench harness (`sdebench/harness/run.py`) verbatim.
 
-Memory flows through the OMB memory provider: the runner ingests the dataset's git+chat documents
-into the provider, and this mode queries it per task (Hindsight `reflect` via direct_answer, else
-`retrieve`) and injects the surfaced decision into the agent via run.py's `provided` arm. Only the
-no-memory baseline (`none`) and Hindsight providers are supported; other providers raise for coding.
-The harness result is returned as an AnswerResult (the runner's `coding` branch reads `solved` etc.).
+Separation of concerns — AMB never calls Hindsight's reflect itself:
+  - INGEST is the OMB memory provider's job: the runner ingests the dataset's git+chat+planted
+    documents into the provider's bank (`memory.ingest`).
+  - RETRIEVAL is the AGENT's job: the mode runs opencode with its Hindsight coding plugin (the
+    `hscoding` arm), which reflects+injects live over that same bank — exactly like the standalone
+    harness. The mode only points the plugin at the provider's bank + server via env.
+
+`none` = the no-memory baseline (`full` arm). A Hindsight provider with an HTTP endpoint
+(`hindsight-http`/`hindsight-cloud`) drives the `hscoding` arm; the embedded `hindsight` and all
+other providers raise (the agent plugin needs a reachable HTTP bank). The harness result is returned
+as an AnswerResult (the runner's `coding` branch reads `solved` etc.).
 """
 import asyncio
 import json
@@ -51,45 +57,32 @@ class CodingMode(ResponseMode):
             return AnswerResult(answer="unsolved", reasoning="no task_json in meta", context="",
                                 retrieve_time_ms=0.0, raw_response={"solved": False})
 
-        # Map the OMB memory provider to a harness arm. The provider (populated by the runner's ingest)
-        # is queried here for the decision, which is injected via run.py's `provided` arm. Only the
-        # no-memory baseline and Hindsight are supported; other providers raise for the coding task.
-        external_memory_file = None
-        surfaced = ""
+        # Map the OMB memory provider to a harness arm. AMB does NOT reflect — the agent's plugin does.
+        # `none` => vanilla; a Hindsight HTTP provider => the `hscoding` arm, with the plugin pointed at
+        # the SAME bank the runner just ingested into (SDE_HSCODING_BANK) on the same server.
+        env = {**os.environ}
         if memory.name == "none":
             arm = "full"
         elif memory.name.startswith("hindsight"):
-            arm = "provided"
-            # Focus reflect on the FULL decision context around the code being changed, not just the
-            # literal symptom — the non-guessable rule is often distal from the reported symptom
-            # (e.g. a bug report about nested-dict merging whose real trap is list union/dedup/order).
-            target = " in ".join(x for x in (meta.get("function"), meta.get("module")) if x) or "the affected code"
-            reflect_query = (
-                query + f"\n\nSurface ALL non-obvious project decisions and rules that a correct fix to "
-                f"{target} must respect — value/collection handling, ordering, de-duplication, exact "
-                "values, edge cases, and any previously-rejected approaches — even if not mentioned above."
-            )
-            try:
-                answer, ctx, _ = await memory.async_direct_answer(reflect_query)  # Hindsight reflect
-                surfaced = (answer or ctx or "").strip()
-            except NotImplementedError:
-                docs, _ = await memory.async_retrieve(query, k=5)
-                surfaced = "\n\n".join(d.content for d in docs).strip()
-            if surfaced:
-                external_memory_file = Path("/tmp/sdebench/omb-mem") / f"{task_id}_{run_id}.txt"
-                external_memory_file.parent.mkdir(parents=True, exist_ok=True)
-                external_memory_file.write_text(surfaced)
+            arm = "hscoding"
+            bank = getattr(memory, "_bank_id", None)
+            url = getattr(memory, "_cloud_base_url", None)  # the HTTP endpoint the plugin will reflect over
+            if not url:
+                raise NotImplementedError(
+                    "coding mode needs an HTTP Hindsight endpoint the agent plugin can reach — use "
+                    "'hindsight-http' (or 'hindsight-cloud'), not the embedded 'hindsight' provider")
+            if bank:
+                env["SDE_HSCODING_BANK"] = bank   # run.py -> HINDSIGHT_BANK_ID for the plugin
+            env["SDE_HINDSIGHT_URL"] = url        # run.py -> HINDSIGHT_API_URL for the plugin
         else:
             raise NotImplementedError(
-                f"coding mode supports memory providers 'none' and 'hindsight*'; got '{memory.name}'")
+                f"coding mode supports 'none' and 'hindsight-http/cloud'; got '{memory.name}'")
 
         cmd = ["uv", "run", "python", str(_RUN_PY), "--task", str(task_json),
                "--history", arm, "--model", self._model, "--run-id", run_id]
-        if external_memory_file:
-            cmd += ["--external-memory", str(external_memory_file)]
         t0 = time.perf_counter()
         proc = await asyncio.to_thread(
-            subprocess.run, cmd, capture_output=True, text=True, cwd=str(_REPO_ROOT), env={**os.environ},
+            subprocess.run, cmd, capture_output=True, text=True, cwd=str(_REPO_ROOT), env=env,
         )
         elapsed_ms = (time.perf_counter() - t0) * 1000
 
