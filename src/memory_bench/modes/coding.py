@@ -70,8 +70,8 @@ class CodingMode(ResponseMode):
         if os.environ.get("SDE_HSCODING_REUSE_BANK", "").lower() in ("1", "true") \
                 and await asyncio.to_thread(self._bank_has_memories, url, bank):
             return
-        plugin_dir = Path(os.environ.get("SDE_HSCODING_PLUGIN_DIR",
-                                         str(Path.home() / "dev" / "hindsight-coding-opencode")))
+        plugin_dir = Path(os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR",
+                                         str(Path.home() / "dev" / "hindsight-coding-opencode"))))
         backfill_js = plugin_dir / "dist" / "backfill.js"
         tj = Path(task_json)
         t = json.loads(tj.read_text())

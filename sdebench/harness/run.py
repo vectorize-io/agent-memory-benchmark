@@ -265,8 +265,8 @@ def gen_index_doc(task: dict) -> str:
 _AGENT_IMAGES = {"opencode": os.environ.get("SDE_AGENT_IMAGE", "sdebench-agent"),
                  "claude-code": os.environ.get("SDE_AGENT_IMAGE_CLAUDE", "sdebench-agent-claude")}
 _AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5"}
-_PLUGIN_DIR = os.environ.get("SDE_HSCODING_PLUGIN_DIR", str(Path.home() / "dev" / "hindsight-coding-opencode"))
-_CLAUDE_CREDS = os.environ.get("SDE_CLAUDE_CREDS", str(Path.home() / ".sdebench" / "claude_creds.json"))
+_PLUGIN_DIR = os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR", str(Path.home() / "dev" / "hindsight-coding-opencode")))
+_CLAUDE_CREDS = os.path.expanduser(os.environ.get("SDE_CLAUDE_CREDS", str(Path.home() / ".sdebench" / "claude_creds.json")))
 
 
 def _container_url(url: str) -> str:
@@ -300,7 +300,16 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
     cmd = ["docker", "run", "-d", "--rm", *mounts, "-w", "/work",
            "--add-host", "host.docker.internal:host-gateway",
            *_mem_docker_env(env), _AGENT_IMAGES[agent], "sleep", "infinity"]
-    cid = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout.strip()
+    cid = ""
+    for attempt in range(4):  # `docker run` can transiently exit 125 under load — retry
+        p = subprocess.run(cmd, capture_output=True, text=True)
+        if p.returncode == 0:
+            cid = p.stdout.strip()
+            break
+        print(f"  [docker] start attempt {attempt+1}/4 failed (exit {p.returncode}): {p.stderr.strip()[:200]}", flush=True)
+        time.sleep(3 * (attempt + 1))
+    if not cid:
+        raise RuntimeError(f"docker run failed after retries: {p.stderr.strip()[:300]}")
     if agent == "opencode":
         # opencode's plugin reads ~/.hindsight/coding-agent.json (not env): disabled=vanilla; bank+url=memory.
         cfg: dict = {"disabled": env.get("HINDSIGHT_DISABLED") == "1", "gitSync": {"enabled": False}}
