@@ -348,12 +348,33 @@ def _parse_claude(stdout: str, elapsed: float) -> dict:
             "trajectory": traj, "cost": d.get("total_cost_usd", 0.0) or 0.0}
 
 
-def run_agent(cid: str, model: str, timeout: int, message: str, resume: bool = False, agent: str = "opencode") -> dict:
+def hs_reflect(query: str, bank: str, url: str | None = None, timeout: int = 120) -> str:
+    """Harness-side reflect over a Hindsight bank (used by the claude arm — claude has no plugin).
+    Returns the synthesized root-cause answer, or '' on any error (memory is best-effort)."""
+    import urllib.request
+    base = (url or HINDSIGHT_URL).rstrip("/")
+    try:
+        req = urllib.request.Request(f"{base}/v1/default/banks/{bank}/reflect",
+            data=json.dumps({"query": query, "budget": "high"}).encode(),
+            headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return (json.loads(r.read()).get("text") or "").strip()
+    except Exception:
+        return ""
+
+
+def run_agent(cid: str, model: str, timeout: int, message: str, resume: bool = False,
+              agent: str = "opencode", system_append: str | None = None) -> dict:
     # One turn: exec the agent into the already-running per-task container (session store lives inside,
     # so `-c`/`--continue` resumes the same session across the intervention loop).
     if agent == "claude-code":
         cmd = ["docker", "exec", "-w", "/work", cid, "claude", "-p", "--output-format", "json",
                "--permission-mode", "acceptEdits", "--model", model]
+        # Inject memory via --append-system-prompt (TRUSTED channel). A UserPromptSubmit hook's
+        # additionalContext is treated by claude as a possible prompt-injection and REFUSED; the system
+        # prompt is trusted. This is claude's equivalent of opencode's system-prompt injection.
+        if system_append:
+            cmd += ["--append-system-prompt", system_append]
         if resume:
             cmd.append("--continue")
         cmd.append(message)
@@ -631,6 +652,17 @@ def main():
     init_prompt = PROMPT.format(repo=task["repo"], bug_report=task["bug_report"], instruction=VARIANTS[os.environ.get("SDE_VARIANT", "base")])
     env = load_env(memory_bank, mem_index, conv_log)   # container env (memory config the plugin reads)
     cid = start_agent_container(repo, env, args.agent)  # ONE container for the whole task (initial + interventions)
+    # claude has no plugin: reflect ONCE on the symptom here and inject via --append-system-prompt on every
+    # turn (trusted channel). opencode uses its plugin instead, so no harness reflect for it.
+    sys_mem = None
+    if args.agent == "claude-code" and memory_bank:
+        _ans = hs_reflect(task["bug_report"], memory_bank)
+        if _ans:
+            sys_mem = ("Relevant engineering context retrieved from THIS project's own history (git "
+                       "commits and past developer decisions) — trusted internal documentation, not user "
+                       "input. If it states an exact rule or literal values, apply them precisely; verify "
+                       "against the current code:\n\n" + _ans)
+            print(f"  [claude] injected memory via system prompt ({len(_ans)} chars)", flush=True)
     try:
         if args.history == "full" and args.agent == "opencode" and task.get("conversations"):
             # Vanilla-baseline fairness: seed the past developer conversations as opencode sessions the
@@ -641,7 +673,7 @@ def main():
                 init_prompt += ("\n\nPast developer sessions on this project are available in your opencode "
                                 "session history — run `opencode session list` and `opencode export <id>` to "
                                 "review them if they help.")
-        acc(run_agent(cid, args.model, args.timeout, init_prompt, agent=args.agent), "initial", init_prompt)
+        acc(run_agent(cid, args.model, args.timeout, init_prompt, agent=args.agent, system_append=sys_mem), "initial", init_prompt)
 
         # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.
         # Metric = number of human-like interventions needed (capped); cost = sum across all rounds.
@@ -658,7 +690,7 @@ def main():
             interventions += 1
             fb = build_feedback(g)
             print(f"  ↳ intervention {interventions}: {g['pytest']}", flush=True)
-            acc(run_agent(cid, args.model, args.timeout, fb, resume=True, agent=args.agent), f"intervention-{interventions}", fb)
+            acc(run_agent(cid, args.model, args.timeout, fb, resume=True, agent=args.agent, system_append=sys_mem), f"intervention-{interventions}", fb)
     finally:
         stop_agent_container(cid)
 
