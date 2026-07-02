@@ -259,17 +259,52 @@ def gen_index_doc(task: dict) -> str:
     return "\n".join(lines)
 
 
-def run_agent(workdir: Path, model: str, timeout: int, message: str, resume: bool = False,
-              memory_bank: str | None = None, mem_index: str | None = None, conv_log: str | None = None) -> dict:
-    env = load_env(memory_bank, mem_index, conv_log)
-    env["PWD"] = str(workdir)
-    cmd = ["opencode", "run", "--format", "json", "-m", model]
+_AGENT_IMAGE = os.environ.get("SDE_AGENT_IMAGE", "sdebench-agent")
+_PLUGIN_DIR = os.environ.get("SDE_HSCODING_PLUGIN_DIR", str(Path.home() / "dev" / "hindsight-coding-opencode"))
+
+
+def _container_url(url: str) -> str:
+    """Rewrite a host-local URL so the agent CONTAINER can reach it (host's localhost)."""
+    return url.replace("localhost", "host.docker.internal").replace("127.0.0.1", "host.docker.internal")
+
+
+def start_agent_container(workdir: Path, env: dict) -> str:
+    """Start ONE long-lived agent container per task: repo + plugin mounted, and opencode's session
+    store kept INSIDE the container (fast local fs, persisting across the intervention loop so `-c`
+    resumes the same session — no per-turn container cold-start or bind-mounted-SQLite cost). Grading
+    stays in the sdebench-base image. Returns the container id."""
+    key = env.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
+    denv: list[str] = []
+    if key:
+        denv += ["-e", f"GEMINI_API_KEY={key}", "-e", f"GOOGLE_GENERATIVE_AI_API_KEY={key}"]
+    for k in ("HINDSIGHT_DISABLED", "HINDSIGHT_BANK_ID", "HINDSIGHT_MEMORY_MODE"):
+        if env.get(k) is not None:
+            denv += ["-e", f"{k}={env[k]}"]
+    if env.get("HINDSIGHT_API_URL"):
+        denv += ["-e", f"HINDSIGHT_API_URL={_container_url(env['HINDSIGHT_API_URL'])}"]
+    cmd = ["docker", "run", "-d", "--rm",
+           "-v", f"{workdir}:/work", "-w", "/work",
+           "-v", f"{_PLUGIN_DIR}:/opt/hindsight-coding-opencode:ro",   # the Hindsight coding plugin
+           "--add-host", "host.docker.internal:host-gateway",
+           *denv, _AGENT_IMAGE, "sleep", "infinity"]
+    return subprocess.run(cmd, capture_output=True, text=True, check=True).stdout.strip()
+
+
+def stop_agent_container(cid: str) -> None:
+    if cid:
+        subprocess.run(["docker", "rm", "-f", cid], capture_output=True, text=True)
+
+
+def run_agent(cid: str, model: str, timeout: int, message: str, resume: bool = False) -> dict:
+    # One turn: exec opencode into the already-running per-task container (session store lives inside,
+    # so `-c` resumes the same session across the intervention loop).
+    cmd = ["docker", "exec", "-w", "/work", cid,
+           "opencode", "run", "--format", "json", "-m", model]
     if resume:
         cmd.append("-c")          # continue the last session in this dir (keeps context)
     cmd.append(message)
     t0 = time.perf_counter()
-    proc = subprocess.run(cmd, cwd=str(workdir), env=env, timeout=timeout,
-                          capture_output=True, text=True)
+    proc = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
     elapsed = time.perf_counter() - t0
     # Token split kept separate (cached vs input vs output) — $ is computed later per model.
     tok = {"input": 0, "output": 0, "reasoning": 0, "cache_read": 0, "cache_write": 0}
@@ -477,24 +512,29 @@ def main():
 
     print(f"[{task['task_id']}] history={args.history} model={args.model} — initial attempt…", flush=True)
     init_prompt = PROMPT.format(repo=task["repo"], bug_report=task["bug_report"], instruction=VARIANTS[os.environ.get("SDE_VARIANT", "base")])
-    acc(run_agent(repo, args.model, args.timeout, init_prompt, memory_bank=memory_bank, mem_index=mem_index, conv_log=conv_log), "initial", init_prompt)
+    env = load_env(memory_bank, mem_index, conv_log)   # container env (memory config the plugin reads)
+    cid = start_agent_container(repo, env)              # ONE container for the whole task (initial + interventions)
+    try:
+        acc(run_agent(cid, args.model, args.timeout, init_prompt), "initial", init_prompt)
 
-    # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.
-    # Metric = number of human-like interventions needed (capped); cost = sum across all rounds.
-    interventions = 0
-    while True:
-        patch = capture_source_patch(repo)
-        g = grade(task, patch, work)
-        # record THIS round's submitted patch + its grade outcome (incl. the rejected ones)
-        trace[-1]["patch"] = patch
-        trace[-1]["grade_pytest"] = g["pytest"]
-        trace[-1]["grade_passed"] = g["resolved"]
-        if g["resolved"] or interventions >= args.max_interventions:
-            break
-        interventions += 1
-        fb = build_feedback(g)
-        print(f"  ↳ intervention {interventions}: {g['pytest']}", flush=True)
-        acc(run_agent(repo, args.model, args.timeout, fb, resume=True, memory_bank=memory_bank, mem_index=mem_index, conv_log=conv_log), f"intervention-{interventions}", fb)
+        # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.
+        # Metric = number of human-like interventions needed (capped); cost = sum across all rounds.
+        interventions = 0
+        while True:
+            patch = capture_source_patch(repo)
+            g = grade(task, patch, work)
+            # record THIS round's submitted patch + its grade outcome (incl. the rejected ones)
+            trace[-1]["patch"] = patch
+            trace[-1]["grade_pytest"] = g["pytest"]
+            trace[-1]["grade_passed"] = g["resolved"]
+            if g["resolved"] or interventions >= args.max_interventions:
+                break
+            interventions += 1
+            fb = build_feedback(g)
+            print(f"  ↳ intervention {interventions}: {g['pytest']}", flush=True)
+            acc(run_agent(cid, args.model, args.timeout, fb, resume=True), f"intervention-{interventions}", fb)
+    finally:
+        stop_agent_container(cid)
 
     solved = g["resolved"]
     cost = compute_cost(args.model, {k: totals[k] for k in TOK})
