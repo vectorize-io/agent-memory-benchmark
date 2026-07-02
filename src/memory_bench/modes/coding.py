@@ -1,21 +1,23 @@
 """Coding response mode: build the task repo, run a coding agent with test-feedback interventions,
 grade by pytest. Reuses the proven sdebench harness (`sdebench/harness/run.py`) verbatim.
 
-Separation of concerns — AMB never calls Hindsight's reflect itself:
-  - INGEST is the OMB memory provider's job: the runner ingests the dataset's git+chat+planted
-    documents into the provider's bank (`memory.ingest`).
-  - RETRIEVAL is the AGENT's job: the mode runs opencode with its Hindsight coding plugin (the
-    `hscoding` arm), which reflects+injects live over that same bank — exactly like the standalone
-    harness. The mode only points the plugin at the provider's bank + server via env.
+AMB does ZERO memory work for the coding task — memory is entirely the plugin's domain:
+  - `none`     => the no-memory baseline (`full` arm).
+  - `hscoding` => the mode (a) builds the task repo, (b) triggers the PLUGIN's own backfill
+    (`hindsight-coding-backfill`) over that repo + the task's conversations — the plugin decides
+    what and how to ingest — then (c) runs opencode + the plugin (`hscoding` arm), which does
+    reflect+inject. AMB never calls Hindsight retain or reflect itself.
+Any other provider raises. The harness result is returned as an AnswerResult (the runner's `coding`
+branch reads `solved` etc.).
 
-`none` = the no-memory baseline (`full` arm). A Hindsight provider with an HTTP endpoint
-(`hindsight-http`/`hindsight-cloud`) drives the `hscoding` arm; the embedded `hindsight` and all
-other providers raise (the agent plugin needs a reachable HTTP bank). The harness result is returned
-as an AnswerResult (the runner's `coding` branch reads `solved` etc.).
+Env: SDE_HINDSIGHT_URL (Hindsight server, default :8888), SDE_HSCODING_PLUGIN_DIR (the plugin package
+dir holding dist/backfill.js, default ~/dev/hindsight-coding-opencode), SDE_HSCODING_GIT_LIMIT
+(optional git scope passed to the plugin backfill; unset => the plugin decides), SDE_MODEL.
 """
 import asyncio
 import json
 import os
+import shutil
 import subprocess
 import time
 import uuid
@@ -46,6 +48,35 @@ class CodingMode(ResponseMode):
     def answer_from_context(self, query: str, context: str, task_type: str = "coding") -> AnswerResult:
         raise NotImplementedError("coding mode grades by running the agent; --skip-retrieval is not supported")
 
+    async def _plugin_backfill(self, task_json: str, task_id: str, run_id: str, bank: str, url: str) -> None:
+        """Trigger the PLUGIN's own backfill — AMB does not ingest. Build the task repo, then run the
+        plugin's `hindsight-coding-backfill` over that repo + the task's conversations; the plugin
+        decides what and how to ingest (extraction, strategies, git scope, pages)."""
+        plugin_dir = Path(os.environ.get("SDE_HSCODING_PLUGIN_DIR",
+                                         str(Path.home() / "dev" / "hindsight-coding-opencode")))
+        backfill_js = plugin_dir / "dist" / "backfill.js"
+        tj = Path(task_json)
+        t = json.loads(tj.read_text())
+        build_py = tj.parents[2] / t.get("build", "build.py")
+        base = Path("/tmp/sdebench/omb-backfill") / f"{task_id}_{run_id}"
+        src = base / "repo"
+        shutil.rmtree(base, ignore_errors=True)
+        base.mkdir(parents=True, exist_ok=True)
+        # 1. build the task repo (the plugin backfill reads its git history)
+        await asyncio.to_thread(subprocess.run, ["python", str(build_py), str(src)],
+                                capture_output=True, text=True, env={**os.environ})
+        # 2. run the plugin's backfill (it owns extraction/strategies/pages/git scope)
+        bf = ["node", str(backfill_js), "--repo", str(src), "--bank", bank, "--api-url", url, "--reset"]
+        conv = t.get("conversations") or []
+        if conv:
+            cf = base / "conversations.json"
+            cf.write_text(json.dumps([{"id": task_id, "turns": conv}]))
+            bf += ["--conversations", str(cf)]
+        limit = os.environ.get("SDE_HSCODING_GIT_LIMIT")  # optional scope; unset => the plugin decides
+        if limit:
+            bf += ["--limit", limit]
+        await asyncio.to_thread(subprocess.run, bf, capture_output=True, text=True, env={**os.environ})
+
     async def async_answer(self, query: str, memory: MemoryProvider, task_type: str = "coding",
                            user_id: str | None = None, meta: dict | None = None) -> AnswerResult:
         meta = meta or {}
@@ -57,26 +88,19 @@ class CodingMode(ResponseMode):
             return AnswerResult(answer="unsolved", reasoning="no task_json in meta", context="",
                                 retrieve_time_ms=0.0, raw_response={"solved": False})
 
-        # Map the OMB memory provider to a harness arm. AMB does NOT reflect — the agent's plugin does.
-        # `none` => vanilla; a Hindsight HTTP provider => the `hscoding` arm, with the plugin pointed at
-        # the SAME bank the runner just ingested into (SDE_HSCODING_BANK) on the same server.
+        # `none` => vanilla; `hscoding` => trigger the plugin's own backfill, then run opencode+plugin.
         env = {**os.environ}
         if memory.name == "none":
             arm = "full"
-        elif memory.name.startswith("hindsight"):
+        elif memory.name == "hscoding":
             arm = "hscoding"
-            bank = getattr(memory, "_bank_id", None)
-            url = getattr(memory, "_cloud_base_url", None)  # the HTTP endpoint the plugin will reflect over
-            if not url:
-                raise NotImplementedError(
-                    "coding mode needs an HTTP Hindsight endpoint the agent plugin can reach — use "
-                    "'hindsight-http' (or 'hindsight-cloud'), not the embedded 'hindsight' provider")
-            if bank:
-                env["SDE_HSCODING_BANK"] = bank   # run.py -> HINDSIGHT_BANK_ID for the plugin
-            env["SDE_HINDSIGHT_URL"] = url        # run.py -> HINDSIGHT_API_URL for the plugin
+            bank = f"sde-coding-{task_id}"
+            url = os.environ.get("SDE_HINDSIGHT_URL", "http://localhost:8888")
+            await self._plugin_backfill(task_json, task_id, run_id, bank, url)  # PLUGIN ingests; AMB does not
+            env["SDE_HSCODING_BANK"] = bank   # run.py -> HINDSIGHT_BANK_ID for the plugin (reflect)
+            env["SDE_HINDSIGHT_URL"] = url     # run.py -> HINDSIGHT_API_URL for the plugin
         else:
-            raise NotImplementedError(
-                f"coding mode supports 'none' and 'hindsight-http/cloud'; got '{memory.name}'")
+            raise NotImplementedError(f"coding mode supports 'none' and 'hscoding'; got '{memory.name}'")
 
         cmd = ["uv", "run", "python", str(_RUN_PY), "--task", str(task_json),
                "--history", arm, "--model", self._model, "--run-id", run_id]

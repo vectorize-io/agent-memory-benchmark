@@ -40,37 +40,35 @@ The dataset lives in the [sde-bench](https://github.com/vectorize-io/sde-bench) 
 front doors:
 
 **Via the OMB runner** (integrated: results land in the OMB `outputs/` + viewer, alongside the other
-benchmarks). `task_type="coding"` — the runner grades by tests, not a judge. Clean separation, so AMB
-never calls Hindsight itself: the **memory provider ingests** the git+chat+planted docs
-(`load_documents`) into its bank, and the **agent's plugin does the retrieval** — the `coding` mode
-runs `run.py --history hscoding` (opencode + the Hindsight coding plugin, reflect+inject live) pointed
-at that same bank:
+benchmarks). `task_type="coding"` — the runner grades by tests, not a judge. **AMB does zero memory
+work** — memory is entirely the plugin's domain:
 ```bash
-uv run omb run --dataset sdebench --split boltons --mode coding --memory none          # vanilla baseline
-HINDSIGHT_HTTP_URL=http://localhost:8899 \
-  uv run omb run --dataset sdebench --split boltons --mode coding --memory hindsight-http   # plugin over the ingested bank
-uv run omb run --dataset sdebench --split boltons --mode coding --memory none -q 1      # one task
+uv run omb run --dataset sdebench --split boltons --mode coding --memory none              # vanilla baseline
+SDE_HINDSIGHT_URL=http://localhost:8899 \
+  uv run omb run --dataset sdebench --split boltons --mode coding --memory hscoding          # agent + plugin memory
+uv run omb run --dataset sdebench --split boltons --mode coding --memory none -q 1          # one task
 ```
-Only `none` and an HTTP Hindsight provider (`hindsight-http`/`hindsight-cloud`) are supported for
-coding — the agent plugin needs a reachable HTTP bank, so the embedded `hindsight` and other providers
-raise. Tune the ingested git noise with `SDEBENCH_GIT_DOCS` (default 400 recent commits) and toggle
-per-task decision commits with `SDEBENCH_PLANTED_COMMITS` (default on; carries omdset's H-source
-decision).
+`--memory none` = vanilla. `--memory hscoding` = the mode (a) builds the task repo, (b) **triggers the
+plugin's own backfill** (`hindsight-coding-backfill`) over that repo + the task's conversations — the
+**plugin** decides what/how to ingest (extraction, strategies, git scope, pages) — then (c) runs
+opencode + the plugin, which does reflect+inject. AMB never calls Hindsight retain *or* reflect. Env:
+`SDE_HINDSIGHT_URL` (server), `SDE_HSCODING_PLUGIN_DIR` (the plugin dir with `dist/backfill.js`),
+`SDE_HSCODING_GIT_LIMIT` (optional git scope; unset ⇒ the plugin decides).
 
 **Standalone harness** (direct, more arms/flags):
 ```bash
 uv run python sdebench/harness/run.py --task sdebench/datasets/boltons-<name>/tasks/main/task.json \
-    --history {full|memsys|hscoding|oracle} --run-id <id>
+    --history {full|hscoding|oracle} --run-id <id>
 ```
 
 ## Layout
 ```
 sdebench/
   datasets/            # -> sde-bench submodule: the 10 boltons tasks + generator (gen/) + datasheet
-  harness/             # runner (full/squashed/memsys/hindsight/hscoding/oracle arms), grading, metrics
-  memsys/              # a local file-based memory system under test (language-agnostic, no AST)
+  harness/run.py       # the coding engine: build repo -> agent -> interventions -> pytest grade
+                       #   (the OMB `coding` mode shells out to this; run.py is load-bearing)
   Dockerfile           # prebuilt grading env (python + pytest + git)
-  BOLTONS_SUITE.md, FINDINGS.md, MEMSYS_RESULTS.md   # results write-ups
+  FINDINGS.md          # results write-up
 ```
 
 ## Tasks & design
