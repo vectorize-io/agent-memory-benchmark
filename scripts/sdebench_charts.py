@@ -59,10 +59,12 @@ def arm_stats(outputs, run_glob):
         seen.add(key); runs.append(load_run(p))
     if not runs:
         return None
+    # Report per-task averages (divide summed metrics by task count) — more interpretable than run totals.
+    nt = runs[0]["tasks"]
     keys = [k for k in runs[0] if k != "tasks"]
-    mean = {k: st.mean(r[k] for r in runs) for k in keys}
-    std  = {k: (st.stdev([r[k] for r in runs]) if len(runs) > 1 else 0.0) for k in keys}
-    mean["tasks"] = runs[0]["tasks"]; mean["_n"] = len(runs)
+    mean = {k: st.mean(r[k] for r in runs) / nt for k in keys}
+    std  = {k: (st.stdev([r[k] for r in runs]) / nt if len(runs) > 1 else 0.0) for k in keys}
+    mean["tasks"] = nt; mean["_n"] = len(runs)
     return mean, std
 
 
@@ -108,8 +110,8 @@ def tokens_chart(data, out):
         for b, v in zip(bars, vals):
             lab = f"{v/1e6:.1f}M" if v >= 1e6 else (f"{v/1e3:.0f}k" if v >= 1e3 else str(int(v)))
             ax.text(b.get_x() + b.get_width()/2, b.get_height(), lab, ha="center", va="bottom", fontsize=7.5)
-    ax.set_yscale("log"); ax.set_ylabel("tokens (log scale)")
-    ax.set_title("Tokens: input vs cached vs output", fontweight="bold")
+    ax.set_yscale("log"); ax.set_ylabel("tokens / task (log scale)")
+    ax.set_title("Tokens per task: input vs cached vs output", fontweight="bold")
     ax.set_xticks(list(x)); ax.set_xticklabels([lbl for lbl, _ in runs], fontsize=9)
     ax.legend(frameon=False, ncol=3, loc="upper center", bbox_to_anchor=(0.5, 1.14))
     ax.spines[["top", "right"]].set_visible(False)
@@ -131,15 +133,16 @@ def main():
             raise SystemExit(f"no runs matched glob {glb!r} under {args.outputs}")
         data[(ag, arm)] = s
     n = data[("OpenCode", "vanilla")][0]["_n"]
-    note = f"sum over 19 tasks" + (f", mean of n={n} runs (error bars = std)" if n > 1 else ", n=1")
+    nt = data[("OpenCode", "vanilla")][0]["tasks"]
+    note = f"average per task (over {nt} tasks)" + (f", mean of n={n} runs (error bars = std)" if n > 1 else ", n=1")
     print(f"charts -> {out}  ({note})")
 
-    grouped_bar(data, "interventions", "Human interventions needed", "interventions (total)",
-                lambda v: f"{v:.0f}", out / "interventions.png", note)
-    grouped_bar(data, "cost", "Cost", "USD", lambda v: f"${v:.2f}", out / "cost.png", note)
-    grouped_bar(data, "turns", "Tool-turns", "tool calls (total)", lambda v: f"{v:.0f}",
+    grouped_bar(data, "interventions", "Interventions per task", "interventions / task",
+                lambda v: f"{v:.2f}", out / "interventions.png", note)
+    grouped_bar(data, "cost", "Cost per task", "USD / task", lambda v: f"${v:.2f}", out / "cost.png", note)
+    grouped_bar(data, "turns", "Tool-turns per task", "turns / task", lambda v: f"{v:.0f}",
                 out / "turns.png", note)
-    grouped_bar(data, "wall", "Wall-clock time", "seconds (total)", lambda v: f"{v:.0f}s",
+    grouped_bar(data, "wall", "Wall-clock per task", "seconds / task", lambda v: f"{v:.0f}s",
                 out / "wall.png", note)
     tokens_chart(data, out / "tokens.png")
 
