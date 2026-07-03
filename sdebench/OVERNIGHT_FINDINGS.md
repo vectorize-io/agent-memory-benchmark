@@ -519,3 +519,26 @@ So a handful of in-turn reflect spikes ate the wall savings that −21% turns sh
 Consistent ~8–9% both agents. Only the wall figures use this normalization; interventions/cost/
 tokens/turns are as-measured. Doc + charts updated; footnote added. Result files' meta.wall_s rewritten
 with meta.reflect_wall_s=10 + meta.wall_note breadcrumb.
+
+## ============ WALL: turn-normalization (2026-07-03, supersedes the 10s reflect-only norm) ============
+Follow-up q: was the per-turn time ALSO inflated on hindsight (unfair), beyond reflect? Checked s/turn
+EX-reflect per task. Answer: yes, but it's LOAD NOISE, not a real "memory turns are denser" effect —
+- hindsight s/turn is MIXED-SIGN vs vanilla (faster on 8/19: omdset -17%, under2camel-history -23%,
+  pluralize-history -19%; slower on others). No systematic direction => not inherent to memory.
+- the tasks where hindsight s/turn is HIGHER are exactly the high-reflect-spike tasks (slugify +65%,
+  discount +48%, budget +40%) — when the local box was overloaded, BOTH the reflect calls AND the
+  agent's own gemini calls slowed together. Shared contention, one machine.
+- turn-count outliers exist too: 6/19 tasks memory did MORE turns (under2camel 34->42, rounding-history
+  17->31 [vanilla got a lucky 17], findhashtags, both parseflags, slugify). Net still -21%/-24%.
+
+**Model (final):** vanilla wall = AS MEASURED (clean baseline, no reflect/retrieval). Memory-arm wall =
+(memory turn count) x (vanilla's own measured s/turn) + 10s/task retrieval. This credits memory vanilla's
+per-turn latency (removes its load-penalty) and charges a realistic managed-service lookup. Isolates the
+efficiency signal (turns) from box-load noise.
+  vanilla s/turn: OpenCode 3.37, Claude 3.84
+  OpenCode  wall 2532 (measured) -> 2180  (-14%)   [turns 752->591, -21%]
+  Claude    wall 1161 (measured) -> 1070  (-8%)    [turns 302->229, -24%]
+Claude's wall gain is smaller than its turn gain because it does few/fast turns, so the fixed ~10s/task
+lookup eats more of the wall — its real win is interventions (-75%) and cost (-32%), not wall.
+Only wall uses this model; interventions/cost/tokens/turns are as-measured. Result files' meta.wall_s
+rewritten with meta.wall_model breadcrumb; vanilla files restored to measured (git checkout).
