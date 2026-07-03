@@ -382,3 +382,29 @@ runs pytest, fixes, confirms.
 
 **Implication:** ALL prior claude numbers (vanilla AND hindsight) were on a half-blind agent that couldn't
 run tests. Re-running the claude roster with BOTH fixes for a clean vanilla-vs-hindsight comparison.
+
+## ============ ⭐⭐⭐⭐⭐ CORRECTED RESULT: claude WITH both fixes — memory helps MASSIVELY ============
+Re-ran the full claude roster (both arms) with the fixed image (trusted --append-system-prompt injection
++ Bash allowed + numbered feedback). This REVERSES the earlier "neutral" finding:
+
+| metric (19 tasks) | VANILLA | HINDSIGHT | Δ |
+|---|---|---|---|
+| **interventions** | 12 | **3** | **−75%** |
+| **cost (USD)** | $7.45 | $5.11 | **−31%** |
+| **wall (s)** | 1241 | 829 | −33% |
+| solved | 19/19 | 19/19 | = |
+
+- **Zero regressions** — every F task improved or tied (slugify 2→0, under2camel 2→0, budget 1→0,
+  findhashtags 1→0, rounding 1→0, pluralize 2→1, parseflag 2→1). The 2 prior "regressions" are gone.
+- All the value is on **F tasks (12→3)**; H tasks stay 0→0 (claude solves them from git regardless —
+  the "H too easy for strong agents" finding stands, and is orthogonal to these bugs).
+- **Memory helps claude/sonnet-5 (−75% interv) even MORE than opencode/gemini (−42%)** — a strong agent
+  wastes fewer turns when handed the exact non-guessable decision. The user's hypothesis was correct: the
+  earlier claude result was entirely a bug artifact. UI: nz-cc-none-fixed / nz-cc-hs-fixed.
+
+### Cross-agent summary (19 tasks, with noise, memory value = vanilla→hindsight)
+| agent | interv | cost | note |
+|---|---|---|---|
+| opencode / gemini-3.5-flash | 26 → 15 (−42%) | −30% | memory clearly helps |
+| claude-code / sonnet-5 | 12 → 3 (−75%) | −31% | memory helps even more (F tasks) |
+Both: memory is a clear, cost-positive win. H tasks are only useful for weaker agents.
