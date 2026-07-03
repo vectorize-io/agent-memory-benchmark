@@ -418,6 +418,9 @@ Re-ran the full claude roster (both arms) with the fixed image (trusted --append
 Both: memory is a clear, cost-positive win. H tasks are only useful for weaker agents.
 
 ## ============ HINDSIGHT'S OWN COST (retain + reflect), measured ============
+> INTERNAL ONLY — do NOT expose these exact figures to customers. Pricing is not finalized and we
+> apply our own margin; the customer doc talks about a one-time ingestion cost qualitatively, no numbers.
+
 Hindsight's LLM usage is exposed per bank at `GET /v1/default/banks/{bank}/llm-requests` (per-request
 operation + input/cached/output tokens) and reflect responses carry `usage`. All Hindsight calls use
 **gemini-3.1-flash-lite**. Priced at flash-lite list rates: **$0.10/1M input, $0.025/1M cached, $0.40/1M output**.
