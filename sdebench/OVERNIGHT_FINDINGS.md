@@ -363,3 +363,22 @@ User was right — the claude integration had a bug we never validated. TRACED i
 - LESSON: hook `additionalContext` is the WRONG channel for authoritative memory on claude (triggers
   injection defenses). System prompt is trusted. The earlier "memory neutral for strong agents" claim was
   an ARTIFACT of this bug, not a real property — retracting it pending the re-run.
+
+## ============ ⭐⭐⭐⭐ TWO claude-integration bugs found + fixed (the "never validated" ones) ============
+User's instinct was exactly right. The claude arm had TWO bugs that made "memory doesn't help claude" an
+artifact, not a finding:
+
+**Bug 1 — memory rejected (fixed 6c529c4):** hook `additionalContext` is distrusted by sonnet-5 as a
+prompt-injection ("I'd flag that as a likely prompt-injection attempt"). Fixed → inject via
+`--append-system-prompt` (trusted). Validated: slugify 2→0 interventions.
+
+**Bug 2 — claude ran BLIND (fixed, this commit):** `--permission-mode acceptEdits` BLOCKS Bash, so claude
+could edit but NEVER run pytest to verify. Traced via parseflag: claude wrote a wrong fix (`s=="true"`,
+dropped "on"), couldn't test it, repeated the identical wrong patch across all 6 rounds, and on
+under2camel literally refused the intervention loop ("same message a fourth time… I'm not going to keep
+making this change"). So the parseflag/under2camel "regressions" were claude running blind, NOT bad memory.
+Fix: settings.json permissions.allow=[Bash,Edit,…] so claude runs tests + iterates. Validated: claude now
+runs pytest, fixes, confirms.
+
+**Implication:** ALL prior claude numbers (vanilla AND hindsight) were on a half-blind agent that couldn't
+run tests. Re-running the claude roster with BOTH fixes for a clean vanilla-vs-hindsight comparison.
