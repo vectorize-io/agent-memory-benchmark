@@ -208,6 +208,11 @@ const toggleExtSort   = col => toggleSort(col, extSortCol, extSortDir)
 const chartAccuracy = local => _chartData(local, 'accuracy')
 const chartRecall   = local => _chartData(local, 'avg_retrieve_time_ms', true)
 const chartTokens   = local => _chartData(local, 'avg_context_tokens', true)
+// coding datasets (sdebench) report agent metrics (interventions/cost/turns/tokens), not QA metrics
+const isCoding = rows => rows.length > 0 && rows.every(r => r.coding)
+const codingArm = item => (item.memory === 'none' ? 'vanilla' : 'memory')
+const fmtTok = v => v == null ? '—' : (v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'k' : v)
+const sortCoding = rows => [...rows].sort((a,b) => (b.interventions ?? -1) - (a.interventions ?? -1))
 const sortIcon = (col, active, dir) => active === col ? (dir === 'asc' ? ' ↑' : ' ↓') : ''
 const getViewMode = split => splitViewMode.value[split] ?? 'overall'
 async function setViewMode(split, mode) {
@@ -360,8 +365,48 @@ function hasCategoryData(local, split) {
           <!-- ── OVERALL VIEW ── -->
           <template v-if="getViewMode(split) === 'overall'">
 
-            <!-- Charts -->
-            <div v-if="local.length" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <!-- ── CODING dataset (sdebench): agent metrics, not QA metrics ── -->
+            <Card v-if="isCoding(local)" class="overflow-hidden mb-4">
+              <UiTable>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Run</TableHead>
+                    <TableHead>Agent</TableHead>
+                    <TableHead :right="true">Tasks</TableHead>
+                    <TableHead :right="true">Solved</TableHead>
+                    <TableHead :right="true">Interventions</TableHead>
+                    <TableHead :right="true">Cost</TableHead>
+                    <TableHead :right="true">Turns</TableHead>
+                    <TableHead :right="true">Tokens in / out</TableHead>
+                    <TableHead :right="true">Wall</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow v-for="item in sortCoding(local)" :key="item.path" :clickable="true"
+                            @click="router.push('/run/' + item.path.replace(/\.json(\.gz)?$/, ''))">
+                    <TableCell :primary="true">
+                      <div class="flex items-center gap-2">
+                        <span>{{ item.run_name }}</span>
+                        <Badge :variant="codingArm(item) === 'memory' ? 'default' : 'secondary'">{{ codingArm(item) }}</Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell>{{ item.agent }}</TableCell>
+                    <TableCell :right="true">{{ item.tasks ?? '—' }}</TableCell>
+                    <TableCell :right="true">{{ item.solved != null ? item.solved + '/' + item.tasks : '—' }}</TableCell>
+                    <TableCell :right="true" class="font-semibold" title="Human-like feedback rounds needed (lower is better)">{{ item.interventions ?? '—' }}</TableCell>
+                    <TableCell :right="true">{{ item.cost_usd != null ? '$' + item.cost_usd.toFixed(2) : '—' }}</TableCell>
+                    <TableCell :right="true">{{ item.turns ?? '—' }}</TableCell>
+                    <TableCell :right="true" class="text-muted-foreground/85">{{ fmtTok(item.tokens_in) }} / {{ fmtTok(item.tokens_out) }}</TableCell>
+                    <TableCell :right="true">{{ item.wall_s != null ? Math.round(item.wall_s) + 's' : '—' }}</TableCell>
+                    <TableCell :right="true" class="text-muted-foreground/70 text-sm">→</TableCell>
+                  </TableRow>
+                </TableBody>
+              </UiTable>
+            </Card>
+
+            <!-- Charts (QA datasets only) -->
+            <div v-if="local.length && !isCoding(local)" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
               <Card class="p-4">
                 <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-4">Accuracy</p>
                 <BarChart :rows="chartAccuracy(local).rows" :max="1"
@@ -384,8 +429,8 @@ function hasCategoryData(local, split) {
               </Card>
             </div>
 
-            <!-- Overall table -->
-            <Card v-if="local.length" class="overflow-hidden mb-4">
+            <!-- Overall table (QA datasets only) -->
+            <Card v-if="local.length && !isCoding(local)" class="overflow-hidden mb-4">
               <UiTable>
                 <TableHeader>
                   <TableRow>

@@ -148,6 +148,32 @@ def _list_results(published_only: bool = False) -> list[dict]:
             "avg_context_tokens": float(avg_context_tokens) if avg_context_tokens and avg_context_tokens != "null" else None,
             "category": category if category and category != "null" else None,
         })
+        # Coding datasets (sdebench) report agent metrics per-result, not top-level. Read the full file
+        # and aggregate them so the dataset page can show interventions/cost/turns/tokens instead of the
+        # QA metrics (accuracy/recall/ctx-tokens), which don't apply to coding.
+        if parts[2] == "coding":
+            try:
+                full = _json.loads(_gzip.decompress(raw) if is_gz else raw)
+                rs = full.get("results", [])
+                metas = [r.get("meta", {}) or {} for r in rs]
+                def _sum(k):
+                    return sum((m.get(k) or 0) for m in metas)
+                def _toks(sel):
+                    return sum(sum((m.get("tokens", {}) or {}).get(x, 0) or 0 for x in sel) for m in metas)
+                agent = next((m.get("agent") for m in metas if m.get("agent")), None) or "opencode"
+                entries[-1].update({
+                    "coding": True, "agent": agent,
+                    "tasks": len(rs),
+                    "solved": sum(1 for r in rs if (r.get("meta", {}) or {}).get("solved")),
+                    "interventions": _sum("interventions"),
+                    "cost_usd": round(_sum("cost_usd"), 2),
+                    "turns": _sum("turns"),
+                    "wall_s": round(_sum("wall_s"), 0),
+                    "tokens_in": _toks(("input", "cache_read", "cache_write")),
+                    "tokens_out": _toks(("output", "reasoning")),
+                })
+            except Exception:
+                pass
 
     _results_cache = entries
     _results_cache_mtime = current_mtime
