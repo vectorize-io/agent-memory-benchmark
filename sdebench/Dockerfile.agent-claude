@@ -4,8 +4,12 @@ FROM node:22-slim
 RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates python3 \
     && rm -rf /var/lib/apt/lists/*
 RUN npm i -g @anthropic-ai/claude-code
-# Memory is injected by the HARNESS via --append-system-prompt (a TRUSTED channel). We do NOT use a
-# UserPromptSubmit hook: claude treats hook-injected additionalContext as a possible prompt-injection
-# and REFUSES it (validated). So no hook is registered — the harness reflects and appends to the system
-# prompt instead. Auth (OAuth creds) is mounted at runtime.
+# settings: ALLOW Bash/Edit/etc so claude can run the tests it's fixing (pytest). Without a permissions
+# allow-list, headless claude blocks Bash ("running commands needs approval") and can't verify its work
+# — `--dangerously-skip-permissions` is refused as root, so the allow-list is the way. Memory is injected
+# by the HARNESS via --append-system-prompt (a TRUSTED channel; a UserPromptSubmit hook's additionalContext
+# is treated by claude as a prompt-injection and REFUSED). Auth (OAuth creds) mounted at runtime.
+RUN mkdir -p /root/.claude \
+    && printf '{"permissions":{"allow":["Bash","Edit","Write","Read","Glob","Grep","MultiEdit","LS"],"defaultMode":"acceptEdits"}}' \
+       > /root/.claude/settings.json
 WORKDIR /work
