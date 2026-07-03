@@ -87,3 +87,16 @@ dir now holds 31 tasks, so this hs sweep covers old 19 (contamination comparison
 the 12 new hard tasks (their first real memory-arm contact). An oc-vanilla 31-task sweep follows.
 Noted: the omb runner starts several tasks concurrently — relevant to wall-clock honesty; find the
 concurrency knob before the final sweeps and run those serially or measure contention explicitly.
+
+## 2026-07-03 ~20:00 — emitter idempotence + a self-inflicted git incident
+
+Made the three emitters merge-preserve unknown task.json keys (re-emission no longer strips
+enrichment) and normalized field order. In the process, a stash/re-emit sequence briefly reverted
+the emitter patches and I pushed a broken dataset state (bba6413: two tasks missing `policy`).
+Caught by the structural validator on the next run; restored from the stash, verified idempotence
+properly (three emitters re-run → zero diffs), repaired in 9cc3d38. Lesson recorded: validate
+BEFORE commit in the same shell invocation gates nothing if the chain uses `;` — gate pushes on
+validator exit status.
+
+Sweep progress at 20:00: 8/31 tasks done, all correct so far on the memory arm (incl. new
+csvquote pair). Backfill of 31 fresh banks is the long pole as predicted.
