@@ -210,7 +210,11 @@ const chartRecall   = local => _chartData(local, 'avg_retrieve_time_ms', true)
 const chartTokens   = local => _chartData(local, 'avg_context_tokens', true)
 // coding datasets (sdebench) report agent metrics (interventions/cost/turns/tokens), not QA metrics
 const isCoding = rows => rows.length > 0 && rows.every(r => r.coding)
-const codingArm = item => (item.memory === 'none' ? 'vanilla' : 'memory')
+const codingArm = item => {
+  const m = (item.memory || '').toLowerCase(); const rn = (item.run_name || '').toLowerCase()
+  if (m === 'none' || /(^|[-_])(none|vanilla|full)([-_]|$)/.test(rn)) return 'vanilla'
+  return 'memory'
+}
 const fmtTok = v => v == null ? '—' : (v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'k' : v)
 const sortCoding = rows => [...rows].sort((a,b) => (b.interventions ?? -1) - (a.interventions ?? -1))
 const sortIcon = (col, active, dir) => active === col ? (dir === 'asc' ? ' ↑' : ' ↓') : ''
