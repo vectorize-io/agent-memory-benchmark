@@ -35,7 +35,10 @@ class SdebenchDataset(Dataset):
         for tj in self._task_files():
             t = json.loads(tj.read_text())
             cat = t.get("category")
-            if category and cat != category:
+            # the PRIMARY AMB category is `source` (history vs conversation) — the benchmark's core
+            # "where does the decision live" axis (2 values). The decision-type (`category`) and `tier`
+            # remain as secondary breakdown axes via get_result_categories.
+            if category and t.get("source") != category:
                 continue
             queries.append(Query(
                 id=t["task_id"],
@@ -60,8 +63,9 @@ class SdebenchDataset(Dataset):
         return []
 
     def categories(self, split: str) -> list[str] | None:
-        cats = {json.loads(tj.read_text()).get("category") for tj in self._task_files()}
-        return sorted(c for c in cats if c)
+        # PRIMARY category = source (history / conversation) — 2 values, the benchmark's main axis.
+        srcs = {json.loads(tj.read_text()).get("source") for tj in self._task_files()}
+        return sorted(s for s in srcs if s)
 
     def category_type(self, split: str, category: str):
         return "query"
