@@ -442,3 +442,49 @@ budget would cut it.)
 Net: Hindsight's own cost is a rounding error against what it saves; positive from the first project and
 compounding as more tasks reuse the memory. (Method note: NOT added to AMB — computed ad hoc from the
 `/llm-requests` endpoint + reflect usage; documented here + in the customer doc only.)
+
+## ============ n=3 SWEEP (2026-07-03) — all 4 arms, 3 runs each ============
+Ran all 4 combinations at n=3 (nz-{oc,cc}-{none,hs}-{1,2,3}, 12 runs). Backfill excluded from wall:
+each bank pre-backfilled ONCE (prebackfill.py, sequential) then all hindsight runs reuse it
+(SDE_HSCODING_REUSE_BANK=1) — mirrors production (ingest once, reflect per task). So wall_s measures
+agent solve time only, no backfill inflation. Concurrency overload from n=1 (4 fresh backfills stalling
+the server) is gone with the pre-backfill+reuse split.
+
+### Means (sum over 19 tasks, mean of 3 runs, ± = std)
+**OpenCode / gemini-3.5-flash**
+| metric | vanilla | hindsight | Δ |
+|---|---|---|---|
+| interventions | 23.7 ±1.5 | **10.0 ±1.0** | **−58%** |
+| cost (USD) | $15.27 | $11.39 | −25% |
+| input (fresh) | 7.2M | 6.1M | −14% |
+| cached | 16.8M | 6.7M | −60% |
+| output | 225k | 134k | −41% |
+| turns | 752 | 591 | −21% |
+| wall (s) | 2532 | 2386 | −6% |
+| solved | 19/19 | 19/19 | = |
+
+**Claude Code / sonnet-5**
+| metric | vanilla | hindsight | Δ |
+|---|---|---|---|
+| interventions | 13.3 ±1.2 | **3.3 ±1.2** | **−75%** |
+| cost (USD) | $7.56 | $5.17 | −32% |
+| input (fresh) | 612k | 403k | −34% |
+| cached | 10.3M | 7.5M | −28% |
+| output | 69k | 49k | −29% |
+| turns | 302 | 229 | −24% |
+| wall (s) | 1161 | 873 | −25% |
+| solved | 19/19 | 19/19 | = |
+
+### What changed vs n=1
+- **Effect is stronger and tighter.** OpenCode interv −42%→**−58%**, Claude holds **−75%**. Variance
+  is low (Claude interv 12–15; OpenCode hindsight 9–11), so the direction is signal, not noise.
+- **Wall story FLIPPED.** n=1 showed OpenCode +32% slower (backfill was inside wall). With backfill
+  excluded via reuse, memory is now **faster or neutral for both** (OpenCode −6%, Claude −25%) —
+  fewer correction rounds outweigh the per-task reflect. This is the honest production number:
+  ingest once, pay only lightweight retrieval per task.
+- Solve rate stays 100% in every arm. Story remains efficiency, not capability.
+
+### Artifacts
+- 12 result files force-added under outputs/sdebench/nz-{oc,cc}-{none,hs}-{1,2,3}/ (old n=1 dirs deleted).
+- Charts regenerated with error bars: `uv run --with matplotlib python scripts/sdebench_charts.py --out ~/Documents/charts`.
+- Customer doc ~/Documents/memory-coding-agents-early-results.md updated to n=3 (table, headline 58–75%, wall bullet flipped, notes).
