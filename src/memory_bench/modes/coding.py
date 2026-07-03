@@ -89,7 +89,12 @@ class CodingMode(ResponseMode):
         # chats to ingest = the task's own decision chat + a shared pool of DECOY conversations (noise:
         # long, codebase-related, no task policy) so chat retrieval is a real ranking problem, not a
         # 1-chat lookup. Decoys are pre-generated once from git history (gen/decoy_conversations.json).
-        chats = [{"id": task_id, "turns": conv}] if conv else []
+        # a task may carry ONE chat (list of turns) or SEVERAL (list of lists — e.g. a rule set in an
+        # early chat and AMENDED in a later one); seed_sessions on the vanilla side already handles both.
+        if conv and isinstance(conv[0], list):
+            chats = [{"id": f"{task_id}-chat{i}", "turns": c} for i, c in enumerate(conv) if c]
+        else:
+            chats = [{"id": task_id, "turns": conv}] if conv else []
         decoy_path = Path(os.environ.get("SDE_DECOY_CONVERSATIONS",
                           str(_REPO_ROOT / "sdebench" / "datasets" / "gen" / "decoy_conversations.json")))
         if os.environ.get("SDE_DECOYS", "1").lower() not in ("0", "false") and decoy_path.exists():
