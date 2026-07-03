@@ -138,13 +138,13 @@ def main():
     print(f"charts -> {out}  ({note})")
 
     grouped_bar(data, "interventions", "Interventions per task", "interventions / task",
-                lambda v: f"{v:.2f}", out / "interventions.png", note)
-    grouped_bar(data, "cost", "Cost per task", "USD / task", lambda v: f"${v:.2f}", out / "cost.png", note)
+                lambda v: f"{v:.2f}", out / "interventions-pertask.png", note)
+    grouped_bar(data, "cost", "Cost per task", "USD / task", lambda v: f"${v:.2f}", out / "cost-pertask.png", note)
     grouped_bar(data, "turns", "Tool-turns per task", "turns / task", lambda v: f"{v:.0f}",
-                out / "turns.png", note)
+                out / "turns-pertask.png", note)
     grouped_bar(data, "wall", "Wall-clock per task", "seconds / task", lambda v: f"{v:.0f}s",
-                out / "wall.png", note)
-    tokens_chart(data, out / "tokens.png")
+                out / "wall-pertask.png", note)
+    tokens_chart(data, out / "tokens-pertask.png")
 
 
 if __name__ == "__main__":
