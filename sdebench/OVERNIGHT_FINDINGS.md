@@ -5,11 +5,19 @@ wired it into the memory backfill, added claude-code as a second agent, and ran 
 for BOTH agents (vanilla vs hindsight, with noise). All results in the UI (`uv run omb view` → sdebench):
 `nz-oc-none/nz-oc-hs` (opencode), `nz-cc-none/nz-cc-hs` (claude).
 
-**Headline results (n=1, 19 tasks, with noise):**
+**Headline results (n=1, 19 tasks, with noise) — memory is a clear win for BOTH agents:**
 | agent | vanilla interv | hindsight interv | cost Δ | note |
 |---|---|---|---|---|
 | opencode / gemini-3.5-flash | 26 | **15 (−42%)** | −30% | memory clearly wins |
-| claude-code / sonnet-5 | 12 | 13 (flat) | −4% | memory ~neutral; strong agent solves anyway |
+| claude-code / sonnet-5 | 12 | **3 (−75%)** | −31% | memory wins even MORE (after fixing 2 bugs) |
+
+**IMPORTANT (session 2 late):** the claude integration had TWO bugs we never validated (user was right):
+(1) memory injected via a UserPromptSubmit hook was DISTRUSTED by claude as a prompt-injection and refused
+→ fixed with `--append-system-prompt`; (2) `--permission-mode acceptEdits` BLOCKED Bash so claude ran
+half-blind (couldn't run pytest) → fixed with a settings.json Bash allow-list. The earlier "claude memory
+is neutral/harmful" was a BUG ARTIFACT. Corrected: claude memory = 12→3 interventions (−75%), zero
+regressions. UI runs: nz-cc-none-fixed / nz-cc-hs-fixed (claude), nz-oc-none / nz-oc-hs (opencode).
+
 
 **Two big findings:**
 1. **H-tasks are TOO EASY for a strong agent.** claude vanilla = **0 interventions on ALL 10 H tasks**
