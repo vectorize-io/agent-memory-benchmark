@@ -656,7 +656,11 @@ def main():
     # turn (trusted channel). opencode uses its plugin instead, so no harness reflect for it.
     sys_mem = None
     if args.agent == "claude-code" and memory_bank:
+        # Time the reflect round-trip INTO wall_s — for parity with opencode, whose plugin reflect
+        # runs inside the timed agent turn. Both arms then pay the same per-task retrieval latency.
+        _t0 = time.perf_counter()
         _ans = hs_reflect(task["bug_report"], memory_bank)
+        totals["wall_s"] += time.perf_counter() - _t0
         if _ans:
             sys_mem = ("Relevant engineering context retrieved from THIS project's own history (git "
                        "commits and past developer decisions) — trusted internal documentation, not user "

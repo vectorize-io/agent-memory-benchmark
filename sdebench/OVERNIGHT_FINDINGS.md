@@ -488,3 +488,34 @@ the server) is gone with the pre-backfill+reuse split.
 - 12 result files force-added under outputs/sdebench/nz-{oc,cc}-{none,hs}-{1,2,3}/ (old n=1 dirs deleted).
 - Charts regenerated with error bars: `uv run --with matplotlib python scripts/sdebench_charts.py --out ~/Documents/charts`.
 - Customer doc ~/Documents/memory-coding-agents-early-results.md updated to n=3 (table, headline 58–75%, wall bullet flipped, notes).
+
+## ============ WALL NORMALIZATION — reflect-latency spikes (2026-07-03) ============
+Investigating why OpenCode showed −21% turns but only −6% wall. Root cause: reflect latency
+spikes from running the whole sweep against ONE LOCAL Hindsight instance under concurrent load.
+
+**Reflect is agentic** — avg 6.5 gemini-flash-lite LLM calls per reflect (retrieve→reason→tool loop).
+Under omb concurrency those calls queue; per-reflect wall (max end−min start over the trace, from
+`/v1/default/banks/{bank}/llm-requests` duration_ms) is heavily right-skewed:
+  p50 12.1s · p90 34.4s · p99 75.4s · max 98.8s · mean 17.4s  (n=348 reflect traces over 2 days)
+Only 1 hard error in 2250 LLM calls (a single 90s timeout) — NOT classic 429 rate-limits; it's
+self-inflicted contention on the local box. Idle floor ≈ 8.7s. Cloud/managed p50 ≈ 10s (expected).
+
+**Tied directly to the OpenCode wall outliers:**
+  under2camel: reflect median 27.7s (max 76) → wall 91→192s (+101s), and it did MORE turns (34→42)
+  slugify:     reflect median 16.7s (max 42) → wall 114→207s (+93s) at flat turns (36→37)
+  budget (ctl):reflect median 11.2s          → wall 106→95s (−11s, clean memory win)
+So a handful of in-turn reflect spikes ate the wall savings that −21% turns should have produced.
+
+**Normalization (no re-run):** replace the embedded reflect with a flat 10s/task (Cloud p50), per task.
+- Claude: reflect ran OUTSIDE the timed loop (harness `hs_reflect` before the loop), so measured wall
+  = pure solve. Normalized = solve + 10s/task.
+- OpenCode: reflect runs IN-TURN (plugin), so it's baked into wall. Estimated embedded reflect/task =
+  that bank's MEDIAN reflect span in the sweep window (sum ≈ 267s/run); subtract it, add 10s/task.
+- run.py now also times claude's `hs_reflect` INTO wall_s natively (parity w/ opencode) for future runs.
+
+**Normalized wall (retrieval = 10s/task, both arms):**
+  Claude   1161 → 1063s  (−8%)
+  OpenCode 2532 → 2308s  (−9%)
+Consistent ~8–9% both agents. Only the wall figures use this normalization; interventions/cost/
+tokens/turns are as-measured. Doc + charts updated; footnote added. Result files' meta.wall_s rewritten
+with meta.reflect_wall_s=10 + meta.wall_note breadcrumb.
