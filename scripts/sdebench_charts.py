@@ -24,7 +24,9 @@ ARMS = [
     ("Claude",   "memory",  "nz-cc-hs*"),
 ]
 AGENTS = ["OpenCode", "Claude"]
-VANILLA_C, MEMORY_C = "#9aa0a6", "#0d9488"   # muted gray vs teal highlight
+AGENT_LABELS = {"OpenCode": "OpenCode\nGemini 3.5 Flash", "Claude": "Claude Code\nClaude Sonnet"}
+ARM_LABELS = {"vanilla": "Vanilla", "memory": "Hindsight"}
+VANILLA_C, MEMORY_C = "#9aa0a6", "#0080b0"   # muted gray vs Hindsight brand blue
 TOK_COLORS = {"Input": "#3b82f6", "Cached": "#a5b4fc", "Output": "#f59e0b"}
 
 
@@ -75,7 +77,7 @@ def grouped_bar(data, metric, title, ylabel, fmt, out, note=""):
     for i, (arm, color, off) in enumerate((("vanilla", VANILLA_C, -w/2), ("memory", MEMORY_C, w/2))):
         vals = [data[(ag, arm)][0][metric] for ag in AGENTS]
         errs = [data[(ag, arm)][1][metric] for ag in AGENTS]
-        bars = ax.bar([xi + off for xi in x], vals, w, label=arm.capitalize(), color=color,
+        bars = ax.bar([xi + off for xi in x], vals, w, label=ARM_LABELS[arm], color=color,
                       yerr=errs if any(errs) else None, capsize=4, error_kw=dict(ecolor="#555", lw=1))
         for b, v in zip(bars, vals):
             ax.text(b.get_x() + b.get_width()/2, b.get_height(), fmt(v), ha="center", va="bottom", fontsize=9)
@@ -83,7 +85,7 @@ def grouped_bar(data, metric, title, ylabel, fmt, out, note=""):
     for xi, ag in zip(x, AGENTS):
         v = data[(ag, "vanilla")][0][metric]; m = data[(ag, "memory")][0][metric]
         ax.text(xi, max(v, m) * 1.14, _pct(v, m), ha="center", fontsize=10, fontweight="bold", color=MEMORY_C)
-    ax.set_xticks(list(x)); ax.set_xticklabels(AGENTS)
+    ax.set_xticks(list(x)); ax.set_xticklabels([AGENT_LABELS[a] for a in AGENTS], fontsize=9)
     ax.set_ylabel(ylabel); ax.set_title(title, fontweight="bold")
     ax.margins(y=0.20); ax.legend(frameon=False, loc="upper right")
     ax.spines[["top", "right"]].set_visible(False)
@@ -95,7 +97,8 @@ def grouped_bar(data, metric, title, ylabel, fmt, out, note=""):
 
 def tokens_chart(data, out):
     """Distinguish Input vs Cached vs Output — grouped bars per run, log y (spans M to k)."""
-    runs = [(f"{ag}\n{arm}", (ag, arm)) for ag in AGENTS for arm in ("vanilla", "memory")]
+    short = {"OpenCode": "OpenCode·Gemini", "Claude": "Claude·Sonnet"}
+    runs = [(f"{short[ag]}\n{ARM_LABELS[arm]}", (ag, arm)) for ag in AGENTS for arm in ("vanilla", "memory")]
     cats = ["Input", "Cached", "Output"]; keys = {"Input": "tok_input", "Cached": "tok_cached", "Output": "tok_output"}
     fig, ax = plt.subplots(figsize=(7.5, 4.2))
     x = range(len(runs)); w = 0.26
