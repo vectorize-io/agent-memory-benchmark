@@ -688,7 +688,9 @@ def main():
             if g["resolved"] or interventions >= args.max_interventions:
                 break
             interventions += 1
-            fb = build_feedback(g)
+            # number each round so a resumed agent never sees a verbatim-repeated message (claude flags
+            # that as an adversarial loop and refuses); the pytest output also differs as the code changes.
+            fb = f"[Feedback #{interventions}] " + build_feedback(g)
             print(f"  ↳ intervention {interventions}: {g['pytest']}", flush=True)
             acc(run_agent(cid, args.model, args.timeout, fb, resume=True, agent=args.agent, system_append=sys_mem), f"intervention-{interventions}", fb)
     finally:
