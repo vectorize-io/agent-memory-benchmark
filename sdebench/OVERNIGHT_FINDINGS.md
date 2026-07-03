@@ -416,3 +416,26 @@ Re-ran the full claude roster (both arms) with the fixed image (trusted --append
 | opencode / gemini-3.5-flash | 26 → 15 (−42%) | −30% | memory clearly helps |
 | claude-code / sonnet-5 | 12 → 3 (−75%) | −31% | memory helps even more (F tasks) |
 Both: memory is a clear, cost-positive win. H tasks are only useful for weaker agents.
+
+## ============ HINDSIGHT'S OWN COST (retain + reflect), measured ============
+Hindsight's LLM usage is exposed per bank at `GET /v1/default/banks/{bank}/llm-requests` (per-request
+operation + input/cached/output tokens) and reflect responses carry `usage`. All Hindsight calls use
+**gemini-3.1-flash-lite**. Priced at flash-lite list rates: **$0.10/1M input, $0.025/1M cached, $0.40/1M output**.
+
+**One-time ingestion (per project bank)** — retain + consolidation + mental-model refresh (measured on
+sde-coding-boltons-budget-001): input 9.9M (fresh 6.4M + cached 3.5M) + output 1.0M ⇒ **≈ $1.14, paid once**.
+This is per PROJECT, not per task — in production the git+conversations are ingested once and every future
+task reflects against the same memory. (Our benchmark used a bank per task for isolation.)
+
+**Per reflect (per task)** — avg of 4 sampled queries (response.usage): input ~115k + output ~582 ⇒
+**≈ $0.012 (~1.2¢) per task**. (Reflect input is large because budget=high pulls broad context; a lower
+budget would cut it.)
+
+**Economics vs the agent savings (per 19-task run):**
+- Claude: agent $7.45→$5.11 (saved $2.34). Memory adds 19×$0.012=$0.22/run + $1.14 one-time.
+  → first project net **+$0.98**, every run after **+$2.12**.
+- OpenCode: agent $15.45→$10.91 (saved $4.54). → first project net **+$3.18**, every run after **+$4.32**.
+
+Net: Hindsight's own cost is a rounding error against what it saves; positive from the first project and
+compounding as more tasks reuse the memory. (Method note: NOT added to AMB — computed ad hoc from the
+`/llm-requests` endpoint + reflect usage; documented here + in the customer doc only.)
