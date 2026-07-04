@@ -134,3 +134,15 @@ memory-arm run had no injected memory. A memory run that silently isn't one can 
 Implication for tonight's data: dz-oc-hs-1 is INVALID as a memory measurement (it is, ironically,
 a good unseeded-vanilla replicate). dz-oc-none-1 stands. Re-running hs with REUSE_BANK on settled
 banks + diagnostics; every future sweep asserts reflect_ok per task.
+
+## 2026-07-04 ~04:40 — disk-full incident took docker down mid-sweep
+
+hs re-sweep #2 (first with working injection — 50 task reflects confirmed live) started failing
+tasks at ~200s each: the DATA VOLUME hit 100% (867/926 GiB) and the docker daemon died. Each task
+workdir holds TWO full boltons clones (agent repo + pristine grading copy) and sweeps never cleaned
+them — hundreds of dirs ate the disk. Fixes: (1) run.py now deletes repo+grade copies after writing
+result/trace (steady-state disk ~2 tasks × concurrency); (2) cleaned /tmp/sdebench (+6 GiB);
+(3) OrbStack restarted (`orb start`), hindsight-db auto-recovered, API server (embedded pg0)
+unaffected — banks intact. Sweep #2 is invalid (infra); relaunched as #3: instrumented, REUSE_BANK,
+disk-lean. The reflect diagnostics did their job on their first outing — the 14 pre-crash results
+show injection working (e.g. dedupe 3->1 corrections vs the blind run).

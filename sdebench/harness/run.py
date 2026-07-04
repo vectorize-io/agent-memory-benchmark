@@ -728,6 +728,10 @@ def main():
     (work / "result.json").write_text(json.dumps(result, indent=2))
     (work / "trace.json").write_text(json.dumps(
         {**result, "bug_report": task["bug_report"], "final_patch": patch, "git_history": git_history, "trace": trace}, indent=2))
+    # each workdir holds a full host-repo clone (+ a second pristine copy for grading) — sweeps ran
+    # the disk to 100% and took the docker daemon down. Keep result/trace, drop the repo copies.
+    shutil.rmtree(repo, ignore_errors=True)
+    shutil.rmtree(work / "grade", ignore_errors=True)
     print(json.dumps(result, indent=2))
     tk = result["tokens"]
     print(f"\nRESULT history={args.history}: solved={solved} interventions={interventions} | "
