@@ -205,3 +205,12 @@ reflect sample fabricated a file path + REF-ID — logged as future work (reflec
 Customer doc rewritten as v2 (supersedes v1 with an explicit "what changed and why numbers are
 lower" section: contamination found+fixed, harder suite, injection verification). Charts
 regenerated from dz-* outputs (corrections/cost/turns; wall+tokens dropped — not uniformly backed).
+
+## 2026-07-05 ~00:20 — capped-task post-mortem + n-boost
+
+findhashtags-001 (the one capped cc-memory run): reflect on that bank surfaces the FULL policy
+including the 4-digit-year carve-out; the trace shows the agent implemented the general
+digit-filter and then iterated on partial hidden-test feedback for 5 rounds without revisiting
+the injected rule. Application variance, not retrieval failure — the other two runs solved the
+same task with the same bank. No fix warranted; the cap stands in the results.
+Launching cc runs 4-5 (both arms) to tighten claude's wide memory variance (14/15/8).
