@@ -697,6 +697,16 @@ def main():
             fb = f"[Feedback #{interventions}] " + build_feedback(g)
             print(f"  ↳ intervention {interventions}: {g['pytest']}", flush=True)
             acc(run_agent(cid, args.model, args.timeout, fb, resume=True, agent=args.agent, system_append=sys_mem), f"intervention-{interventions}", fb)
+        # memory observability: the plugin records every reflect outcome to /tmp inside the container.
+        # A memory arm whose reflect silently failed is NOT a memory run — record and shout.
+        mem_diag = None
+        if memory_bank and args.agent == "opencode":
+            _p = subprocess.run(["docker", "exec", cid, "cat", "/tmp/hindsight-plugin.log"],
+                                capture_output=True, text=True)
+            mem_diag = [json.loads(l) for l in (_p.stdout or "").splitlines() if l.strip()] or None
+            _ok = any(d.get("event") == "reflect_ok" for d in (mem_diag or []))
+            print(f"  [memory] reflect diagnostics: {mem_diag if mem_diag else 'NO LOG — plugin never reflected'}"
+                  + ("" if _ok else "  ⚠️ MEMORY ARM RAN WITHOUT INJECTED MEMORY"), flush=True)
     finally:
         stop_agent_container(cid)
 
@@ -713,6 +723,7 @@ def main():
         "tokens": {k: totals[k] for k in TOK},      # cached vs input vs output kept separate
         "turns": totals["turns"], "wall_s": round(totals["wall_s"], 1),
         "cost_usd": round(cost, 4),                   # 0 unless --price-* given
+        "memory_diag": mem_diag if (memory_bank and args.agent == "opencode") else None,
     }
     (work / "result.json").write_text(json.dumps(result, indent=2))
     (work / "trace.json").write_text(json.dumps(

@@ -137,7 +137,7 @@ def main():
     note = f"average per task (over {nt} tasks)" + (f", mean of n={n} runs (error bars = std)" if n > 1 else ", n=1")
     print(f"charts -> {out}  ({note})")
 
-    grouped_bar(data, "interventions", "Interventions per task", "interventions / task",
+    grouped_bar(data, "interventions", "Corrections needed per task", "corrections / task",
                 lambda v: f"{v:.2f}", out / "interventions-pertask.png", note)
     grouped_bar(data, "cost", "Cost per task", "USD / task", lambda v: f"${v:.2f}", out / "cost-pertask.png", note)
     grouped_bar(data, "turns", "Tool-turns per task", "turns / task", lambda v: f"{v:.0f}",

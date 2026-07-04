@@ -100,3 +100,37 @@ validator exit status.
 
 Sweep progress at 20:00: 8/31 tasks done, all correct so far on the memory arm (incl. new
 csvquote pair). Backfill of 31 fresh banks is the long pole as predicted.
+
+## 2026-07-04 ~02:10 — clean memory-arm sweep done: contamination WAS material
+
+oc-hs on all 31 tasks, decontaminated plugin, fresh banks: 31/31 solved. On the old 19 tasks the
+clean run needed 15 total corrections vs the contaminated runs' mean 10.0 (range 9-11) — i.e. the
+removed strings were worth roughly a third of the memory arm's apparent advantage. rounding/-history
+(whose answer sat verbatim in the extraction-prompt example) went 0.33/0.00 -> 1/1. This validates
+the decision to fix + re-run rather than ship v1's numbers to more customers. Caveat: n=1 vs n=3,
+and the server branch/config differs from the overnight runs — the go-forward comparison is
+clean-vs-clean, same server, same day.
+
+Hard tier, memory arm: 13 corrections across 12 tasks (dedupe-001 worst at 3) — harder than the
+legacy suite even WITH memory, as designed. Vanilla 33-task sweep launched 02:05 (no backfill
+needed, should be faster). The 2 amended tasks still need a memory-arm top-up run.
+
+## 2026-07-04 ~03:30 — MAJOR FINDING: the memory arm ran memory-BLIND all night
+
+Vanilla sweep done (33/33 solved). Comparing arms exposed a wrong-shaped result (memory ~uniform
+1 correction; WORSE than seeded vanilla on the hard tier 13 vs 11) → investigated → the server log
+shows ZERO task-time reflects during either sweep window; every logged reflect is backfill page
+generation. The plugin's reflect is "best-effort": on any failure it silently injects nothing — so
+the "memory arm" was actually an unseeded vanilla agent for all 31 tasks. The identical harness
+path reflects fine on the now-idle box (verified end-to-end incl. a harness-exact container), so
+the sweep-time failure was environmental (most plausibly the reflect fetch dying under the
+backfill-saturated box) — and INVISIBLE by design.
+
+Fix shipped (product improvement, not benchmark tuning): the plugin now writes a per-session
+reflect diagnostic (/tmp/hindsight-plugin.log in-container: reflect_ok/empty/failed + ms + error),
+and run.py surfaces it into result.json (memory_diag) and the console with a loud warning when a
+memory-arm run had no injected memory. A memory run that silently isn't one can no longer masquerade.
+
+Implication for tonight's data: dz-oc-hs-1 is INVALID as a memory measurement (it is, ironically,
+a good unseeded-vanilla replicate). dz-oc-none-1 stands. Re-running hs with REUSE_BANK on settled
+banks + diagnostics; every future sweep asserts reflect_ok per task.
