@@ -18,10 +18,10 @@ import matplotlib.pyplot as plt
 
 # 4 arms: (agent, arm, run-name glob). Globs so n>1 reruns (nz-oc-none-1/-2/-3) auto-average.
 ARMS = [
-    ("OpenCode", "vanilla", "nz-oc-none*"),
-    ("OpenCode", "memory",  "nz-oc-hs*"),
-    ("Claude",   "vanilla", "nz-cc-none*"),
-    ("Claude",   "memory",  "nz-cc-hs*"),
+    ("OpenCode", "vanilla", "dz-oc-none*"),
+    ("OpenCode", "memory",  "dz-oc-hs*"),
+    ("Claude",   "vanilla", "dz-cc-none*"),
+    ("Claude",   "memory",  "dz-cc-hs*"),
 ]
 AGENTS = ["OpenCode", "Claude"]
 AGENT_LABELS = {"OpenCode": "OpenCode\nGemini 3.5 Flash", "Claude": "Claude Code\nClaude Sonnet"}
@@ -34,8 +34,17 @@ def load_run(path):
     d = json.load(gzip.open(path, "rt") if path.endswith(".gz") else open(path))
     a = dict(interventions=0, cost=0, turns=0, wall=0, tok_input=0, tok_cached=0, tok_output=0,
              solved=0, tasks=len(d["results"]))
+    import re as _re
     for r in d["results"]:
-        m = r["meta"]; t = m.get("tokens") or {}
+        m = r.get("meta")
+        if not m:  # dz-* runs: metrics live in the runner's reasoning string, not a meta blob
+            s = r.get("reasoning") or ""
+            g = lambda pat: _re.search(pat, s)
+            m = {"interventions": int(g(r"interventions=(\d+)").group(1)) if g(r"interventions=(\d+)") else 0,
+                 "cost_usd": float(g(r"cost=\$([\d.]+)").group(1)) if g(r"cost=\$([\d.]+)") else 0,
+                 "turns": int(g(r"turns=(\d+)").group(1)) if g(r"turns=(\d+)") else 0,
+                 "solved": r.get("answer") == "solved"}
+        t = m.get("tokens") or {}
         a["interventions"] += m.get("interventions") or 0
         a["cost"]          += m.get("cost_usd") or 0
         a["turns"]         += m.get("turns") or 0
@@ -142,9 +151,8 @@ def main():
     grouped_bar(data, "cost", "Cost per task", "USD / task", lambda v: f"${v:.2f}", out / "cost-pertask.png", note)
     grouped_bar(data, "turns", "Tool-turns per task", "turns / task", lambda v: f"{v:.0f}",
                 out / "turns-pertask.png", note)
-    grouped_bar(data, "wall", "Wall-clock per task", "seconds / task", lambda v: f"{v:.0f}s",
-                out / "wall-pertask.png", note)
-    tokens_chart(data, out / "tokens-pertask.png")
+    # wall + tokens panels dropped for the dz campaign (not uniformly backed; doc reports
+    # corrections/cost/turns/solve only)
 
 
 if __name__ == "__main__":

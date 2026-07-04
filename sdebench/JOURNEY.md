@@ -146,3 +146,62 @@ result/trace (steady-state disk ~2 tasks × concurrency); (2) cleaned /tmp/sdebe
 unaffected — banks intact. Sweep #2 is invalid (infra); relaunched as #3: instrumented, REUSE_BANK,
 disk-lean. The reflect diagnostics did their job on their first outing — the 14 pre-crash results
 show injection working (e.g. dedupe 3->1 corrections vs the blind run).
+
+## 2026-07-04 ~05:45 — first VALID clean comparison (n=1) + a real Hindsight gap found
+
+hs sweep #3: 33/33 solved, reflect_ok verified on every task (diagnostics prove memory was
+injected). Honest n=1 numbers vs seeded vanilla:
+  ALL 33:  corrections 34 -> 24 (-29%) | cost $25.40 -> $20.27 (-20%) | turns 1184 -> 1027 (-13%)
+  OLD 19:  corrections 21 -> 13 (-38%) | HARD 12: 11 -> 9 (-18%) | AMENDED 2: 2 -> 2 (0%)
+Much smaller than v1's contaminated -58%, and with a clear frontier: memory LOSES on 7
+conversation tasks (v=0, m=1-2) where seeded vanilla reads the raw chat but reflect's summary
+drops a component of a multi-part policy.
+
+The conversation-amended type caught a real defect on its first outing: reflect on the
+dedupe-amended bank returns the STALE chat-A rule (keep-latest — the proven naive!) and misses
+the amendment (most-filled + tie->primary) plus the day-truncated key. Cross-conversation
+supersession does not happen: both chats' facts coexist and reflect prefers the wrong one.
+
+Planned general fixes (product-level, not benchmark tuning): (1) backfill assigns per-chat
+occurred_at (real session exports have timestamps; ordered synthetic dates for JSON chats) so
+recency is available; (2) reflect mission: on conflicting facts the latest/superseding decision
+wins and the old rule must be reported as superseded. To keep n=3 internally consistent, these
+land AFTER the n=3 sweeps; the amended pair then gets a before/after case study.
+
+Fixes shipped to PR #2522 (89b58f376): chronological session recency (was inverted!) +
+supersession-aware reflect mission. Revised sweep plan so final memory numbers use banks built
+by the FIXED plugin: vanilla #2, #3 (bank-independent, running/queued) -> banks v2 fresh backfill
++ hs runs A/B/C with reuse -> claude-code arms. hs sweep #3's banks (v1) stay archived as the
+pre-fix point of comparison; the amended-pair before/after becomes the case study.
+
+## 2026-07-04 ~15:30 — banks v2 run A: fixes hold up
+
+hs v2a (fresh banks, fixed plugin): 33/33 solved, 27 corrections, reflect_ok verified on every
+task. Amended pair with v2 banks: dedupe-amended 0 corrections (was 1 with v1 banks — reflect had
+surfaced the superseded keep-latest rule), retryjitter-amended 1. The chronological-recency +
+supersession-mission fixes moved exactly the tasks they were built from — and nothing else was
+touched to get there. Run B (reuse) launched for n=3.
+
+## 2026-07-04 ~17:35 — OPENCODE n=3 FINAL (33 tasks, decontaminated, injection-verified)
+
+vanilla:  34, 33, 29  (mean 32.0)
+memory:   27, 26, 22  (mean 25.0)   => corrections -22%
+Every memory run: reflect_ok on all 33 tasks. Solve rate 100% everywhere. This is the honest
+opencode story on the hardened suite: a fifth fewer human corrections, no contamination, no
+silent memory loss, hard multi-part tasks included. (v1 doc claimed -58% on the old suite with
+a contaminated plugin — the gap between those numbers is the price of legitimacy, documented
+throughout this file.) Claude Code arms launched next (vanilla first).
+
+## 2026-07-05 ~00:15 — CAMPAIGN COMPLETE
+
+Final n=3, 33 tasks, decontaminated plugin, v2 banks, injection verified on every memory run:
+  OpenCode+Gemini:  corrections/task 0.97 -> 0.76 (-22%) | cost -18% | turns -10% | solved 99/99 vs 99/99
+  Claude+Sonnet:    corrections/task 0.89 -> 0.37 (-58%) | cost -31% | turns -21% | solved 99/99 vs 98/99
+  (the 98th: findhashtags-001 hit the 5-cap in one cc memory run — reported, not rerun away)
+Amended case study: v1 banks reflect returned the SUPERSEDED rule verbatim (defect reproduced live);
+after the chronological-recency + supersession fixes, the stale rule no longer surfaces and the
+amended pair averages 1.3 corrections/run vs 2 before. One residual quality observation: a v2
+reflect sample fabricated a file path + REF-ID — logged as future work (reflect grounding).
+Customer doc rewritten as v2 (supersedes v1 with an explicit "what changed and why numbers are
+lower" section: contamination found+fixed, harder suite, injection verification). Charts
+regenerated from dz-* outputs (corrections/cost/turns; wall+tokens dropped — not uniformly backed).
