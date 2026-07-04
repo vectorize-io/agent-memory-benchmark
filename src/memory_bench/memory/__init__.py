@@ -1,4 +1,5 @@
 from .base import MemoryProvider
+from .automem import AutoMemMemoryProvider
 from .bm25 import BM25MemoryProvider
 from .cognee import CogneeMemoryProvider
 from .hindsight import HindsightCloudMemoryProvider, HindsightHTTPMemoryProvider, HindsightMemoryProvider
@@ -11,6 +12,7 @@ from .ogham import OghamMemoryProvider
 from .supermemory import SupermemoryMemoryProvider
 
 REGISTRY: dict[str, type[MemoryProvider]] = {
+    "automem": AutoMemMemoryProvider,
     "bm25": BM25MemoryProvider,
     "cognee": CogneeMemoryProvider,
     "hindsight": HindsightMemoryProvider,

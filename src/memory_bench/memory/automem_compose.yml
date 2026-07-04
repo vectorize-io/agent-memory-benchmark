@@ -1,0 +1,23 @@
+# Spun by the AutoMem provider. Ports + project name are overridden per run.
+services:
+  falkordb:
+    image: falkordb/falkordb:v4.18.3  # pinned (was :latest) for reproducibility — graph module 41803, the version the submission ran
+    ports: ["${AUTOMEM_FALKOR_PORT:-6379}:6379"]
+  qdrant:
+    image: qdrant/qdrant:v1.11.3
+    ports: ["${AUTOMEM_QDRANT_PORT:-6333}:6333"]
+  automem:
+    image: ${AUTOMEM_IMAGE:-ghcr.io/verygoodplugins/automem:amb-v1}
+    depends_on: [falkordb, qdrant]
+    ports: ["${AUTOMEM_API_PORT:-8001}:8001"]
+    environment:
+      PORT: "8001"
+      FALKORDB_HOST: falkordb
+      FALKORDB_PORT: "6379"
+      QDRANT_URL: http://qdrant:6333
+      EMBEDDING_PROVIDER: local
+      VECTOR_SIZE: "768"
+      AUTOMEM_API_TOKEN: benchmark-token
+      JIT_ENRICHMENT_ENABLED: "true"
+      ENRICHMENT_ENABLE_SUMMARIES: "false"  # no LLM summaries (lean, no external deps)
+      ENRICHMENT_ENABLED: "false"           # async enrichment worker off (fast + low-mem); JIT inline recall enrichment stays on

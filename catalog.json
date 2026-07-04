@@ -71,6 +71,13 @@
     }
   },
   "providers": {
+    "automem": {
+      "key": "automem",
+      "description": "AutoMem graph+vector memory (FalkorDB + Qdrant) self-spun via Docker with FastEmbed (BAAI/bge-base-en-v1.5, 768d, no embedding API keys); recall traverses graph relations.",
+      "kind": "local",
+      "link": "https://automem.ai",
+      "logo": "https://www.google.com/s2/favicons?sz=32&domain=automem.ai"
+    },
     "bm25": {
       "key": "bm25",
       "description": "Keyword search baseline. No embeddings \u2014 splits docs into chunks and uses BM25 ranking.",
