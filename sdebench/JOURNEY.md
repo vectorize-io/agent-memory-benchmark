@@ -214,3 +214,12 @@ digit-filter and then iterated on partial hidden-test feedback for 5 rounds with
 the injected rule. Application variance, not retrieval failure — the other two runs solved the
 same task with the same bank. No fix warranted; the cap stands in the results.
 Launching cc runs 4-5 (both arms) to tighten claude's wide memory variance (14/15/8).
+
+## 2026-07-05 ~04:30 — n=5 for Claude; campaign closed
+
+cc-none n=5: 33,31,24,32,30 (0.91/task). cc-hs n=5: 14,15,8,9,17 (0.38/task) = -58%, unchanged
+from n=3. Second capped run appeared (csvquote-history in run 5; different task than run 2's) —
+solve 163/165 vs vanilla 165/165, disclosed in the doc. Doc + charts updated to n=5 for Claude.
+Final deliverables: doc v2 (~/Documents), charts (corrections/cost/turns, n-averaged with error
+bars), PRs: hindsight #2522 (decontamination, diagnostics, supersession fixes), benchmark #23
+(harness fixes, 20 run outputs, this journal), sde-bench hardening-2026-07 (33-task dataset).
