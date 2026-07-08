@@ -67,3 +67,4 @@ Results are saved to `outputs/{dataset}/{memory}/{mode}/{domain}.json` and can b
 - Python ≥ 3.11
 - `GEMINI_API_KEY` in `.env` or environment
 - For MemBench: set `MEMBENCH_DATA_PATH` to your local data directory
+- For Tree Ring Memory: install the `tree-ring` CLI or set `TREE_RING_BIN`

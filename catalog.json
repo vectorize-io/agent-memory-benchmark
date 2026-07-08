@@ -143,6 +143,13 @@
       "link": "https://qdrant.tech",
       "logo": "https://www.google.com/s2/favicons?sz=32&domain=qdrant.tech"
     },
+    "tree-ring": {
+      "key": "tree-ring",
+      "description": "Local-first Rust CLI memory using SQLite/FTS, ring lifecycle metadata, sensitivity checks, and project-scoped recall. Requires the tree-ring binary on PATH or TREE_RING_BIN.",
+      "kind": "local",
+      "link": "https://github.com/TerminallyLazy/Tree-Ring-Memory",
+      "logo": "https://raw.githubusercontent.com/TerminallyLazy/Tree-Ring-Memory/main/assets/tree-ring-memory-logo.png"
+    },
     "supermemory": {
       "key": "supermemory",
       "description": "Supermemory cloud API with temporal metadata support.",

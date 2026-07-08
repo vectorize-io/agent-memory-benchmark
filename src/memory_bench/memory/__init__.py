@@ -9,6 +9,7 @@ from .mem0_cloud import Mem0CloudMemoryProvider
 from .hybrid_search import HybridSearchMemoryProvider
 from .ogham import OghamMemoryProvider
 from .supermemory import SupermemoryMemoryProvider
+from .tree_ring import TreeRingMemoryProvider
 
 REGISTRY: dict[str, type[MemoryProvider]] = {
     "bm25": BM25MemoryProvider,
@@ -24,6 +25,7 @@ REGISTRY: dict[str, type[MemoryProvider]] = {
     "ogham": OghamMemoryProvider,
     "qdrant": HybridSearchMemoryProvider,
     "supermemory": SupermemoryMemoryProvider,
+    "tree-ring": TreeRingMemoryProvider,
 }
 
 
