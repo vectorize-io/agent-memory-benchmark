@@ -4,7 +4,7 @@ import time
 from .base import ResponseMode
 from .rag import RAGMode, _OPEN_SCHEMA, _MCQ_SCHEMA
 from ..dataset.base import _DEFAULT_OPEN_PROMPT as _OPEN_PROMPT, _DEFAULT_MCQ_PROMPT as _MCQ_PROMPT
-from ..llm.base import ToolDef
+from ..llm.base import LLM, ToolDef
 from ..llm.gemini import GeminiLLM
 from ..memory.base import MemoryProvider
 from ..models import AnswerResult
@@ -23,8 +23,10 @@ class AgenticRAGMode(ResponseMode):
     name = "agentic-rag"
     description = "The LLM acts as an agent with a recall tool and can make multiple retrieval calls with different queries before finalising its answer."
 
-    def __init__(self, llm: GeminiLLM | None = None, k: int = 10):
+    def __init__(self, llm: LLM | None = None, k: int = 10):
         self._llm = llm or GeminiLLM()
+        if type(self._llm).tool_loop is LLM.tool_loop:
+            raise ValueError(f"{self._llm.model_id} does not support agentic-rag tool calling")
         self._rag = RAGMode(llm=self._llm, k=k)
         self.k = k
 
