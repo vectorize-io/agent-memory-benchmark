@@ -12,7 +12,7 @@ from rich.table import Table
 load_dotenv(dotenv_path=Path(__file__).parents[2] / ".env", override=True)
 
 from .dataset import REGISTRY as DATASET_REGISTRY, get_dataset
-from .llm import REGISTRY as LLM_REGISTRY, get_llm, get_answer_llm
+from .llm import REGISTRY as LLM_REGISTRY, get_answer_llm
 from .memory import REGISTRY as MEMORY_REGISTRY, get_memory_provider
 from .modes import REGISTRY as MODE_REGISTRY, get_mode
 from .runner import EvalRunner
@@ -22,12 +22,63 @@ app = typer.Typer(help="Open Memory Benchmark (OMB).")
 console = Console()
 
 
-def _resolve_gemini_key() -> None:
-    key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    if not key:
-        typer.echo("Error: GEMINI_API_KEY environment variable is not set.", err=True)
+def _ensure_provider_env(provider: str, role: str) -> None:
+    if provider not in LLM_REGISTRY:
+        typer.echo(
+            f"Error: unknown {role.lower()} LLM provider '{provider}'. Available: {', '.join(LLM_REGISTRY)}.",
+            err=True,
+        )
         raise typer.Exit(1)
-    os.environ["GOOGLE_API_KEY"] = key
+
+    if provider == "anthropic":
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            typer.echo(f"Error: {role} LLM provider '{provider}' requires ANTHROPIC_API_KEY.", err=True)
+            raise typer.Exit(1)
+        return
+
+    if provider == "gemini":
+        key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        if not key:
+            typer.echo(f"Error: {role} LLM provider '{provider}' requires GEMINI_API_KEY.", err=True)
+            raise typer.Exit(1)
+        os.environ["GOOGLE_API_KEY"] = key
+        return
+
+    if provider == "groq":
+        if not os.environ.get("GROQ_API_KEY"):
+            typer.echo(f"Error: {role} LLM provider '{provider}' requires GROQ_API_KEY.", err=True)
+            raise typer.Exit(1)
+        return
+
+    if provider == "openai":
+        if not os.environ.get("OPENAI_API_KEY"):
+            typer.echo(f"Error: {role} LLM provider '{provider}' requires OPENAI_API_KEY.", err=True)
+            raise typer.Exit(1)
+        return
+
+
+def _validate_run_env(memory: str, mode: str, answer_provider: str | None = None) -> None:
+    if answer_provider is not None:
+        os.environ["OMB_ANSWER_LLM"] = answer_provider
+
+    answer_provider = os.environ.get("OMB_ANSWER_LLM", "groq")
+    judge_provider = os.environ.get("OMB_JUDGE_LLM", "gemini")
+    _ensure_provider_env(answer_provider, "Answer")
+    _ensure_provider_env(judge_provider, "Judge")
+
+    if mode == "agentic-rag" and answer_provider != "gemini":
+        typer.echo(
+            f"Error: response mode 'agentic-rag' requires a tool-capable LLM provider; '{answer_provider}' is not supported.",
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    if memory == "hindsight":
+        key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        if not key:
+            typer.echo("Error: memory provider 'hindsight' requires GEMINI_API_KEY for embedded extraction.", err=True)
+            raise typer.Exit(1)
+        os.environ["GOOGLE_API_KEY"] = key
 
 
 @app.command()
@@ -36,7 +87,7 @@ def run(
     dataset: str = typer.Option("tempo", "--dataset", help=f"Dataset. Available: {', '.join(DATASET_REGISTRY)}"),
     memory: str = typer.Option("bm25", "--memory", "-m", help=f"Memory provider. Available: {', '.join(MEMORY_REGISTRY)}"),
     mode: str = typer.Option("rag", "--mode", help=f"Response mode. Available: {', '.join(MODE_REGISTRY)}"),
-    llm: str = typer.Option("gemini", "--llm", help=f"LLM for answer generation. Available: {', '.join(LLM_REGISTRY)}"),
+    llm: str | None = typer.Option(None, "--llm", help=f"LLM provider for answer generation. Overrides OMB_ANSWER_LLM. Available: {', '.join(LLM_REGISTRY)}"),
     category: str = typer.Option(None, "--category", "-c", help="Category filter(s), comma-separated (e.g. 'a,b,c'). With --query-limit, runs N queries per category."),
     query_limit: int = typer.Option(None, "--query-limit", "-q", help="Max queries to evaluate. When combined with multiple --category values, applies per category."),
     query_id: str = typer.Option(None, "--query-id", help="Run a single specific query by ID"),
@@ -54,7 +105,7 @@ def run(
     description: str = typer.Option(None, "--description", "-d", help="Optional description for this run (stored in the result JSON)"),
 ) -> None:
     """Run an evaluation on a single split (optionally filtered to a category)."""
-    _resolve_gemini_key()
+    _validate_run_env(memory, mode, llm)
 
     ds = get_dataset(dataset)
 

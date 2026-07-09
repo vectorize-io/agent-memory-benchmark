@@ -3634,6 +3634,7 @@ name = "omb"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "anthropic" },
     { name = "cognee" },
     { name = "datasets" },
     { name = "fastapi", extra = ["standard"] },
@@ -3646,6 +3647,7 @@ dependencies = [
     { name = "qdrant-client" },
     { name = "rank-bm25" },
     { name = "rich" },
+    { name = "scipy" },
     { name = "sentence-transformers" },
     { name = "supermemory" },
     { name = "tiktoken" },
@@ -3655,6 +3657,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "anthropic", specifier = ">=0.84.0" },
     { name = "cognee", specifier = ">=0.5.4" },
     { name = "datasets", specifier = ">=2.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.135.1" },
@@ -3667,6 +3670,7 @@ requires-dist = [
     { name = "qdrant-client", specifier = ">=1.13" },
     { name = "rank-bm25", specifier = ">=0.2" },
     { name = "rich", specifier = ">=13" },
+    { name = "scipy", specifier = ">=1.11" },
     { name = "sentence-transformers", specifier = ">=3.0" },
     { name = "supermemory", specifier = ">=0.1" },
     { name = "tiktoken", specifier = ">=0.12.0" },

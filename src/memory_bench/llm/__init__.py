@@ -1,11 +1,13 @@
 import os
 
+from .anthropic import AnthropicLLM
 from .base import LLM, Schema
 from .gemini import GeminiLLM
 from .groq import GroqLLM
 from .openai import OpenAILLM
 
 REGISTRY: dict[str, type[LLM]] = {
+    "anthropic": AnthropicLLM,
     "gemini": GeminiLLM,
     "groq": GroqLLM,
     "openai": OpenAILLM,
