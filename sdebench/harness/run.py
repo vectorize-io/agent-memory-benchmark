@@ -263,8 +263,10 @@ def gen_index_doc(task: dict) -> str:
 # auto-injected via ~/.hindsight/coding-agent.json). claude-code: sonnet-5 + a UserPromptSubmit hook
 # that reflects+injects (no MCP), OAuth creds mounted at runtime.
 _AGENT_IMAGES = {"opencode": os.environ.get("SDE_AGENT_IMAGE", "sdebench-agent"),
-                 "claude-code": os.environ.get("SDE_AGENT_IMAGE_CLAUDE", "sdebench-agent-claude")}
-_AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5"}
+                 "claude-code": os.environ.get("SDE_AGENT_IMAGE_CLAUDE", "sdebench-agent-claude"),
+                 "codex": os.environ.get("SDE_AGENT_IMAGE_CODEX", "sdebench-agent-codex")}
+_AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5",
+                "codex": "gpt-5.1-codex-mini"}
 # The coding-agents plugin package inside a hindsight monorepo checkout (PR-tracked source of
 # truth; the legacy standalone ~/dev/hindsight-coding-opencode copy is retired).
 _PLUGIN_DIR = os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR",
@@ -284,6 +286,9 @@ def _mem_docker_env(env: dict) -> list[str]:
     key = env.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
     if key:
         denv += ["-e", f"GEMINI_API_KEY={key}", "-e", f"GOOGLE_GENERATIVE_AI_API_KEY={key}"]
+    okey = env.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY", "")
+    if okey:
+        denv += ["-e", f"OPENAI_API_KEY={okey}"]
     for k in ("HINDSIGHT_DISABLED", "HINDSIGHT_BANK_ID", "HINDSIGHT_MEMORY_MODE"):
         if env.get(k) is not None:
             denv += ["-e", f"{k}={env[k]}"]
@@ -300,6 +305,8 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
         mounts += ["-v", f"{_PLUGIN_DIR}:/opt/hindsight-coding-agents:ro"]
     elif agent == "claude-code":
         mounts += ["-v", f"{_CLAUDE_CREDS}:/root/.claude/.credentials.json"]  # rw: claude may refresh it
+    elif agent == "codex":
+        mounts += ["-v", f"{_PLUGIN_DIR}:/opt/hindsight-coding-agents:ro"]    # the codex hook lives here
     cmd = ["docker", "run", "-d", "--rm", *mounts, "-w", "/work",
            "--add-host", "host.docker.internal:host-gateway",
            *_mem_docker_env(env), _AGENT_IMAGES[agent], "sleep", "infinity"]
@@ -323,6 +330,29 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
         subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
                         "mkdir -p /root/.hindsight && cat > /root/.hindsight/coding-agent.json"],
                        input=json.dumps(cfg), capture_output=True, text=True)
+    elif agent == "codex":
+        # API-key auth: login in-container (the host auth.json holds ChatGPT tokens that go stale).
+        subprocess.run(["docker", "exec", cid, "sh", "-c",
+                        "printenv OPENAI_API_KEY | codex login --with-api-key"],
+                       capture_output=True, text=True)
+        # Memory via the ACTUAL product integration: the hindsight-codex-hook wired through Codex's
+        # own hooks mechanism. Vanilla arm: no hooks file -> no memory (parity by absence).
+        if env.get("HINDSIGHT_BANK_ID"):
+            hooks = {"hooks": {"UserPromptSubmit": [{"hooks": [
+                {"type": "command", "command": "node /opt/hindsight-coding-agents/dist/codex-hook.js",
+                 "timeout": 150}]}]}}
+            hs_cfg = {"apiUrl": _container_url(env.get("HINDSIGHT_API_URL", HINDSIGHT_URL)),
+                      "bankId": env["HINDSIGHT_BANK_ID"]}
+            subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
+                            "mkdir -p /root/.codex /root/.hindsight && cat > /root/.codex/hooks.json"],
+                           input=json.dumps(hooks), capture_output=True, text=True)
+            subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
+                            "cat > /root/.hindsight/coding-agent.json"],
+                           input=json.dumps(hs_cfg), capture_output=True, text=True)
+            subprocess.run(["docker", "exec", cid, "sh", "-c",
+                            "printf 'codex_hooks = true\n' >> /root/.codex/config.toml || "
+                            "printf 'codex_hooks = true\n' > /root/.codex/config.toml"],
+                           capture_output=True, text=True)
     return cid
 
 
@@ -349,6 +379,44 @@ def _parse_claude(stdout: str, elapsed: float) -> dict:
         traj.append({"k": "say", "text": str(txt)[:1500]})
     return {"elapsed": elapsed, "tokens": tok, "turns": d.get("num_turns", 0) or 0,
             "trajectory": traj, "cost": d.get("total_cost_usd", 0.0) or 0.0}
+
+
+def _parse_codex(stdout: str, elapsed: float) -> dict:
+    """Parse `codex exec --json` JSONL (observed schema, codex-cli 0.145):
+    {"type":"item.completed","item":{"type":"command_execution"|"agent_message"|"reasoning"|...}}
+    {"type":"turn.completed","usage":{input_tokens,cached_input_tokens,cache_write_input_tokens,
+                                      output_tokens,reasoning_output_tokens}}"""
+    tok = {"input": 0, "output": 0, "reasoning": 0, "cache_read": 0, "cache_write": 0}
+    turns = 0
+    traj = []
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            e = json.loads(line)
+        except Exception:
+            continue
+        et = e.get("type")
+        if et == "item.completed":
+            item = e.get("item") or {}
+            it = item.get("type")
+            if it in ("agent_message",):
+                txt = str(item.get("text") or "")[:1500]
+                if txt:
+                    traj.append({"k": "say", "text": txt})
+            elif it not in ("reasoning", None):  # command_execution, patch_apply, tool calls, ...
+                turns += 1
+                arg = str(item.get("command") or item.get("path") or item.get("text") or "")[:160]
+                traj.append({"k": "tool", "tool": str(it), "arg": arg, "input": "", "out": ""})
+        elif et == "turn.completed":
+            u = e.get("usage") or {}
+            tok["input"] += u.get("input_tokens", 0) or 0
+            tok["cache_read"] += u.get("cached_input_tokens", 0) or 0
+            tok["cache_write"] += u.get("cache_write_input_tokens", 0) or 0
+            tok["output"] += u.get("output_tokens", 0) or 0
+            tok["reasoning"] += u.get("reasoning_output_tokens", 0) or 0
+    return {"elapsed": elapsed, "tokens": tok, "turns": turns, "trajectory": traj}
 
 
 def hs_reflect(query: str, bank: str, url: str | None = None, timeout: int = 120) -> str:
@@ -384,6 +452,14 @@ def run_agent(cid: str, model: str, timeout: int, message: str, resume: bool = F
         t0 = time.perf_counter()
         proc = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
         return _parse_claude(proc.stdout, time.perf_counter() - t0)
+    if agent == "codex":
+        base = ["docker", "exec", "-w", "/work", cid, "codex", "exec", "--json", "-m", model,
+                "--dangerously-bypass-approvals-and-sandbox",   # the container IS the sandbox
+                "--dangerously-bypass-hook-trust"]              # hooks are harness-installed
+        cmd = base + (["resume", "--last", message] if resume else [message])
+        t0 = time.perf_counter()
+        proc = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
+        return _parse_codex(proc.stdout, time.perf_counter() - t0)
     cmd = ["docker", "exec", "-w", "/work", cid,
            "opencode", "run", "--format", "json", "-m", model]
     if resume:
@@ -564,7 +640,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
     ap.add_argument("--history", choices=["full", "squashed", "hindsight", "hscoding", "memtool", "inject", "oracle", "hybrid", "index", "provided", "conversations", "skill"], default="full")
-    ap.add_argument("--agent", choices=["opencode", "claude-code"], default="opencode")
+    ap.add_argument("--agent", choices=["opencode", "claude-code", "codex"], default="opencode")
     ap.add_argument("--model", default=None, help="agent model; defaults per --agent")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
@@ -708,7 +784,7 @@ def main():
         # memory observability: the plugin records every reflect outcome to /tmp inside the container.
         # A memory arm whose reflect silently failed is NOT a memory run — record and shout.
         mem_diag = None
-        if memory_bank and args.agent == "opencode":
+        if memory_bank and args.agent in ("opencode", "codex"):
             _p = subprocess.run(["docker", "exec", cid, "cat", "/tmp/hindsight-plugin.log"],
                                 capture_output=True, text=True)
             mem_diag = [json.loads(l) for l in (_p.stdout or "").splitlines() if l.strip()] or None
@@ -731,7 +807,7 @@ def main():
         "tokens": {k: totals[k] for k in TOK},      # cached vs input vs output kept separate
         "turns": totals["turns"], "wall_s": round(totals["wall_s"], 1),
         "cost_usd": round(cost, 4),                   # 0 unless --price-* given
-        "memory_diag": mem_diag if (memory_bank and args.agent == "opencode") else None,
+        "memory_diag": mem_diag if (memory_bank and args.agent in ("opencode", "codex")) else None,
     }
     (work / "result.json").write_text(json.dumps(result, indent=2))
     (work / "trace.json").write_text(json.dumps(

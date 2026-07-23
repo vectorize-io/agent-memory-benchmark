@@ -1,0 +1,9 @@
+# Isolated Codex CLI environment: mirrors Dockerfile.agent-claude — the agent runs containerized
+# with a fresh session store; auth is mounted at runtime. Memory arrives via the Codex hooks
+# mechanism (hindsight-codex-hook from the mounted hindsight-coding-agents package).
+FROM node:22-slim
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git ca-certificates python3 \
+    && rm -rf /var/lib/apt/lists/*
+RUN npm i -g @openai/codex
+WORKDIR /work

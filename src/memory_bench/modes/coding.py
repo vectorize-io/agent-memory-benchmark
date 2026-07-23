@@ -35,7 +35,8 @@ class CodingMode(ResponseMode):
     name = "coding"
     description = "Build the task repo, run a coding agent with test-feedback interventions, grade by pytest."
 
-    _AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5"}
+    _AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5",
+                    "codex": "gpt-5.1-codex-mini"}
 
     def __init__(self, model: str | None = None):
         self._agent = os.environ.get("SDE_AGENT", "opencode")   # --agent, so claude runs land in the UI
