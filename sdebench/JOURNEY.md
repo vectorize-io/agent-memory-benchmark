@@ -233,3 +233,21 @@ green: reflect_ok, budget solved 0 corrections. Two infra rots found on the way 
 sdebench-base image lost) — the reflect diagnostics flagged the first immediately, and grade()
 now raises on a grading-container failure instead of burning the intervention cap on empty
 "tests still fail" feedback.
+
+## 2026-07-23 — Codex CLI as a third agent stack (subset run)
+
+Added --agent codex (Codex CLI 0.145, gpt-5.1-codex-mini, containerized; interventions via
+`codex exec resume --last`; in-container API-key login — the host's ChatGPT auth tokens rotate
+stale when mounted). The memory arm dogfoods the REAL product path: Codex's own hooks mechanism
+running hindsight-codex-hook from the PR package (per-repo config layering + injection diagnostics).
+
+Subset (first 6 tasks, n=1, server: hindsight-wt6-mainbase @8898 fresh pg0, git-limit 300 for
+backfills — NOT doc-comparable conditions): vanilla 9 corrections/321 turns vs memory 4/178
+(-56% corrections, -45% turns), 6/6 solved both arms, all 6 injections verified server-side
+(exactly 6 task reflects for 6 tasks). dedupe-amended: 2 -> 0 corrections — the cross-chat
+supersession fix works through the codex hook path too.
+
+Two gotchas recorded: (1) omb's per-provider output file RETAINS entries from previous runs when a
+later run covers fewer tasks — a 6-task run left 27 stale rows in the json (initially misread as a
+33-task run; caught via '6 queries loaded' + server-side reflect count). Fix candidate: omb should
+truncate results to the run's query set. (2) `-q N` = first N tasks alphabetically.
