@@ -11,7 +11,7 @@ Any other provider raises. The harness result is returned as an AnswerResult (th
 branch reads `solved` etc.).
 
 Env: SDE_HINDSIGHT_URL (Hindsight server, default :8888), SDE_HSCODING_PLUGIN_DIR (the plugin package
-dir holding dist/backfill.js, default ~/dev/hindsight-coding-opencode), SDE_HSCODING_GIT_LIMIT
+dir holding dist/backfill.js, default = the hindsight monorepo's hindsight-coding-agents package), SDE_HSCODING_GIT_LIMIT
 (optional git scope passed to the plugin backfill; unset => the plugin decides), SDE_MODEL.
 """
 import asyncio
@@ -71,7 +71,8 @@ class CodingMode(ResponseMode):
                 and await asyncio.to_thread(self._bank_has_memories, url, bank):
             return
         plugin_dir = Path(os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR",
-                                         str(Path.home() / "dev" / "hindsight-coding-opencode"))))
+                                         str(Path.home() / "dev" / "hs-coding-plugin-wt"
+                                             / "hindsight-integrations" / "hindsight-coding-agents"))))
         backfill_js = plugin_dir / "dist" / "backfill.js"
         tj = Path(task_json)
         t = json.loads(tj.read_text())

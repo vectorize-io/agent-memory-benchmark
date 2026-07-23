@@ -7,10 +7,10 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 # opencode CLI (the npm package fetches the right platform binary)
 RUN npm i -g opencode-ai@1.16.2
-# permissive config + the Hindsight coding plugin (mounted at /opt/hindsight-coding-opencode at
-# runtime; inert unless HINDSIGHT_DISABLED is unset + a bank is set). The built plugin has no runtime
-# deps (@opencode-ai/plugin is types-only), so mounting its dir is enough.
+# permissive config + the Hindsight coding plugin (mounted at /opt/hindsight-coding-agents at
+# runtime; inert unless the config/env disables it). The mounted package dir includes its
+# node_modules, which the built plugin needs at runtime (@opencode-ai/plugin `tool`).
 RUN mkdir -p /root/.config/opencode \
-    && printf '{"plugin":["/opt/hindsight-coding-opencode"],"permission":{"bash":"allow","edit":"allow","webfetch":"allow"}}' \
+    && printf '{"plugin":["/opt/hindsight-coding-agents"],"permission":{"bash":"allow","edit":"allow","webfetch":"allow"}}' \
        > /root/.config/opencode/opencode.json
 WORKDIR /work

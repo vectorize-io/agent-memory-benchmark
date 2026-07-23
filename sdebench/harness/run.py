@@ -265,7 +265,10 @@ def gen_index_doc(task: dict) -> str:
 _AGENT_IMAGES = {"opencode": os.environ.get("SDE_AGENT_IMAGE", "sdebench-agent"),
                  "claude-code": os.environ.get("SDE_AGENT_IMAGE_CLAUDE", "sdebench-agent-claude")}
 _AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5"}
-_PLUGIN_DIR = os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR", str(Path.home() / "dev" / "hindsight-coding-opencode")))
+# The coding-agents plugin package inside a hindsight monorepo checkout (PR-tracked source of
+# truth; the legacy standalone ~/dev/hindsight-coding-opencode copy is retired).
+_PLUGIN_DIR = os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR",
+    str(Path.home() / "dev" / "hs-coding-plugin-wt" / "hindsight-integrations" / "hindsight-coding-agents")))
 _CLAUDE_CREDS = os.path.expanduser(os.environ.get("SDE_CLAUDE_CREDS", str(Path.home() / ".sdebench" / "claude_creds.json")))
 
 
@@ -294,7 +297,7 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
     resumes across the intervention loop cheaply). Grading stays in sdebench-base. Returns the id."""
     mounts = ["-v", f"{workdir}:/work"]
     if agent == "opencode":
-        mounts += ["-v", f"{_PLUGIN_DIR}:/opt/hindsight-coding-opencode:ro"]
+        mounts += ["-v", f"{_PLUGIN_DIR}:/opt/hindsight-coding-agents:ro"]
     elif agent == "claude-code":
         mounts += ["-v", f"{_CLAUDE_CREDS}:/root/.claude/.credentials.json"]  # rw: claude may refresh it
     cmd = ["docker", "run", "-d", "--rm", *mounts, "-w", "/work",
@@ -532,6 +535,11 @@ def grade(task: dict, source_patch: str, work: Path) -> dict:
         capture_output=True, text=True)
     passed = r.returncode == 0
     out = (r.stdout or "")
+    if not passed and not out.strip():
+        # pytest ALWAYS writes to stdout; an empty failure means the grading CONTAINER failed
+        # (missing image, docker down, ...). That is an infra error, not a wrong fix — feeding it
+        # back as "tests still fail" burns the intervention cap on a problem the agent cannot fix.
+        raise RuntimeError(f"grading container failed (not a test failure): {(r.stderr or '').strip()[:300]}")
     tail = out.strip().splitlines()[-1:] if out.strip() else [""]
     return {"applied": applied, "resolved": passed and applied,
             "pytest": tail[0] if tail else "", "output": out,
@@ -587,7 +595,7 @@ def main():
         if _em:
             task["bug_report"] = task["bug_report"] + "\n\nRelevant memory (surfaced for you by your memory system):\n" + _em
     elif args.history == "hscoding":
-        build_repo(task, repo, "full")              # full repo; memory via the hindsight-coding-opencode
+        build_repo(task, repo, "full")              # full repo; memory via the hindsight-coding-agents
         memory_bank = os.environ.get("SDE_HSCODING_BANK", "hs-coding")  # plugin (reflect + INJECT), bank
         #                                            # pre-backfilled by `hindsight-coding-backfill` (git+chat)
     elif args.history == "skill":

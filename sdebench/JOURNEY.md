@@ -223,3 +223,13 @@ solve 163/165 vs vanilla 165/165, disclosed in the doc. Doc + charts updated to 
 Final deliverables: doc v2 (~/Documents), charts (corrections/cost/turns, n-averaged with error
 bars), PRs: hindsight #2522 (decontamination, diagnostics, supersession fixes), benchmark #23
 (harness fixes, 20 run outputs, this journal), sde-bench hardening-2026-07 (33-task dataset).
+
+## 2026-07-23 — retired the standalone plugin copy; harness hardening
+
+The harness now uses the PR-tracked monorepo package (hindsight-integrations/
+hindsight-coding-agents, PR #2522) instead of the standalone ~/dev/hindsight-coding-opencode
+copy; container mount renamed to /opt/hindsight-coding-agents, both images rebuilt. Sanity run
+green: reflect_ok, budget solved 0 corrections. Two infra rots found on the way (server down,
+sdebench-base image lost) — the reflect diagnostics flagged the first immediately, and grade()
+now raises on a grading-container failure instead of burning the intervention cap on empty
+"tests still fail" feedback.
