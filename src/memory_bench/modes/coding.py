@@ -100,7 +100,8 @@ class CodingMode(ResponseMode):
         await asyncio.to_thread(subprocess.run, ["python", str(build_py), str(src)],
                                 capture_output=True, text=True, env={**os.environ})
         # 2. run the plugin's deepen engine (it owns extraction/strategies/pages/git scope)
-        bf = ["node", str(deepen_js), "--repo", str(src), "--bank", bank, "--api-url", url]
+        bf = ["node", str(deepen_js), "--repo", str(src), "--bank", bank, "--api-url", url,
+              "--git-ingest", "full"]  # benchmark wants deterministic full depth regardless of user config
         conv = t.get("conversations") or []
         # chats to ingest = the task's own decision chat + a shared pool of DECOY conversations (noise:
         # long, codebase-related, no task policy) so chat retrieval is a real ranking problem, not a
