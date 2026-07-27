@@ -322,7 +322,10 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
         raise RuntimeError(f"docker run failed after retries: {p.stderr.strip()[:300]}")
     if agent == "opencode":
         # opencode's plugin reads ~/.hindsight/coding-agent.json (not env): disabled=vanilla; bank+url=memory.
-        cfg: dict = {"disabled": env.get("HINDSIGHT_DISABLED") == "1", "gitSync": {"enabled": False}}
+        cfg: dict = {"disabled": env.get("HINDSIGHT_DISABLED") == "1", "gitSync": {"enabled": False},
+                     # trial isolation for the v2 plugin: no session write-back into the bank between
+                     # rounds/runs, no auto-seed or survey racing the controlled backfill
+                     "retainSessions": False, "autoSeed": False, "codebaseSurvey": False}
         if env.get("HINDSIGHT_BANK_ID"):
             cfg["bankId"] = env["HINDSIGHT_BANK_ID"]
         if env.get("HINDSIGHT_API_URL"):
@@ -788,7 +791,7 @@ def main():
             _p = subprocess.run(["docker", "exec", cid, "cat", "/tmp/hindsight-plugin.log"],
                                 capture_output=True, text=True)
             mem_diag = [json.loads(l) for l in (_p.stdout or "").splitlines() if l.strip()] or None
-            _ok = any(d.get("event") == "reflect_ok" for d in (mem_diag or []))
+            _ok = any(d.get("event") in ("reflect_ok", "recall_ok", "inject_ok") for d in (mem_diag or []))
             print(f"  [memory] reflect diagnostics: {mem_diag if mem_diag else 'NO LOG — plugin never reflected'}"
                   + ("" if _ok else "  ⚠️ MEMORY ARM RAN WITHOUT INJECTED MEMORY"), flush=True)
     finally:

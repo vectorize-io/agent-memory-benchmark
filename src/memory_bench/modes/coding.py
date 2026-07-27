@@ -63,18 +63,32 @@ class CodingMode(ResponseMode):
         except Exception:
             return False
 
+    @staticmethod
+    def _delete_bank(url: str, bank: str) -> None:
+        """Fresh-trial reset lives in the HARNESS now (the plugin has no user-facing reset — a fresh
+        bank IS the reset path). 404/errors are fine (bank didn't exist)."""
+        import urllib.request
+        try:
+            req = urllib.request.Request(f"{url}/v1/default/banks/{bank}", method="DELETE")
+            urllib.request.urlopen(req, timeout=30).read()
+        except Exception:
+            pass
+
     async def _plugin_backfill(self, task_json: str, task_id: str, run_id: str, bank: str, url: str) -> None:
-        """Trigger the PLUGIN's own backfill — AMB does not ingest. Build the task repo, then run the
-        plugin's `hindsight-coding-backfill` over that repo + the task's conversations; the plugin
-        decides what and how to ingest (extraction, strategies, git scope, pages)."""
-        # Reuse a bank already backfilled by a previous run (n=3 without re-ingesting the same data).
+        """Trigger the PLUGIN's own ingestion — AMB does not ingest. Build the task repo, then run the
+        plugin's background `deepen` engine (the same one every session start fires) over that repo +
+        the task's conversations, and POLL the plugin's `status` entry until `synced` — the exact
+        observable contract a real deployment has (the backfill CLI no longer exists)."""
+        # Reuse a bank already ingested by a previous run (n=3 without re-ingesting the same data).
         if os.environ.get("SDE_HSCODING_REUSE_BANK", "").lower() in ("1", "true") \
                 and await asyncio.to_thread(self._bank_has_memories, url, bank):
             return
+        await asyncio.to_thread(self._delete_bank, url, bank)
         plugin_dir = Path(os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR",
                                          str(Path.home() / "dev" / "hs-coding-plugin-wt"
                                              / "hindsight-integrations" / "hindsight-coding-agents"))))
-        backfill_js = plugin_dir / "dist" / "backfill.js"
+        deepen_js = plugin_dir / "dist" / "deepen.js"
+        status_js = plugin_dir / "dist" / "status.js"
         tj = Path(task_json)
         t = json.loads(tj.read_text())
         build_py = tj.parents[2] / t.get("build", "build.py")
@@ -85,8 +99,8 @@ class CodingMode(ResponseMode):
         # 1. build the task repo (the plugin backfill reads its git history)
         await asyncio.to_thread(subprocess.run, ["python", str(build_py), str(src)],
                                 capture_output=True, text=True, env={**os.environ})
-        # 2. run the plugin's backfill (it owns extraction/strategies/pages/git scope)
-        bf = ["node", str(backfill_js), "--repo", str(src), "--bank", bank, "--api-url", url, "--reset"]
+        # 2. run the plugin's deepen engine (it owns extraction/strategies/pages/git scope)
+        bf = ["node", str(deepen_js), "--repo", str(src), "--bank", bank, "--api-url", url]
         conv = t.get("conversations") or []
         # chats to ingest = the task's own decision chat + a shared pool of DECOY conversations (noise:
         # long, codebase-related, no task policy) so chat retrieval is a real ranking problem, not a
@@ -108,8 +122,23 @@ class CodingMode(ResponseMode):
             bf += ["--conversations", str(cf)]
         limit = os.environ.get("SDE_HSCODING_GIT_LIMIT")  # optional scope; unset => the plugin decides
         if limit:
-            bf += ["--limit", limit]
-        await asyncio.to_thread(subprocess.run, bf, capture_output=True, text=True, env={**os.environ})
+            bf += ["--gitlog-limit", limit]
+        await asyncio.to_thread(subprocess.run, bf, capture_output=True, text=True,
+                                env={**os.environ}, timeout=1800)
+        # 3. poll the plugin's sync status until the seeded memory is fully queryable — this is the
+        # product's readiness contract (gitlog + pages present, extractions drained), not a guess.
+        st_cmd = ["node", str(status_js), "--repo", str(src), "--bank", bank, "--api-url", url]
+        deadline = time.monotonic() + 900
+        while time.monotonic() < deadline:
+            p = await asyncio.to_thread(subprocess.run, st_cmd, capture_output=True, text=True,
+                                        env={**os.environ}, timeout=120)
+            try:
+                if json.loads(p.stdout.strip().splitlines()[-1]).get("synced"):
+                    return
+            except Exception:
+                pass
+            await asyncio.sleep(5)
+        raise RuntimeError(f"hscoding ingest never reached synced for bank {bank}")
 
     async def async_answer(self, query: str, memory: MemoryProvider, task_type: str = "coding",
                            user_id: str | None = None, meta: dict | None = None) -> AnswerResult:
