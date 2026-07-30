@@ -126,8 +126,12 @@ class CodingMode(ResponseMode):
         limit = os.environ.get("SDE_HSCODING_GIT_LIMIT")  # optional scope; unset => the plugin decides
         if limit:
             bf += ["--gitlog-limit", limit]
-        await asyncio.to_thread(subprocess.run, bf, capture_output=True, text=True,
-                                env={**os.environ}, timeout=1800)
+        bp = await asyncio.to_thread(subprocess.run, bf, capture_output=True, text=True,
+                                     env={**os.environ}, timeout=1800)
+        if bp.returncode != 0:
+            # Don't poll a bank the engine never filled — surface the deepen failure directly.
+            raise RuntimeError(f"deepen failed (rc={bp.returncode}) for bank {bank}: "
+                               f"{(bp.stderr or bp.stdout or '')[-300:]}")
         # 3. poll the plugin's sync status until the seeded memory is fully queryable — this is the
         # product's readiness contract (gitlog + pages present, extractions drained), not a guess.
         st_cmd = ["node", str(status_js), "--repo", str(src), "--bank", bank, "--api-url", url]
