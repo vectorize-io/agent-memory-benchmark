@@ -815,14 +815,15 @@ def main():
             # "does it think to check its history?" test, vs the memory system that surfaces the
             # decision reliably. opencode gets them as native sessions; codex/claude-code (no
             # importable session store) get markdown transcripts outside the repo.
+            # AVAILABILITY, not advertisement: the chats are reachable (native sessions for
+            # opencode, transcripts under /root/project-history for the rest) but the prompt does
+            # NOT point at them. Whether the agent thinks to look for prior context is exactly the
+            # behavior under test — a pointer in the prompt made a strong agent read them every
+            # time and collapsed the vanilla/memory gap by design rather than by ability.
             if args.agent == "opencode":
-                if seed_sessions(cid, task["conversations"], args.model):
-                    init_prompt += ("\n\nPast developer sessions on this project are available in your opencode "
-                                    "session history — run `opencode session list` and `opencode export <id>` to "
-                                    "review them if they help.")
-            elif seed_transcript_files(cid, task["conversations"]):
-                init_prompt += ("\n\nTranscripts of past developer sessions on this project are archived "
-                                "under /root/project-history/ — review them if they help.")
+                seed_sessions(cid, task["conversations"], args.model)
+            else:
+                seed_transcript_files(cid, task["conversations"])
         acc(run_agent(cid, args.model, args.timeout, init_prompt, agent=args.agent, system_append=sys_mem), "initial", init_prompt)
 
         # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.
@@ -870,6 +871,10 @@ def main():
         "turns": totals["turns"], "wall_s": round(totals["wall_s"], 1),
         "cost_usd": round(cost, 4),                   # 0 when the model has no PRICES entry
         "memory_diag": mem_diag if (memory_bank and args.agent in ("opencode", "codex")) else None,
+        # claude delivers memory via --append-system-prompt: record the evidence (0/None chars on a
+        # memory arm = reflect silently failed and the run was effectively vanilla — a result that
+        # must not masquerade as "memory didn't help").
+        "memory_injected_chars": (len(sys_mem) if sys_mem is not None else None),
     }
     (work / "result.json").write_text(json.dumps(result, indent=2))
     (work / "trace.json").write_text(json.dumps(
