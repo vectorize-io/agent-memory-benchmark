@@ -1,14 +1,16 @@
 """sdebench harness — run a coding agent on a regression task and grade it.
 
-Flow: build the repo (full or squashed history) -> ship the agent the bug report +
-failing regression test -> run opencode -> capture the SOURCE diff (tests excluded) ->
+Flow: build the repo -> ship the agent the bug report + failing regression test -> run the agent
+(--agent opencode|claude-code|codex) -> on a failing grade, feed the pytest tail back and resume
+(the corrections loop, cap --max-interventions) -> capture the SOURCE diff (tests excluded) ->
 grade in Docker against FAIL_TO_PASS + PASS_TO_PASS + HIDDEN_TO_PASS from pristine copies.
 
 Usage:
-    uv run python sdebench/harness/run.py --history full      [--model google/gemini-3.5-flash]
-    uv run python sdebench/harness/run.py --history squashed
+    uv run python sdebench/harness/run.py --task <task.json> --agent opencode --history full     # vanilla
+    uv run python sdebench/harness/run.py --task <task.json> --agent codex   --history hscoding  # memory
 
-Metrics reported: resolution (binary), cost (tokens; $ if --price set), speed (wall, turns).
+Metrics reported: solved (binary), interventions, turns, wall, tokens, cost (from PRICES;
+claude-code self-reports).
 """
 import argparse, json, os, re, shutil, subprocess, time
 from pathlib import Path
@@ -32,6 +34,9 @@ def _task_dir(task):
 # $1.50 input / $9.00 output, cached input 90% off ($0.15). reasoning bills as output.
 PRICES = {
     "google/gemini-3.5-flash": {"input": 1.50, "cache_read": 0.15, "cache_write": 1.50, "output": 9.00},
+    # gpt-5.1-codex-mini (Jul 2026): $0.25 in / $2.00 out; cached input 90% off; OpenAI does not
+    # bill cache writes separately (they price as normal input).
+    "gpt-5.1-codex-mini": {"input": 0.25, "cache_read": 0.025, "cache_write": 0.25, "output": 2.00},
 }
 
 
@@ -267,10 +272,10 @@ _AGENT_IMAGES = {"opencode": os.environ.get("SDE_AGENT_IMAGE", "sdebench-agent")
                  "codex": os.environ.get("SDE_AGENT_IMAGE_CODEX", "sdebench-agent-codex")}
 _AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5",
                 "codex": "gpt-5.1-codex-mini"}
-# The coding-agents plugin package inside a hindsight monorepo checkout (PR-tracked source of
-# truth; the legacy standalone ~/dev/hindsight-coding-opencode copy is retired).
-_PLUGIN_DIR = os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR",
-    str(Path.home() / "dev" / "hs-coding-plugin-wt" / "hindsight-integrations" / "hindsight-coding-agents")))
+# The hindsight-coding-agents plugin package (dist/ built) — memory arms only. No default that
+# assumes a particular machine layout: point SDE_HSCODING_PLUGIN_DIR at a checkout of
+# hindsight-integrations/hindsight-coding-agents (or the npm-installed package dir).
+_PLUGIN_DIR = os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR", ""))
 _CLAUDE_CREDS = os.path.expanduser(os.environ.get("SDE_CLAUDE_CREDS", str(Path.home() / ".sdebench" / "claude_creds.json")))
 
 
@@ -301,12 +306,10 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
     """Start ONE long-lived agent container per task (session store INSIDE it so `-c`/`--continue`
     resumes across the intervention loop cheaply). Grading stays in sdebench-base. Returns the id."""
     mounts = ["-v", f"{workdir}:/work"]
-    if agent == "opencode":
+    if agent in ("opencode", "codex") and _PLUGIN_DIR:  # plugin (and its codex hook) — memory arms
         mounts += ["-v", f"{_PLUGIN_DIR}:/opt/hindsight-coding-agents:ro"]
-    elif agent == "claude-code":
+    if agent == "claude-code":
         mounts += ["-v", f"{_CLAUDE_CREDS}:/root/.claude/.credentials.json"]  # rw: claude may refresh it
-    elif agent == "codex":
-        mounts += ["-v", f"{_PLUGIN_DIR}:/opt/hindsight-coding-agents:ro"]    # the codex hook lives here
     cmd = ["docker", "run", "-d", "--rm", *mounts, "-w", "/work",
            "--add-host", "host.docker.internal:host-gateway",
            *_mem_docker_env(env), _AGENT_IMAGES[agent], "sleep", "infinity"]
@@ -585,6 +588,31 @@ def seed_sessions(cid: str, conversations: list, model: str) -> int:
     return n
 
 
+def seed_transcript_files(cid: str, conversations: list) -> int:
+    """Vanilla-baseline chat availability for agents WITHOUT an importable session store
+    (codex, claude-code): write each past developer conversation as a markdown transcript under
+    /root/project-history — OUTSIDE the repo, so the codebase and its diff are untouched. Same
+    contract as seed_sessions: the substrate is reachable if the agent chooses to look, nothing
+    is injected. Returns the number of transcripts written."""
+    if not conversations:
+        return 0
+    chats = conversations if isinstance(conversations[0], list) else [conversations]
+    n = 0
+    for ci, conv in enumerate(chats):
+        if not conv:
+            continue
+        lines = [f"# Past developer session {ci + 1}\n"]
+        for turn in conv:
+            who = "Developer" if turn.get("role", "user") != "assistant" else "Assistant"
+            lines.append(f"**{who}:** {turn.get('text', '')}\n")
+        body = "\n".join(lines)
+        subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
+                        f"mkdir -p /root/project-history && cat > /root/project-history/session-{ci + 1:02d}.md"],
+                       input=body, capture_output=True, text=True)
+        n += 1
+    return n
+
+
 _JUNK = [".venv", "venv", "build", "dist", "*.egg-info", "__pycache__", ".pytest_cache", "*.pyc"]
 
 
@@ -641,7 +669,7 @@ def build_feedback(grade_result: dict) -> str:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--task", default=str(SDEBENCH / "datasets" / "ratelimiter" / "task.json"))
+    ap.add_argument("--task", required=True, help="path to a task.json (sdebench/datasets/boltons-*/tasks/main/task.json)")
     ap.add_argument("--history", choices=["full", "squashed", "hindsight", "hscoding", "memtool", "inject", "oracle", "hybrid", "index", "provided", "conversations", "skill"], default="full")
     ap.add_argument("--agent", choices=["opencode", "claude-code", "codex"], default="opencode")
     ap.add_argument("--model", default=None, help="agent model; defaults per --agent")
@@ -674,9 +702,12 @@ def main():
         if _em:
             task["bug_report"] = task["bug_report"] + "\n\nRelevant memory (surfaced for you by your memory system):\n" + _em
     elif args.history == "hscoding":
+        if not _PLUGIN_DIR or not (Path(_PLUGIN_DIR) / "dist").is_dir():
+            sys.exit("hscoding arm needs SDE_HSCODING_PLUGIN_DIR -> a hindsight-coding-agents "
+                     "checkout with dist/ built")
         build_repo(task, repo, "full")              # full repo; memory via the hindsight-coding-agents
-        memory_bank = os.environ.get("SDE_HSCODING_BANK", "hs-coding")  # plugin (reflect + INJECT), bank
-        #                                            # pre-backfilled by `hindsight-coding-backfill` (git+chat)
+        memory_bank = os.environ.get("SDE_HSCODING_BANK", "hs-coding")  # plugin (reflect + INJECT); the
+        #                                            # bank is pre-populated by the plugin's deepen engine
     elif args.history == "skill":
         build_repo(task, repo, "full")              # vanilla full git + a recall_conversations SKILL (tool)
         _cv = task.get("conversations") or []
@@ -755,15 +786,20 @@ def main():
                        "against the current code:\n\n" + _ans)
             print(f"  [claude] injected memory via system prompt ({len(_ans)} chars)", flush=True)
     try:
-        if args.history == "full" and args.agent == "opencode" and task.get("conversations"):
-            # Vanilla-baseline fairness: seed the past developer conversations as opencode sessions the
-            # agent CAN consult (not injected, not resumed). It reads them only if it chooses — the
-            # realistic "does it think to check its history?" test, vs the memory system that surfaces
-            # the decision reliably.
-            if seed_sessions(cid, task["conversations"], args.model):
-                init_prompt += ("\n\nPast developer sessions on this project are available in your opencode "
-                                "session history — run `opencode session list` and `opencode export <id>` to "
-                                "review them if they help.")
+        if args.history == "full" and task.get("conversations"):
+            # Vanilla-baseline fairness: make the past developer conversations REACHABLE by the plain
+            # agent (not injected, not resumed) — it reads them only if it chooses. The realistic
+            # "does it think to check its history?" test, vs the memory system that surfaces the
+            # decision reliably. opencode gets them as native sessions; codex/claude-code (no
+            # importable session store) get markdown transcripts outside the repo.
+            if args.agent == "opencode":
+                if seed_sessions(cid, task["conversations"], args.model):
+                    init_prompt += ("\n\nPast developer sessions on this project are available in your opencode "
+                                    "session history — run `opencode session list` and `opencode export <id>` to "
+                                    "review them if they help.")
+            elif seed_transcript_files(cid, task["conversations"]):
+                init_prompt += ("\n\nTranscripts of past developer sessions on this project are archived "
+                                "under /root/project-history/ — review them if they help.")
         acc(run_agent(cid, args.model, args.timeout, init_prompt, agent=args.agent, system_append=sys_mem), "initial", init_prompt)
 
         # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.
@@ -809,7 +845,7 @@ def main():
         "final_pytest": g["pytest"], "patch_bytes": len(patch),
         "tokens": {k: totals[k] for k in TOK},      # cached vs input vs output kept separate
         "turns": totals["turns"], "wall_s": round(totals["wall_s"], 1),
-        "cost_usd": round(cost, 4),                   # 0 unless --price-* given
+        "cost_usd": round(cost, 4),                   # 0 when the model has no PRICES entry
         "memory_diag": mem_diag if (memory_bank and args.agent in ("opencode", "codex")) else None,
     }
     (work / "result.json").write_text(json.dumps(result, indent=2))

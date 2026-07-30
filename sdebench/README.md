@@ -1,83 +1,108 @@
-# sdebench — Software-Development Engineer Benchmark
+# sdebench — does memory help a coding agent?
 
-A benchmark for coding agents where **git history is load-bearing**. Each task is a
-**regression fix** on a synthetic repo whose history we engineer: a bug is *bundled
-inside an otherwise-legitimate commit*, so finding and fixing it rewards reading the
-history (`git log`/`blame`/`bisect`) and the commit messages (which encode intent).
+A benchmark that measures whether a coding agent, working on a **real codebase**, benefits from a
+**memory system** that has ingested the project's git rationale and past developer conversations.
 
-This is the opposite of SWE-Bench-CL, where tasks don't recur and history is incidental.
-Here history *should* help — and the harness measures whether the agent exploits it.
+Each task is a bug-fix whose correct solution hinges on a **non-guessable, project-specific
+decision**: the obvious fix passes the visible repro but fails a **held-out hidden test**. Where
+that decision lives (git history vs a past chat vs a chat later amended) is the dataset's main
+axis — and what each arm can *reach* is the experiment:
 
-## Why it's designed this way
-- **Bundled regression** — the breaking commit also makes a wanted change (with its own
-  test), so a lazy `git revert` fails `PASS_TO_PASS`. Forces a *surgical* fix.
-- **Intent lives in history** — the guarantee broken by the regression was established in
-  an earlier commit whose message states it; the breaking commit's message claims only a
-  perf tweak. Diagnosing it cleanly needs the history, not just the code.
-- **Deterministic grading** — injected-clock tests (no wall-clock flakiness).
+| | plain agent | agent + memory |
+|---|---|---|
+| the repo + full git history | ✅ | ✅ |
+| past developer chats | ✅ reachable (seeded, see below) | ✅ ingested & surfaced |
+| a memory system surfacing the decision | ❌ | ✅ |
+
+The dataset lives in the [sde-bench](https://github.com/vectorize-io/sde-bench) submodule at
+`sdebench/datasets` (boltons-hosted tasks; the census is its `MANIFEST.json`, the datasheet its
+`DATASET.md`, authoring guide `GENERATING.md`).
 
 ## Grading (a task is solved iff)
-1. `FAIL_TO_PASS` — the regression repro (shipped with the bug report) now passes.
-2. `PASS_TO_PASS` — the pre-existing suite still passes (no new breakage; no lazy revert).
-3. `HIDDEN_TO_PASS` — held-out tests for the same behaviour with different inputs
-   (defeats overfitting to the visible repro). Graded from a pristine copy so test edits
-   are ignored. Resolution is binary.
 
-## A/B: does history help?
-The same task is run with `full` history vs a `squashed` single-commit repo (identical
-file tree, no commit trail). The only variable is history availability.
+1. `FAIL_TO_PASS` — the visible repro (shipped with the bug report) now passes.
+2. `PASS_TO_PASS` — the pre-existing suite still passes (no collateral breakage).
+3. `HIDDEN_TO_PASS` — the held-out policy test passes (defeats guessing the obvious fix).
 
-## Metrics
-`resolution` (binary), `cost` (input+output tokens × model price), `speed` (wall-clock;
-tool-turns secondary). Agent: opencode + gemini-3.5-flash, in a prebuilt Docker image.
-Primary comparison metric: **interventions** — on a failing grade the harness feeds the failing test
-back and resumes (cap 5); 0 = solved first try.
+Graded in Docker from a **pristine copy** with only the agent's source patch applied — agent edits
+to test files are ignored. Resolution is binary.
+
+**Primary metric: corrections (`interventions`)** — on a failing grade the harness feeds the
+failing-test output back (like a reviewer would) and resumes the same session, cap 5. `0` = solved
+first try with no help. Also reported: turns, cost, wall time, tokens, solve rate.
+
+## Agents
+
+Three agent stacks, selected with `--agent` (standalone harness) or `SDE_AGENT` (OMB path):
+
+| `--agent` | model | image | memory delivery (memory arm) |
+|---|---|---|---|
+| `opencode` | `google/gemini-3.5-flash` | `sdebench-agent` | the `hindsight-coding-agents` opencode plugin, mounted + configured in-container |
+| `claude-code` | `claude-sonnet-5` | `sdebench-agent-claude` | one reflect result injected via `--append-system-prompt` (Claude treats hook-injected context as untrusted) |
+| `codex` | `gpt-5.1-codex-mini` | `sdebench-agent-codex` | Codex hooks running the plugin's `codex-hook.js` (the real product path) |
+
+Build the images from `sdebench/Dockerfile.agent*`; the grading image is `sdebench/Dockerfile`
+(`sdebench-base`). Auth: opencode/codex take API keys from the environment (`OPENAI_API_KEY` is
+passed through and logged in in-container for codex); claude-code mounts OAuth credentials from
+`~/.sdebench/claude_creds.json`.
+
+**Vanilla-arm fairness**: on `conversation`-source tasks the past developer chats are made
+*reachable* by the plain agent — seeded as native opencode sessions for `opencode`, and as markdown
+transcripts under `/root/project-history/` for `codex`/`claude-code` — with a one-line pointer in
+the prompt. Nothing is injected; the agent reads them only if it thinks to. That keeps the
+comparison "reliable surfacing" vs "available but unprompted", not "access" vs "no access".
 
 ## Running
 
-The dataset lives in the [sde-bench](https://github.com/vectorize-io/sde-bench) submodule at
-`sdebench/datasets` (10 boltons-hosted tasks; see its `DATASET.md` / `GENERATING.md`). There are two
-front doors:
+**Via the OMB runner** (results land in `outputs/` + the viewer):
 
-**Via the OMB runner** (integrated: results land in the OMB `outputs/` + viewer, alongside the other
-benchmarks). `task_type="coding"` — the runner grades by tests, not a judge. **AMB does zero memory
-work** — memory is entirely the plugin's domain:
 ```bash
-uv run omb run --dataset sdebench --split boltons --mode coding --memory none              # vanilla baseline
-SDE_HINDSIGHT_URL=http://localhost:8899 \
-  uv run omb run --dataset sdebench --split boltons --mode coding --memory hscoding          # agent + plugin memory
-uv run omb run --dataset sdebench --split boltons --mode coding --memory none -q 1          # one task
+uv run omb run --dataset sdebench --split boltons --mode coding --memory none        # vanilla baseline
+SDE_HINDSIGHT_URL=http://localhost:8888 \
+  uv run omb run --dataset sdebench --split boltons --mode coding --memory hscoding  # agent + memory
 ```
-`--memory none` = vanilla. `--memory hscoding` = the mode (a) builds the task repo, (b) **triggers the
-plugin's own backfill** (`hindsight-coding-backfill`) over that repo + the task's conversations — the
-**plugin** decides what/how to ingest (extraction, strategies, git scope, pages) — then (c) runs
-opencode + the plugin, which does reflect+inject. AMB never calls Hindsight retain *or* reflect. Env:
-`SDE_HINDSIGHT_URL` (server), `SDE_HSCODING_PLUGIN_DIR` (the plugin dir with `dist/backfill.js`),
-`SDE_HSCODING_GIT_LIMIT` (optional git scope; unset ⇒ the plugin decides).
+
+`--memory hscoding` = per task: build the repo, reset the bank, run the plugin's **deepen engine**
+(`dist/deepen.js --git-ingest full`) over the repo + the task's conversations (+40 decoy chats as
+retrieval noise), poll `dist/status.js` until `synced`, then run the agent. OMB itself does **zero**
+memory work — ingestion and retrieval are entirely the plugin's domain.
+
+Env: `SDE_AGENT` (`opencode`|`claude-code`|`codex`), `SDE_HINDSIGHT_URL` (server),
+`SDE_HSCODING_PLUGIN_DIR` (a checkout of the `hindsight-coding-agents` plugin with `dist/` built —
+required for the memory arm), `SDE_HSCODING_REUSE_BANK=1` (skip re-ingestion on reruns).
+
+Note: `-q N` selects the first N tasks **alphabetically** — a subset, not a sample.
 
 **Standalone harness** (direct, more arms/flags):
+
 ```bash
-uv run python sdebench/harness/run.py --task sdebench/datasets/boltons-<name>/tasks/main/task.json \
-    --history {full|hscoding|oracle} --run-id <id>
+uv run python sdebench/harness/run.py \
+    --task sdebench/datasets/boltons-<name>/tasks/main/task.json \
+    --agent {opencode|claude-code|codex} --history {full|hscoding} --run-id <id>
 ```
+
+`--history full` = vanilla (full git history); `--history hscoding` = the memory arm. Other arms
+(`oracle`, `inject`, `index`, …) are research modes — see `harness/run.py`.
+
+**Charts**: `uv run --with matplotlib python scripts/sdebench_charts.py` renders
+corrections/cost/turns per task per agent (globs n>1 reruns, error bars; agents without runs are
+dropped).
 
 ## Layout
+
 ```
 sdebench/
-  datasets/            # -> sde-bench submodule: the 10 boltons tasks + generator (gen/) + datasheet
-  harness/run.py       # the coding engine: build repo -> agent -> interventions -> pytest grade
-                       #   (the OMB `coding` mode shells out to this; run.py is load-bearing)
-  Dockerfile           # prebuilt grading env (python + pytest + git)
-  FINDINGS.md          # results write-up
+  datasets/               # -> sde-bench submodule: tasks + generator (gen/) + datasheet
+  harness/run.py          # the engine: build repo -> agent -> corrections loop -> pytest grade
+                          #   (the OMB `coding` mode shells out to this)
+  Dockerfile              # grading env (python + pytest + git)   -> sdebench-base
+  Dockerfile.agent*       # agent envs (opencode / claude / codex)
 ```
 
-## Tasks & design
-The tasks now live in the [sde-bench](https://github.com/vectorize-io/sde-bench) submodule — 10
-bug-fix tasks hosted in the real boltons library, each hinging on a **non-guessable, project-specific
-decision** (the obvious fix passes the visible repro but fails a held-out hidden test). Axes: **source**
-(H git history / F past conversation), **tier** (real-function / planted), **category** (the kind of
-decision). See the submodule's `DATASET.md` (datasheet) and `GENERATING.md` (how tasks are built and
-how to add one).
+## Design rule
 
-Design rule: the decision must be **non-guessable** — a conventional value/rule the agent guesses
-without memory won't discriminate the with-memory vs without-memory arms.
+The decision must be **non-guessable** — a conventional value or rule the agent can guess without
+memory won't discriminate the arms. Every task ships proof: the generator validates that HEAD fails
+repro+hidden, the correct fix passes everything, and each plausible naive fix passes the repro but
+fails hidden. Memory systems are expected to surface the *decision*, not hidden-test values (no
+answer leakage); the agent still writes and tests its own fix.

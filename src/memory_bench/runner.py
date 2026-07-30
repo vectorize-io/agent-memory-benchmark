@@ -422,7 +422,11 @@ class EvalRunner:
             judge_llm=self._get_judge(dataset)._llm.model_id,
             results=results,
         )
-        self._save(summary)
+        # Final save truncates to THIS run's query set: without it, a later smaller run (e.g. -q 6)
+        # keeps stale rows from an earlier larger run under the same run name, and the output file
+        # silently reads as a bigger run than actually happened. Partial saves (mid-run, above)
+        # deliberately do NOT truncate — they accumulate units as they complete.
+        self._save(summary, query_ids={q.query_id for q in queries})
         memory.cleanup()
         return summary
 
@@ -455,11 +459,14 @@ class EvalRunner:
     def _load_previous_ingested_docs(self, dataset: str, split: str, memory: str, mode: str) -> int:
         return self._load_previous(dataset, split, memory, mode).get("ingested_docs", 0)
 
-    def _save(self, summary: EvalSummary) -> None:
+    def _save(self, summary: EvalSummary, query_ids: set | None = None) -> None:
         path = self._output_path(summary.dataset, summary.split, summary.run_name, summary.mode)
         path.parent.mkdir(parents=True, exist_ok=True)
-        # Always merge: new results overwrite existing ones by query_id, old ones are kept
+        # Always merge: new results overwrite existing ones by query_id, old ones are kept —
+        # except that a final save (query_ids given) drops rows outside this run's query set.
         merged = self._merge(summary.results, summary.dataset, summary.split, summary.run_name, summary.mode)
+        if query_ids is not None:
+            merged = [r for r in merged if r.query_id in query_ids]
         d = asdict(summary)
         results_dicts      = [asdict(r) for r in merged]
         d["total_queries"] = len(merged)

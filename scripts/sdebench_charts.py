@@ -16,15 +16,19 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-# 4 arms: (agent, arm, run-name glob). Globs so n>1 reruns (nz-oc-none-1/-2/-3) auto-average.
+# Arms: (agent, arm, run-name glob). Globs so n>1 reruns (nz-oc-none-1/-2/-3) auto-average.
+# Agents with no matching runs are dropped from the charts automatically.
 ARMS = [
     ("OpenCode", "vanilla", "dz-oc-none*"),
     ("OpenCode", "memory",  "dz-oc-hs*"),
     ("Claude",   "vanilla", "dz-cc-none*"),
     ("Claude",   "memory",  "dz-cc-hs*"),
+    ("Codex",    "vanilla", "dz-cx-none*"),
+    ("Codex",    "memory",  "dz-cx-hs*"),
 ]
-AGENTS = ["OpenCode", "Claude"]
-AGENT_LABELS = {"OpenCode": "OpenCode\nGemini 3.5 Flash", "Claude": "Claude Code\nClaude Sonnet"}
+AGENTS = ["OpenCode", "Claude", "Codex"]
+AGENT_LABELS = {"OpenCode": "OpenCode\nGemini 3.5 Flash", "Claude": "Claude Code\nClaude Sonnet",
+                "Codex": "Codex CLI\nGPT-5.1 Codex Mini"}
 ARM_LABELS = {"vanilla": "Vanilla", "memory": "Hindsight"}
 VANILLA_C, MEMORY_C = "#9aa0a6", "#0080b0"   # muted gray vs Hindsight brand blue
 TOK_COLORS = {"Input": "#3b82f6", "Cached": "#a5b4fc", "Output": "#f59e0b"}
@@ -108,7 +112,7 @@ def grouped_bar(data, metric, title, ylabel, fmt, out, note=""):
 
 def tokens_chart(data, out):
     """Distinguish Input vs Cached vs Output — grouped bars per run, log y (spans M to k)."""
-    short = {"OpenCode": "OpenCode·Gemini", "Claude": "Claude·Sonnet"}
+    short = {"OpenCode": "OpenCode·Gemini", "Claude": "Claude·Sonnet", "Codex": "Codex·5.1-mini"}
     runs = [(f"{short[ag]}\n{ARM_LABELS[arm]}", (ag, arm)) for ag in AGENTS for arm in ("vanilla", "memory")]
     cats = ["Input", "Cached", "Output"]; keys = {"Input": "tok_input", "Cached": "tok_cached", "Output": "tok_output"}
     fig, ax = plt.subplots(figsize=(7.5, 4.2))
@@ -139,10 +143,15 @@ def main():
     for ag, arm, glb in ARMS:
         s = arm_stats(args.outputs, glb)
         if s is None:
-            raise SystemExit(f"no runs matched glob {glb!r} under {args.outputs}")
+            print(f"  (no runs matched {glb!r} under {args.outputs} — dropping arm)")
+            continue
         data[(ag, arm)] = s
-    n = data[("OpenCode", "vanilla")][0]["_n"]
-    nt = data[("OpenCode", "vanilla")][0]["tasks"]
+    # An agent charts only when BOTH its arms ran (a lone vanilla or memory bar is meaningless).
+    AGENTS[:] = [ag for ag in AGENTS if (ag, "vanilla") in data and (ag, "memory") in data]
+    if not AGENTS:
+        raise SystemExit(f"no complete agent arm-pairs under {args.outputs}")
+    n = data[(AGENTS[0], "vanilla")][0]["_n"]
+    nt = data[(AGENTS[0], "vanilla")][0]["tasks"]
     note = f"average per task (over {nt} tasks)" + (f", mean of n={n} runs (error bars = std)" if n > 1 else ", n=1")
     print(f"charts -> {out}  ({note})")
 

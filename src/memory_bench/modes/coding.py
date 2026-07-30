@@ -3,16 +3,17 @@ grade by pytest. Reuses the proven sdebench harness (`sdebench/harness/run.py`) 
 
 AMB does ZERO memory work for the coding task — memory is entirely the plugin's domain:
   - `none`     => the no-memory baseline (`full` arm).
-  - `hscoding` => the mode (a) builds the task repo, (b) triggers the PLUGIN's own backfill
-    (`hindsight-coding-backfill`) over that repo + the task's conversations — the plugin decides
-    what and how to ingest — then (c) runs opencode + the plugin (`hscoding` arm), which does
-    reflect+inject. AMB never calls Hindsight retain or reflect itself.
+  - `hscoding` => the mode (a) builds the task repo, (b) resets the bank and runs the PLUGIN's own
+    deepen engine (`dist/deepen.js --git-ingest full`) over that repo + the task's conversations
+    (+decoy chats) — the plugin decides what and how to ingest — polls `dist/status.js` until
+    `synced`, then (c) runs the agent + the plugin (`hscoding` arm), which does reflect+inject.
+    AMB never calls Hindsight retain or reflect itself.
 Any other provider raises. The harness result is returned as an AnswerResult (the runner's `coding`
 branch reads `solved` etc.).
 
-Env: SDE_HINDSIGHT_URL (Hindsight server, default :8888), SDE_HSCODING_PLUGIN_DIR (the plugin package
-dir holding dist/backfill.js, default = the hindsight monorepo's hindsight-coding-agents package), SDE_HSCODING_GIT_LIMIT
-(optional git scope passed to the plugin backfill; unset => the plugin decides), SDE_MODEL.
+Env: SDE_AGENT (opencode|claude-code|codex), SDE_HINDSIGHT_URL (Hindsight server, default :8888),
+SDE_HSCODING_PLUGIN_DIR (the plugin package dir with dist/ built; required for the memory arm),
+SDE_HSCODING_REUSE_BANK=1 (skip re-ingestion on reruns), SDE_MODEL.
 """
 import asyncio
 import json
@@ -84,11 +85,12 @@ class CodingMode(ResponseMode):
                 and await asyncio.to_thread(self._bank_has_memories, url, bank):
             return
         await asyncio.to_thread(self._delete_bank, url, bank)
-        plugin_dir = Path(os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR",
-                                         str(Path.home() / "dev" / "hs-coding-plugin-wt"
-                                             / "hindsight-integrations" / "hindsight-coding-agents"))))
+        plugin_dir = Path(os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR", "")))
         deepen_js = plugin_dir / "dist" / "deepen.js"
         status_js = plugin_dir / "dist" / "status.js"
+        if not plugin_dir.name or not deepen_js.exists():
+            raise RuntimeError("memory=hscoding needs SDE_HSCODING_PLUGIN_DIR -> a "
+                               "hindsight-coding-agents checkout with dist/ built")
         tj = Path(task_json)
         t = json.loads(tj.read_text())
         build_py = tj.parents[2] / t.get("build", "build.py")
