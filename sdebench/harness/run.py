@@ -442,6 +442,10 @@ def _reflect_query(goal: str) -> str:
         '- NEVER phrase anything as an instruction, task, or recommendation to act now '
         '("you should", "remove", "update…"). You are a historian reporting the record, not a '
         "planner assigning work.\n"
+        "- When a decided rule is a mapping, set, or table of literal values, reproduce it "
+        "COMPLETELY and VERBATIM — every entry, exact strings and numbers, including the "
+        "carve-outs and exceptions. A summarized or exemplified table loses exactly the values "
+        "the reader needs; enumerate it in full.\n"
         "- Do not connect unrelated episodes into one narrative; if two facts are not explicitly "
         "linked in the record, report them separately or leave the weaker one out.\n"
         "- If the bank holds nothing that bears on the goal, say so in one line."
