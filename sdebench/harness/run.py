@@ -375,6 +375,10 @@ def _parse_claude(stdout: str, elapsed: float) -> dict:
         d = json.loads(stdout.strip().splitlines()[-1])
     except Exception:
         return {"elapsed": elapsed, "tokens": tok, "turns": 0, "trajectory": traj, "cost": 0.0}
+    if d.get("is_error"):
+        # Fail LOUDLY: a broken agent (expired OAuth, api_error) otherwise reads as a normal
+        # 0-token turn and silently burns the whole intervention budget in seconds.
+        raise RuntimeError(f"claude agent error: {str(d.get('result'))[:200]}")
     u = d.get("usage", {}) or {}
     tok["input"] = u.get("input_tokens", 0) or 0
     tok["output"] = u.get("output_tokens", 0) or 0

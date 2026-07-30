@@ -426,7 +426,7 @@ class EvalRunner:
         # keeps stale rows from an earlier larger run under the same run name, and the output file
         # silently reads as a bigger run than actually happened. Partial saves (mid-run, above)
         # deliberately do NOT truncate — they accumulate units as they complete.
-        self._save(summary, query_ids={q.query_id for q in queries})
+        self._save(summary, query_ids={q.id for q in queries})
         memory.cleanup()
         return summary
 
