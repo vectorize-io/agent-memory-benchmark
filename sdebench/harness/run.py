@@ -425,6 +425,25 @@ def _parse_codex(stdout: str, elapsed: float) -> dict:
     return {"elapsed": elapsed, "tokens": tok, "turns": turns, "trajectory": traj}
 
 
+def _reflect_query(goal: str) -> str:
+    """Mirror of the plugin's buildReflectQuery (src/core/inject.ts) so the claude arm — which has
+    no plugin and reflects harness-side — sends the same historian-framed prompt as the product:
+    declarative past-tense facts, no imperatives, no cross-episode confabulation."""
+    return (
+        "A developer is starting a coding session in this repository with this goal:\n\n"
+        f"<goal>\n{goal}\n</goal>\n\n"
+        "Report what this bank's history genuinely bears on that goal. Rendering rules, strict:\n"
+        "- Declarative, past-tense, attributed facts only — what happened, what was decided and why, "
+        "with dates, commit/PR/issue ids and exact values where known.\n"
+        '- NEVER phrase anything as an instruction, task, or recommendation to act now '
+        '("you should", "remove", "update…"). You are a historian reporting the record, not a '
+        "planner assigning work.\n"
+        "- Do not connect unrelated episodes into one narrative; if two facts are not explicitly "
+        "linked in the record, report them separately or leave the weaker one out.\n"
+        "- If the bank holds nothing that bears on the goal, say so in one line."
+    )
+
+
 def hs_reflect(query: str, bank: str, url: str | None = None, timeout: int = 120) -> str:
     """Harness-side reflect over a Hindsight bank (used by the claude arm — claude has no plugin).
     Returns the synthesized root-cause answer, or '' on any error (memory is best-effort)."""
@@ -777,7 +796,7 @@ def main():
         # Time the reflect round-trip INTO wall_s — for parity with opencode, whose plugin reflect
         # runs inside the timed agent turn. Both arms then pay the same per-task retrieval latency.
         _t0 = time.perf_counter()
-        _ans = hs_reflect(task["bug_report"], memory_bank)
+        _ans = hs_reflect(_reflect_query(task["bug_report"]), memory_bank)
         totals["wall_s"] += time.perf_counter() - _t0
         if _ans:
             sys_mem = ("Relevant engineering context retrieved from THIS project's own history (git "

@@ -10,6 +10,7 @@ Tasks live in the `sde-bench` submodule at `sdebench/datasets/boltons-*`; the ru
 `sdebench/harness/run.py`.
 """
 import json
+import os
 from pathlib import Path
 
 from .base import Dataset
@@ -28,7 +29,15 @@ class SdebenchDataset(Dataset):
     links = [{"label": "Dataset", "url": "https://github.com/vectorize-io/sde-bench"}]
 
     def _task_files(self) -> list[Path]:
-        return sorted(_DATASETS.glob("boltons-*/tasks/main/task.json"))
+        files = sorted(_DATASETS.glob("boltons-*/tasks/main/task.json"))
+        # SDE_TASK_FILTER: comma-separated substrings matched against the task dir name
+        # (e.g. "slalog,unitparse" or "-amended") — for running a subset that isn't an
+        # alphabetical prefix (-q N is first-N-alphabetically, not a sample).
+        flt = os.environ.get("SDE_TASK_FILTER", "").strip()
+        if flt:
+            subs = [s.strip() for s in flt.split(",") if s.strip()]
+            files = [f for f in files if any(s in f.parents[2].name for s in subs)]
+        return files
 
     def load_queries(self, split: str, category: str | None = None, limit: int | None = None) -> list[Query]:
         queries: list[Query] = []
