@@ -691,6 +691,9 @@ def main():
     ap.add_argument("--run-id", default="r1")
     ap.add_argument("--max-interventions", type=int, default=5,
                     help="cap on feedback rounds before giving up (drift guard)")
+    ap.add_argument("--external-memory", default=None,
+                    help="file with retrieved memories to inject into the prompt (provided arm; "
+                         "how generic AMB providers deliver memory)")
     args = ap.parse_args()
     if not args.model:
         args.model = _AGENT_MODEL[args.agent]
@@ -713,6 +716,8 @@ def main():
     elif args.history == "provided":
         build_repo(task, repo, "full")              # full repo + external memory supplied in the prompt
         _em = task.get("external_memory")
+        if args.external_memory and Path(args.external_memory).exists():
+            _em = Path(args.external_memory).read_text()
         if _em:
             task["bug_report"] = task["bug_report"] + "\n\nRelevant memory (surfaced for you by your memory system):\n" + _em
     elif args.history == "hscoding":

@@ -62,14 +62,23 @@ SDE_HINDSIGHT_URL=http://localhost:8888 \
   uv run omb run --dataset sdebench --split boltons --mode coding --memory hscoding  # agent + memory
 ```
 
-`--memory hscoding` = per task: build the repo, reset the bank, run the plugin's **deepen engine**
-(`dist/deepen.js --git-ingest full`) over the repo + the task's conversations (+40 decoy chats as
-retrieval noise), poll `dist/status.js` until `synced`, then run the agent. OMB itself does **zero**
-memory work — ingestion and retrieval are entirely the plugin's domain.
+Memory flows through OMB's **standard provider pipeline**: the dataset exposes each task's
+knowledge corpus (`isolation_unit = "task"` — decision chat/commit + decoy conversations +
+host-history noise), the runner ingests it into the selected provider, and the coding mode
+dispatches:
+
+- `--memory none` — vanilla baseline.
+- `--memory hscoding` — the Hindsight plugin: its provider ingests via the plugin's own **deepen
+  engine** over the BUILT repo (`--git-ingest full`, + conversations) and polls `status.js` until
+  `synced`; delivery is agent-side (reflect+inject inside the harness).
+- `--memory <any other provider>` (bm25, mem0, …) — generic path: the runner ingests the task
+  corpus, the mode calls `provider.retrieve(bug_report)` and injects the top memories into the
+  task prompt (`provided` arm). Any AMB memory system can run the coding benchmark.
+
+`--skip-ingestion` reuses existing memory state across n-runs (for `hscoding`: populated banks).
 
 Env: `SDE_AGENT` (`opencode`|`claude-code`|`codex`), `SDE_HINDSIGHT_URL` (server),
-`SDE_HSCODING_PLUGIN_DIR` (a checkout of the `hindsight-coding-agents` plugin with `dist/` built —
-required for the memory arm), `SDE_HSCODING_REUSE_BANK=1` (skip re-ingestion on reruns).
+`SDE_HSCODING_PLUGIN_DIR` (plugin checkout with `dist/` built — `hscoding` only).
 
 Note: `-q N` selects the first N tasks **alphabetically** — a subset, not a sample.
 

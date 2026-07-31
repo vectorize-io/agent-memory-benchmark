@@ -1,19 +1,16 @@
 """Coding response mode: build the task repo, run a coding agent with test-feedback interventions,
-grade by pytest. Reuses the proven sdebench harness (`sdebench/harness/run.py`) verbatim.
+grade by pytest. Reuses the sdebench harness (`sdebench/harness/run.py`) verbatim.
 
-AMB does ZERO memory work for the coding task — memory is entirely the plugin's domain:
+Memory flows through the STANDARD provider pipeline: the runner ingests the dataset's per-task
+corpus into the selected provider (isolation_unit = task), then this mode dispatches:
   - `none`     => the no-memory baseline (`full` arm).
-  - `hscoding` => the mode (a) builds the task repo, (b) resets the bank and runs the PLUGIN's own
-    deepen engine (`dist/deepen.js --git-ingest full`) over that repo + the task's conversations
-    (+decoy chats) — the plugin decides what and how to ingest — polls `dist/status.js` until
-    `synced`, then (c) runs the agent + the plugin (`hscoding` arm), which does reflect+inject.
-    AMB never calls Hindsight retain or reflect itself.
-Any other provider raises. The harness result is returned as an AnswerResult (the runner's `coding`
-branch reads `solved` etc.).
+  - `hscoding` => the Hindsight plugin runs INSIDE the agent (reflect+inject); its provider ingested
+    via the plugin's own deepen engine. This mode only passes the bank name through.
+  - any other provider => generic arm: `provider.retrieve(bug_report)` and the top memories are
+    injected into the task prompt (`provided` arm) — how any AMB memory system runs the benchmark.
 
 Env: SDE_AGENT (opencode|claude-code|codex), SDE_HINDSIGHT_URL (Hindsight server, default :8888),
-SDE_HSCODING_PLUGIN_DIR (the plugin package dir with dist/ built; required for the memory arm),
-SDE_HSCODING_REUSE_BANK=1 (skip re-ingestion on reruns), SDE_MODEL.
+SDE_HSCODING_PLUGIN_DIR (plugin dir with dist/ built; hscoding only), SDE_MODEL.
 """
 import asyncio
 import json
@@ -53,100 +50,6 @@ class CodingMode(ResponseMode):
     def answer_from_context(self, query: str, context: str, task_type: str = "coding") -> AnswerResult:
         raise NotImplementedError("coding mode grades by running the agent; --skip-retrieval is not supported")
 
-    @staticmethod
-    def _bank_has_memories(url: str, bank: str) -> bool:
-        """True if the bank already holds memories — used to REUSE a backfilled bank across n runs."""
-        import urllib.request
-        try:
-            with urllib.request.urlopen(f"{url}/v1/default/banks/{bank}/memories/list?limit=1", timeout=10) as r:
-                d = json.loads(r.read())
-            return bool(d.get("items") or d.get("memories") or d.get("total"))
-        except Exception:
-            return False
-
-    @staticmethod
-    def _delete_bank(url: str, bank: str) -> None:
-        """Fresh-trial reset lives in the HARNESS now (the plugin has no user-facing reset — a fresh
-        bank IS the reset path). 404/errors are fine (bank didn't exist)."""
-        import urllib.request
-        try:
-            req = urllib.request.Request(f"{url}/v1/default/banks/{bank}", method="DELETE")
-            urllib.request.urlopen(req, timeout=30).read()
-        except Exception:
-            pass
-
-    async def _plugin_backfill(self, task_json: str, task_id: str, run_id: str, bank: str, url: str) -> None:
-        """Trigger the PLUGIN's own ingestion — AMB does not ingest. Build the task repo, then run the
-        plugin's background `deepen` engine (the same one every session start fires) over that repo +
-        the task's conversations, and POLL the plugin's `status` entry until `synced` — the exact
-        observable contract a real deployment has (the backfill CLI no longer exists)."""
-        # Reuse a bank already ingested by a previous run (n=3 without re-ingesting the same data).
-        if os.environ.get("SDE_HSCODING_REUSE_BANK", "").lower() in ("1", "true") \
-                and await asyncio.to_thread(self._bank_has_memories, url, bank):
-            return
-        await asyncio.to_thread(self._delete_bank, url, bank)
-        plugin_dir = Path(os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR", "")))
-        deepen_js = plugin_dir / "dist" / "deepen.js"
-        status_js = plugin_dir / "dist" / "status.js"
-        if not plugin_dir.name or not deepen_js.exists():
-            raise RuntimeError("memory=hscoding needs SDE_HSCODING_PLUGIN_DIR -> a "
-                               "hindsight-coding-agents checkout with dist/ built")
-        tj = Path(task_json)
-        t = json.loads(tj.read_text())
-        build_py = tj.parents[2] / t.get("build", "build.py")
-        base = Path("/tmp/sdebench/omb-backfill") / f"{task_id}_{run_id}"
-        src = base / "repo"
-        shutil.rmtree(base, ignore_errors=True)
-        base.mkdir(parents=True, exist_ok=True)
-        # 1. build the task repo (the plugin backfill reads its git history)
-        await asyncio.to_thread(subprocess.run, ["python", str(build_py), str(src)],
-                                capture_output=True, text=True, env={**os.environ})
-        # 2. run the plugin's deepen engine (it owns extraction/strategies/pages/git scope)
-        bf = ["node", str(deepen_js), "--repo", str(src), "--bank", bank, "--api-url", url,
-              "--git-ingest", "full"]  # benchmark wants deterministic full depth regardless of user config
-        conv = t.get("conversations") or []
-        # chats to ingest = the task's own decision chat + a shared pool of DECOY conversations (noise:
-        # long, codebase-related, no task policy) so chat retrieval is a real ranking problem, not a
-        # 1-chat lookup. Decoys are pre-generated once from git history (gen/decoy_conversations.json).
-        # a task may carry ONE chat (list of turns) or SEVERAL (list of lists — e.g. a rule set in an
-        # early chat and AMENDED in a later one); seed_sessions on the vanilla side already handles both.
-        if conv and isinstance(conv[0], list):
-            chats = [{"id": f"{task_id}-chat{i}", "turns": c} for i, c in enumerate(conv) if c]
-        else:
-            chats = [{"id": task_id, "turns": conv}] if conv else []
-        decoy_path = Path(os.environ.get("SDE_DECOY_CONVERSATIONS",
-                          str(_REPO_ROOT / "sdebench" / "datasets" / "gen" / "decoy_conversations.json")))
-        if os.environ.get("SDE_DECOYS", "1").lower() not in ("0", "false") and decoy_path.exists():
-            for d in json.loads(decoy_path.read_text()):
-                chats.append({"id": d.get("id", f"decoy-{len(chats)}"), "turns": d["turns"]})
-        if chats:
-            cf = base / "conversations.json"
-            cf.write_text(json.dumps(chats))
-            bf += ["--conversations", str(cf)]
-        limit = os.environ.get("SDE_HSCODING_GIT_LIMIT")  # optional scope; unset => the plugin decides
-        if limit:
-            bf += ["--gitlog-limit", limit]
-        bp = await asyncio.to_thread(subprocess.run, bf, capture_output=True, text=True,
-                                     env={**os.environ}, timeout=1800)
-        if bp.returncode != 0:
-            # Don't poll a bank the engine never filled — surface the deepen failure directly.
-            raise RuntimeError(f"deepen failed (rc={bp.returncode}) for bank {bank}: "
-                               f"{(bp.stderr or bp.stdout or '')[-300:]}")
-        # 3. poll the plugin's sync status until the seeded memory is fully queryable — this is the
-        # product's readiness contract (gitlog + pages present, extractions drained), not a guess.
-        st_cmd = ["node", str(status_js), "--repo", str(src), "--bank", bank, "--api-url", url]
-        deadline = time.monotonic() + 900
-        while time.monotonic() < deadline:
-            p = await asyncio.to_thread(subprocess.run, st_cmd, capture_output=True, text=True,
-                                        env={**os.environ}, timeout=120)
-            try:
-                if json.loads(p.stdout.strip().splitlines()[-1]).get("synced"):
-                    return
-            except Exception:
-                pass
-            await asyncio.sleep(5)
-        raise RuntimeError(f"hscoding ingest never reached synced for bank {bank}")
-
     async def async_answer(self, query: str, memory: MemoryProvider, task_type: str = "coding",
                            user_id: str | None = None, meta: dict | None = None) -> AnswerResult:
         meta = meta or {}
@@ -158,22 +61,36 @@ class CodingMode(ResponseMode):
             return AnswerResult(answer="unsolved", reasoning="no task_json in meta", context="",
                                 retrieve_time_ms=0.0, raw_response={"solved": False})
 
-        # `none` => vanilla; `hscoding` => trigger the plugin's own backfill, then run opencode+plugin.
+        # Dispatch by provider. Ingestion already happened through the RUNNER's standard pipeline
+        # (dataset documents -> provider.async_ingest, per task unit) — nothing is ingested here.
+        #   none      -> vanilla arm (full repo, no memory)
+        #   hscoding  -> the plugin runs INSIDE the agent (reflect+inject); pass it the bank
+        #   any other -> generic arm: provider.retrieve() -> context injected into the task prompt
         env = {**os.environ}
+        retrieve_ms = 0.0
+        external_memory_file = None
         if memory.name == "none":
             arm = "full"
         elif memory.name == "hscoding":
             arm = "hscoding"
-            bank = f"sde-coding-{task_id}"
-            url = os.environ.get("SDE_HINDSIGHT_URL", "http://localhost:8888")
-            await self._plugin_backfill(task_json, task_id, run_id, bank, url)  # PLUGIN ingests; AMB does not
-            env["SDE_HSCODING_BANK"] = bank   # run.py -> HINDSIGHT_BANK_ID for the plugin (reflect)
-            env["SDE_HINDSIGHT_URL"] = url     # run.py -> HINDSIGHT_API_URL for the plugin
+            from ..memory.hscoding import bank_for
+            env["SDE_HSCODING_BANK"] = bank_for(task_id)  # run.py -> plugin config (reflect+inject)
+            env["SDE_HINDSIGHT_URL"] = os.environ.get("SDE_HINDSIGHT_URL", "http://localhost:8888")
         else:
-            raise NotImplementedError(f"coding mode supports 'none' and 'hscoding'; got '{memory.name}'")
+            arm = "provided"
+            t0 = time.perf_counter()
+            docs, _raw = await memory.async_retrieve(query, k=10, user_id=task_id)
+            retrieve_ms = (time.perf_counter() - t0) * 1000
+            block = "\n\n---\n\n".join(d.content for d in docs if d.content) or "(no relevant memories found)"
+            ext = Path("/tmp/sdebench/omb-context") / f"{task_id}_{run_id}.txt"
+            ext.parent.mkdir(parents=True, exist_ok=True)
+            ext.write_text(block)
+            external_memory_file = str(ext)
 
         cmd = ["uv", "run", "python", str(_RUN_PY), "--task", str(task_json),
                "--history", arm, "--agent", self._agent, "--model", self._model, "--run-id", run_id]
+        if external_memory_file:
+            cmd += ["--external-memory", external_memory_file]
         t0 = time.perf_counter()
         proc = await asyncio.to_thread(
             subprocess.run, cmd, capture_output=True, text=True, cwd=str(_REPO_ROOT), env=env,
@@ -195,6 +112,6 @@ class CodingMode(ResponseMode):
             reasoning=f"arm={arm} interventions={result.get('interventions')} "
                       f"cost=${result.get('cost_usd')} turns={result.get('turns')}",
             context=f"memory={memory.name} arm={arm}",   # non-empty; coding scoring ignores context
-            retrieve_time_ms=float(result.get("wall_s", 0.0)) * 1000 or elapsed_ms,
+            retrieve_time_ms=retrieve_ms or (float(result.get("wall_s", 0.0)) * 1000 or elapsed_ms),
             raw_response=result,                          # runner's coding branch reads solved/interventions/…
         )
