@@ -6,9 +6,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends git ca-certific
 RUN npm i -g @anthropic-ai/claude-code
 # settings: ALLOW Bash/Edit/etc so claude can run the tests it's fixing (pytest). Without a permissions
 # allow-list, headless claude blocks Bash ("running commands needs approval") and can't verify its work
-# — `--dangerously-skip-permissions` is refused as root, so the allow-list is the way. Memory is injected
-# by the HARNESS via --append-system-prompt (a TRUSTED channel; a UserPromptSubmit hook's additionalContext
-# is treated by claude as a prompt-injection and REFUSED). Auth (OAuth creds) mounted at runtime.
+# — `--dangerously-skip-permissions` is refused as root, so the allow-list is the way. Memory arrives
+# via the plugin's UserPromptSubmit hook (wired into settings.json by the harness at container start,
+# exactly as the installer does on a real machine); the calibrated <hindsight_memory> wrapper makes
+# hook-injected memory usable. Auth (OAuth creds) mounted at runtime.
 RUN mkdir -p /root/.claude \
     && printf '{"permissions":{"allow":["Bash","Edit","Write","Read","Glob","Grep","MultiEdit","LS"],"defaultMode":"acceptEdits"}}' \
        > /root/.claude/settings.json

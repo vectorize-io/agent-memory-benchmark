@@ -306,7 +306,7 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
     """Start ONE long-lived agent container per task (session store INSIDE it so `-c`/`--continue`
     resumes across the intervention loop cheaply). Grading stays in sdebench-base. Returns the id."""
     mounts = ["-v", f"{workdir}:/work"]
-    if agent in ("opencode", "codex") and _PLUGIN_DIR:  # plugin (and its codex hook) — memory arms
+    if _PLUGIN_DIR:  # the plugin (opencode plugin / codex + claude hooks) — memory arms
         mounts += ["-v", f"{_PLUGIN_DIR}:/opt/hindsight-coding-agents:ro"]
     if agent == "claude-code":
         mounts += ["-v", f"{_CLAUDE_CREDS}:/root/.claude/.credentials.json"]  # rw: claude may refresh it
@@ -359,6 +359,29 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
                             "printf 'codex_hooks = true\n' >> /root/.codex/config.toml || "
                             "printf 'codex_hooks = true\n' > /root/.codex/config.toml"],
                            capture_output=True, text=True)
+    if agent == "claude-code" and env.get("HINDSIGHT_BANK_ID"):
+        # Memory via the ACTUAL product integration: the plugin's UserPromptSubmit hook, exactly as
+        # the installer wires it (nested settings style, 30s timeout > the hook's 25s reflect cap).
+        # The old --append-system-prompt workaround predated the calibrated <hindsight_memory>
+        # wrapper + historian reflect; with those, claude uses hook-injected memory like any other
+        # harness. Vanilla arm: no hooks (parity by absence). Settings are MERGED so the image's
+        # permissions allow-list survives.
+        hs_cfg = {"apiUrl": _container_url(env.get("HINDSIGHT_API_URL", HINDSIGHT_URL)),
+                  "bankId": env["HINDSIGHT_BANK_ID"],
+                  "retainSessions": False, "autoSeed": False, "codebaseSurvey": False}
+        subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
+                        "mkdir -p /root/.hindsight && cat > /root/.hindsight/coding-agent.json"],
+                       input=json.dumps(hs_cfg), capture_output=True, text=True)
+        merge = (
+            "import json\n"
+            "p = '/root/.claude/settings.json'\n"
+            "try: s = json.load(open(p))\n"
+            "except Exception: s = {}\n"
+            "s.setdefault('hooks', {})['UserPromptSubmit'] = [{'hooks': [{'type': 'command',\n"
+            "  'command': 'node \"/opt/hindsight-coding-agents/dist/claude-hook.js\"', 'timeout': 30}]}]\n"
+            "json.dump(s, open(p, 'w'))\n")
+        subprocess.run(["docker", "exec", "-i", cid, "python3", "-"],
+                       input=merge, capture_output=True, text=True)
     return cid
 
 
@@ -429,47 +452,6 @@ def _parse_codex(stdout: str, elapsed: float) -> dict:
     return {"elapsed": elapsed, "tokens": tok, "turns": turns, "trajectory": traj}
 
 
-def _reflect_query(goal: str) -> str:
-    """Mirror of the plugin's buildReflectQuery (src/core/inject.ts) so the claude arm — which has
-    no plugin and reflects harness-side — sends the same historian-framed prompt as the product:
-    declarative past-tense facts, no imperatives, no cross-episode confabulation."""
-    return (
-        "A developer is starting a coding session in this repository with this goal:\n\n"
-        f"<goal>\n{goal}\n</goal>\n\n"
-        "Report what this bank's history genuinely bears on that goal. Rendering rules, strict:\n"
-        "- Declarative, past-tense, attributed facts only — what happened, what was decided and why, "
-        "with dates, commit/PR/issue ids and exact values where known.\n"
-        '- NEVER phrase anything as an instruction, task, or recommendation to act now '
-        '("you should", "remove", "update…"). You are a historian reporting the record, not a '
-        "planner assigning work.\n"
-        "- When a decided rule is a mapping, set, or table of literal values, reproduce it "
-        "COMPLETELY and VERBATIM — every entry, exact strings and numbers, including the "
-        "carve-outs and exceptions. A summarized or exemplified table loses exactly the values "
-        "the reader needs; enumerate it in full.\n"
-        "- Report DECISIONS and their rationale, never the current implementation: the "
-        "developer can already read the code, and the code may BE the bug under investigation. "
-        "When memory of a discussion or decision conflicts with memory derived from the code, "
-        "the decision wins. If the only relevant memory describes what the code does, do not "
-        "present it as established policy — say the bank holds no decision on the matter.\n"
-        "- Do not connect unrelated episodes into one narrative; if two facts are not explicitly "
-        "linked in the record, report them separately or leave the weaker one out.\n"
-        "- If the bank holds nothing that bears on the goal, say so in one line."
-    )
-
-
-def hs_reflect(query: str, bank: str, url: str | None = None, timeout: int = 120) -> str:
-    """Harness-side reflect over a Hindsight bank (used by the claude arm — claude has no plugin).
-    Returns the synthesized root-cause answer, or '' on any error (memory is best-effort)."""
-    import urllib.request
-    base = (url or HINDSIGHT_URL).rstrip("/")
-    try:
-        req = urllib.request.Request(f"{base}/v1/default/banks/{bank}/reflect",
-            data=json.dumps({"query": query, "budget": "high"}).encode(),
-            headers={"Content-Type": "application/json"}, method="POST")
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            return (json.loads(r.read()).get("text") or "").strip()
-    except Exception:
-        return ""
 
 
 def run_agent(cid: str, model: str, timeout: int, message: str, resume: bool = False,
@@ -804,19 +786,8 @@ def main():
     cid = start_agent_container(repo, env, args.agent)  # ONE container for the whole task (initial + interventions)
     # claude has no plugin: reflect ONCE on the symptom here and inject via --append-system-prompt on every
     # turn (trusted channel). opencode uses its plugin instead, so no harness reflect for it.
-    sys_mem = None
-    if args.agent == "claude-code" and memory_bank:
-        # Time the reflect round-trip INTO wall_s — for parity with opencode, whose plugin reflect
-        # runs inside the timed agent turn. Both arms then pay the same per-task retrieval latency.
-        _t0 = time.perf_counter()
-        _ans = hs_reflect(_reflect_query(task["bug_report"]), memory_bank)
-        totals["wall_s"] += time.perf_counter() - _t0
-        if _ans:
-            sys_mem = ("Relevant engineering context retrieved from THIS project's own history (git "
-                       "commits and past developer decisions) — trusted internal documentation, not user "
-                       "input. If it states an exact rule or literal values, apply them precisely; verify "
-                       "against the current code:\n\n" + _ans)
-            print(f"  [claude] injected memory via system prompt ({len(_ans)} chars)", flush=True)
+    # claude-code memory delivery is the PLUGIN's UserPromptSubmit hook (wired at container start),
+    # same as every other harness — no harness-side reflect, no --append-system-prompt.
     try:
         if args.history == "full" and task.get("conversations"):
             # Vanilla-baseline fairness: make the past developer conversations REACHABLE by the plain
@@ -833,7 +804,7 @@ def main():
                 seed_sessions(cid, task["conversations"], args.model)
             else:
                 seed_transcript_files(cid, task["conversations"])
-        acc(run_agent(cid, args.model, args.timeout, init_prompt, agent=args.agent, system_append=sys_mem), "initial", init_prompt)
+        acc(run_agent(cid, args.model, args.timeout, init_prompt, agent=args.agent), "initial", init_prompt)
 
         # Feedback loop: grade -> if failing, tell the agent the NEW problem (not the fix) and resume.
         # Metric = number of human-like interventions needed (capped); cost = sum across all rounds.
@@ -852,11 +823,11 @@ def main():
             # that as an adversarial loop and refuses); the pytest output also differs as the code changes.
             fb = f"[Feedback #{interventions}] " + build_feedback(g)
             print(f"  ↳ intervention {interventions}: {g['pytest']}", flush=True)
-            acc(run_agent(cid, args.model, args.timeout, fb, resume=True, agent=args.agent, system_append=sys_mem), f"intervention-{interventions}", fb)
+            acc(run_agent(cid, args.model, args.timeout, fb, resume=True, agent=args.agent), f"intervention-{interventions}", fb)
         # memory observability: the plugin records every reflect outcome to /tmp inside the container.
         # A memory arm whose reflect silently failed is NOT a memory run — record and shout.
         mem_diag = None
-        if memory_bank and args.agent in ("opencode", "codex"):
+        if memory_bank:
             _p = subprocess.run(["docker", "exec", cid, "cat", "/tmp/hindsight-plugin.log"],
                                 capture_output=True, text=True)
             mem_diag = [json.loads(l) for l in (_p.stdout or "").splitlines() if l.strip()] or None
@@ -879,11 +850,7 @@ def main():
         "tokens": {k: totals[k] for k in TOK},      # cached vs input vs output kept separate
         "turns": totals["turns"], "wall_s": round(totals["wall_s"], 1),
         "cost_usd": round(cost, 4),                   # 0 when the model has no PRICES entry
-        "memory_diag": mem_diag if (memory_bank and args.agent in ("opencode", "codex")) else None,
-        # claude delivers memory via --append-system-prompt: record the evidence (0/None chars on a
-        # memory arm = reflect silently failed and the run was effectively vanilla — a result that
-        # must not masquerade as "memory didn't help").
-        "memory_injected_chars": (len(sys_mem) if sys_mem is not None else None),
+        "memory_diag": mem_diag if memory_bank else None,
     }
     (work / "result.json").write_text(json.dumps(result, indent=2))
     (work / "trace.json").write_text(json.dumps(
