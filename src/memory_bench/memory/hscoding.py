@@ -35,7 +35,7 @@ def bank_for(task_id: str) -> str:
 
 
 class HsCodingProvider(MemoryProvider):
-    name = "hscoding"
+    name = "hindsight-coding"
     description = "Hindsight coding-agents plugin: deepen-engine ingestion, agent-side reflect+inject."
     kind = "local"
     provider = "hindsight"
@@ -51,7 +51,7 @@ class HsCodingProvider(MemoryProvider):
     def initialize(self) -> None:
         plugin_dir = Path(os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR", "")))
         if not plugin_dir.name or not (plugin_dir / "dist" / "deepen.js").exists():
-            raise RuntimeError("memory=hscoding needs SDE_HSCODING_PLUGIN_DIR -> a "
+            raise RuntimeError("memory=hindsight-coding needs SDE_HSCODING_PLUGIN_DIR -> a "
                                "hindsight-coding-agents checkout with dist/ built")
         self._plugin_dir = plugin_dir
 

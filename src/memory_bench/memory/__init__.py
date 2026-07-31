@@ -13,8 +13,8 @@ from .none import NoMemoryProvider
 from .hscoding import HsCodingProvider
 
 REGISTRY: dict[str, type[MemoryProvider]] = {
-    "none": NoMemoryProvider,
-    "hscoding": HsCodingProvider,
+    "vanilla": NoMemoryProvider,
+    "hindsight-coding": HsCodingProvider,
     "bm25": BM25MemoryProvider,
     "cognee": CogneeMemoryProvider,
     "hindsight": HindsightMemoryProvider,
@@ -29,6 +29,9 @@ REGISTRY: dict[str, type[MemoryProvider]] = {
     "qdrant": HybridSearchMemoryProvider,
     "supermemory": SupermemoryMemoryProvider,
 }
+# legacy aliases (docs/scripts used these); canonical names above
+REGISTRY["none"] = NoMemoryProvider
+REGISTRY["hscoding"] = HsCodingProvider
 
 
 def get_memory_provider(name: str) -> MemoryProvider:

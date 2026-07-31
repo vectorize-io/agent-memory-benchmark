@@ -69,9 +69,9 @@ class CodingMode(ResponseMode):
         env = {**os.environ}
         retrieve_ms = 0.0
         external_memory_file = None
-        if memory.name == "none":
+        if memory.name == "vanilla":
             arm = "full"
-        elif memory.name == "hscoding":
+        elif memory.name == "hindsight-coding":
             arm = "hscoding"
             from ..memory.hscoding import bank_for
             env["SDE_HSCODING_BANK"] = bank_for(task_id)  # run.py -> plugin config (reflect+inject)

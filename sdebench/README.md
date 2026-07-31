@@ -58,9 +58,9 @@ not "access" vs "no access".
 **Via the OMB runner** (results land in `outputs/` + the viewer):
 
 ```bash
-uv run omb run --dataset sdebench --split boltons --mode coding --memory none        # vanilla baseline
+uv run omb run --dataset sdebench --split boltons --mode coding --memory vanilla     # no-memory baseline
 SDE_HINDSIGHT_URL=http://localhost:8888 \
-  uv run omb run --dataset sdebench --split boltons --mode coding --memory hscoding  # agent + memory
+  uv run omb run --dataset sdebench --split boltons --mode coding --memory hindsight-coding  # agent + memory
 ```
 
 Memory flows through OMB's **standard provider pipeline**: the dataset exposes each task's
@@ -68,8 +68,8 @@ knowledge corpus (`isolation_unit = "task"` — decision chat/commit + decoy con
 host-history noise), the runner ingests it into the selected provider, and the coding mode
 dispatches:
 
-- `--memory none` — vanilla baseline.
-- `--memory hscoding` — the Hindsight plugin: its provider ingests via the plugin's own **deepen
+- `--memory vanilla` — no-memory baseline (`none` is a legacy alias).
+- `--memory hindsight-coding` — the Hindsight plugin (`hscoding` is a legacy alias): its provider ingests via the plugin's own **deepen
   engine** over the BUILT repo (`--git-ingest full`, + conversations) and polls `status.js` until
   `synced`; delivery is agent-side (reflect+inject inside the harness).
 - `--memory <any other provider>` (bm25, mem0, …) — generic path: the runner ingests the task

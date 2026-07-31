@@ -212,8 +212,10 @@ const chartTokens   = local => _chartData(local, 'avg_context_tokens', true)
 const isCoding = rows => rows.length > 0 && rows.every(r => r.coding)
 const codingArm = item => {
   const m = (item.memory || '').toLowerCase(); const rn = (item.run_name || '').toLowerCase()
-  if (m === 'none' || /(^|[-_])(none|vanilla|full)([-_]|$)/.test(rn)) return 'vanilla'
-  return 'memory'
+  if (m === 'none' || m === 'vanilla' || /(^|[-_])(none|vanilla|full)([-_]|$)/.test(rn)) return 'vanilla'
+  if (m === 'hscoding' || m === 'hindsight-coding') return 'hindsight'
+  const info = providerByKey.value[item.memory]
+  return info?.family ?? item.memory ?? 'memory'
 }
 const fmtTok = v => v == null ? '—' : (v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'k' : v)
 const sortCoding = rows => [...rows].sort((a,b) => (b.interventions ?? -1) - (a.interventions ?? -1))
@@ -393,7 +395,7 @@ function hasCategoryData(local, split) {
                     <TableCell :primary="true">
                       <div class="flex items-center gap-2">
                         <span>{{ item.run_name }}</span>
-                        <Badge :variant="codingArm(item) === 'memory' ? 'default' : 'secondary'">{{ codingArm(item) }}</Badge>
+                        <Badge :variant="codingArm(item) === 'vanilla' ? 'secondary' : 'default'">{{ codingArm(item) }}</Badge>
                       </div>
                     </TableCell>
                     <TableCell>{{ item.agent }}</TableCell>

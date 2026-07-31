@@ -5,8 +5,8 @@ from ..models import Document
 
 
 class NoMemoryProvider(MemoryProvider):
-    name = "none"
-    description = "No memory system (baseline)."
+    name = "vanilla"
+    description = "No memory system (vanilla baseline)."
     kind = "local"
 
     def ingest(self, documents: list[Document]) -> None:
