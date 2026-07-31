@@ -38,7 +38,7 @@ Three agent stacks, selected with `--agent` (standalone harness) or `SDE_AGENT` 
 | `--agent` | model | image | memory delivery (memory arm) |
 |---|---|---|---|
 | `opencode` | `google/gemini-3.5-flash` | `sdebench-agent` | the `hindsight-coding-agents` opencode plugin, mounted + configured in-container |
-| `claude-code` | `claude-sonnet-5` | `sdebench-agent-claude` | one reflect result injected via `--append-system-prompt` (Claude treats hook-injected context as untrusted) |
+| `claude-code` | `claude-sonnet-5` | `sdebench-agent-claude` | the plugin's `UserPromptSubmit` hook (`claude-hook.js`), wired exactly as the installer does (the real product path) |
 | `codex` | `gpt-5.1-codex-mini` | `sdebench-agent-codex` | Codex hooks running the plugin's `codex-hook.js` (the real product path) |
 
 Build the images from `sdebench/Dockerfile.agent*`; the grading image is `sdebench/Dockerfile`
@@ -48,9 +48,10 @@ passed through and logged in in-container for codex); claude-code mounts OAuth c
 
 **Vanilla-arm fairness**: on `conversation`-source tasks the past developer chats are made
 *reachable* by the plain agent — seeded as native opencode sessions for `opencode`, and as markdown
-transcripts under `/root/project-history/` for `codex`/`claude-code` — with a one-line pointer in
-the prompt. Nothing is injected; the agent reads them only if it thinks to. That keeps the
-comparison "reliable surfacing" vs "available but unprompted", not "access" vs "no access".
+transcripts under `/root/project-history/` for `codex`/`claude-code`. The prompt does NOT point at
+them (availability, not advertisement): whether the agent thinks to look for prior context is part
+of what's measured. That keeps the comparison "reliable surfacing" vs "available but unprompted",
+not "access" vs "no access".
 
 ## Running
 
