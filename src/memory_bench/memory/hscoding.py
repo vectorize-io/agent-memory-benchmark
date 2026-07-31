@@ -41,7 +41,7 @@ class HsCodingProvider(MemoryProvider):
     provider = "hindsight"
     variant = "coding-plugin"
     link = "https://github.com/vectorize-io/hindsight"
-    concurrency = 4
+    concurrency = int(os.environ.get("SDE_CONCURRENCY", "4"))
 
     def __init__(self) -> None:
         self._url = os.environ.get("SDE_HINDSIGHT_URL", "http://localhost:8888")
