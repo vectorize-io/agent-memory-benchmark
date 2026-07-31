@@ -391,27 +391,45 @@ def stop_agent_container(cid: str) -> None:
 
 
 def _parse_claude(stdout: str, elapsed: float) -> dict:
-    """Parse claude-code's `--output-format json` result into the common {tokens,turns,cost,...} shape."""
+    """Parse claude-code's `--output-format stream-json --verbose` JSONL: one event per line —
+    assistant messages carry content blocks (text / tool_use), the final `result` event carries
+    the run totals (usage, num_turns, total_cost_usd)."""
     tok = {"input": 0, "output": 0, "reasoning": 0, "cache_read": 0, "cache_write": 0}
     traj = []
-    try:
-        d = json.loads(stdout.strip().splitlines()[-1])
-    except Exception:
+    final = None
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            e = json.loads(line)
+        except Exception:
+            continue
+        if e.get("type") == "assistant":
+            for blk in ((e.get("message") or {}).get("content") or []):
+                if blk.get("type") == "text" and blk.get("text"):
+                    traj.append({"k": "say", "text": str(blk["text"])[:1500]})
+                elif blk.get("type") == "tool_use":
+                    inp = blk.get("input") or {}
+                    arg = str(inp.get("command") or inp.get("file_path") or inp.get("pattern")
+                              or inp.get("path") or json.dumps(inp))[:160]
+                    traj.append({"k": "tool", "tool": str(blk.get("name", "")).lower(),
+                                 "arg": arg, "input": "", "out": ""})
+        elif e.get("type") == "result":
+            final = e
+    if final is None:
         return {"elapsed": elapsed, "tokens": tok, "turns": 0, "trajectory": traj, "cost": 0.0}
-    if d.get("is_error"):
+    if final.get("is_error"):
         # Fail LOUDLY: a broken agent (expired OAuth, api_error) otherwise reads as a normal
         # 0-token turn and silently burns the whole intervention budget in seconds.
-        raise RuntimeError(f"claude agent error: {str(d.get('result'))[:200]}")
-    u = d.get("usage", {}) or {}
+        raise RuntimeError(f"claude agent error: {str(final.get('result'))[:200]}")
+    u = final.get("usage", {}) or {}
     tok["input"] = u.get("input_tokens", 0) or 0
     tok["output"] = u.get("output_tokens", 0) or 0
     tok["cache_read"] = u.get("cache_read_input_tokens", 0) or 0
     tok["cache_write"] = u.get("cache_creation_input_tokens", 0) or 0
-    txt = d.get("result", "")
-    if txt:
-        traj.append({"k": "say", "text": str(txt)[:1500]})
-    return {"elapsed": elapsed, "tokens": tok, "turns": d.get("num_turns", 0) or 0,
-            "trajectory": traj, "cost": d.get("total_cost_usd", 0.0) or 0.0}
+    return {"elapsed": elapsed, "tokens": tok, "turns": final.get("num_turns", 0) or 0,
+            "trajectory": traj, "cost": final.get("total_cost_usd", 0.0) or 0.0}
 
 
 def _parse_codex(stdout: str, elapsed: float) -> dict:
@@ -459,12 +477,12 @@ def run_agent(cid: str, model: str, timeout: int, message: str, resume: bool = F
     # One turn: exec the agent into the already-running per-task container (session store lives inside,
     # so `-c`/`--continue` resumes the same session across the intervention loop).
     if agent == "claude-code":
-        cmd = ["docker", "exec", "-w", "/work", cid, "claude", "-p", "--output-format", "json",
+        # stream-json (+ --verbose) emits every assistant message incl. tool_use blocks — the plain
+        # json format returns only the final message, which left the UI trajectory empty.
+        cmd = ["docker", "exec", "-w", "/work", cid, "claude", "-p",
+               "--output-format", "stream-json", "--verbose",
                "--permission-mode", "acceptEdits", "--model", model]
-        # Inject memory via --append-system-prompt (TRUSTED channel). A UserPromptSubmit hook's
-        # additionalContext is treated by claude as a possible prompt-injection and REFUSED; the system
-        # prompt is trusted. This is claude's equivalent of opencode's system-prompt injection.
-        if system_append:
+        if system_append:  # optional trusted-channel injection (unused by the memory arms; hook delivers)
             cmd += ["--append-system-prompt", system_append]
         if resume:
             cmd.append("--continue")

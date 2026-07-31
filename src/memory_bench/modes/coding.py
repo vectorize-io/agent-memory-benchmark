@@ -101,6 +101,24 @@ class CodingMode(ResponseMode):
         result_path = work / "result.json"
         if result_path.exists():
             result = json.loads(result_path.read_text())
+            trace_path = work / "trace.json"
+            if trace_path.exists():
+                # Surface WHAT HAPPENED to the UI's agent view: flatten the per-round trace into one
+                # step list (feedback rounds separated by 🔁 markers), plus the final patch and the
+                # repo's git history. Injected memory (hscoding) comes from the plugin's diag trail.
+                tr = json.loads(trace_path.read_text())
+                flat: list = []
+                for i, rnd in enumerate(tr.get("trace") or []):
+                    if i:
+                        flat.append({"k": "say", "text": "🔁 " + (rnd.get("prompt") or "")[:400]})
+                    flat.extend(rnd.get("trajectory") or [])
+                result["trajectory"] = flat
+                result["git_history"] = tr.get("git_history")
+                result["final_patch"] = tr.get("final_patch")
+            mem_blocks = [d.get("answer") for d in (result.get("memory_diag") or [])
+                          if d.get("event") == "reflect_ok" and d.get("answer")]
+            if mem_blocks:
+                result["memory_context"] = "\n".join(f"## Memory (reflect)\n{a}" for a in mem_blocks)
         else:
             # harness crashed before grading — surface stderr tail so it's debuggable
             result = {"solved": False, "interventions": None,

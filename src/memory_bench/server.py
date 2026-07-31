@@ -161,8 +161,9 @@ def _list_results(published_only: bool = False) -> list[dict]:
                 def _toks(sel):
                     return sum(sum((m.get("tokens", {}) or {}).get(x, 0) or 0 for x in sel) for m in metas)
                 agent = next((m.get("agent") for m in metas if m.get("agent")), None) or "opencode"
+                model = next((m.get("model") for m in metas if m.get("model")), None)
                 entries[-1].update({
-                    "coding": True, "agent": agent,
+                    "coding": True, "agent": agent, "model": model,
                     "tasks": len(rs),
                     "solved": sum(1 for r in rs if (r.get("meta", {}) or {}).get("solved")),
                     "interventions": _sum("interventions"),

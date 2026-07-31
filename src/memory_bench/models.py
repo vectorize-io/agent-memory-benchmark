@@ -51,6 +51,8 @@ class QueryResult:
     score: float | None = None  # continuous score 0-1 (used by BEAM paper scoring); None means binary only
     meta: dict = field(default_factory=dict)  # propagated from Query.meta
     raw_response: dict | None = None  # raw provider response, free-form
+    trajectory: list | None = None     # coding: flattened agent steps ({k: say|tool|patch, ...}) for the UI agent view
+    git_history: list | None = None    # coding: the repo's recent commits ({sha, subject, body, diff})
     category_axes: dict[str, list[str]] = field(default_factory=dict)  # axis → values, e.g. {"conversation": ["conv-26"], "question_type": ["temporal"]}
 
 

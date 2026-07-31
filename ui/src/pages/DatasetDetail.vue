@@ -376,6 +376,7 @@ function hasCategoryData(local, split) {
                   <TableRow>
                     <TableHead>Run</TableHead>
                     <TableHead>Agent</TableHead>
+                    <TableHead>Model</TableHead>
                     <TableHead :right="true">Tasks</TableHead>
                     <TableHead :right="true">Solved</TableHead>
                     <TableHead :right="true">Interventions</TableHead>
@@ -396,6 +397,7 @@ function hasCategoryData(local, split) {
                       </div>
                     </TableCell>
                     <TableCell>{{ item.agent }}</TableCell>
+                    <TableCell class="text-muted-foreground/85">{{ item.model ?? "—" }}</TableCell>
                     <TableCell :right="true">{{ item.tasks ?? '—' }}</TableCell>
                     <TableCell :right="true">{{ item.solved != null ? item.solved + '/' + item.tasks : '—' }}</TableCell>
                     <TableCell :right="true" class="font-semibold" title="Human-like feedback rounds needed (lower is better)">{{ item.interventions ?? '—' }}</TableCell>

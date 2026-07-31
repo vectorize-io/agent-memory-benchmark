@@ -316,7 +316,7 @@ function toggleCat(axis, cat) {
 
         <div v-if="data?.answer_llm || data?.judge_llm" class="text-sm text-muted-foreground mb-2 space-y-0.5">
           <div v-if="data.answer_llm"><span class="text-foreground/70">Answer LLM</span> {{ data.answer_llm }}</div>
-          <div v-if="data.judge_llm"><span class="text-foreground/70">Judge LLM</span> {{ data.judge_llm }}</div>
+          <div v-if="data.judge_llm && data.mode !== 'coding'"><span class="text-foreground/70">Judge LLM</span> {{ data.judge_llm }}</div><div v-else-if="data.mode === 'coding'"><span class="text-foreground/70">Graded by</span> pytest (hidden + repro + existing suites)</div>
         </div>
 
         <div v-if="isAgent && agentStats?.sde" class="grid grid-cols-2 gap-1.5">
