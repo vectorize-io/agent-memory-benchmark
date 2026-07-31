@@ -316,7 +316,7 @@ function toggleCat(axis, cat) {
 
         <div v-if="data?.answer_llm || data?.judge_llm" class="text-sm text-muted-foreground mb-2 space-y-0.5">
           <div v-if="data.answer_llm"><span class="text-foreground/70">Answer LLM</span> {{ data.answer_llm }}</div>
-          <div v-if="data.judge_llm && data.mode !== 'coding'"><span class="text-foreground/70">Judge LLM</span> {{ data.judge_llm }}</div><div v-else-if="data.mode === 'coding'"><span class="text-foreground/70">Graded by</span> pytest (hidden + repro + existing suites)</div>
+          <div v-if="data.judge_llm && data.mode !== 'coding'"><span class="text-foreground/70">Judge LLM</span> {{ data.judge_llm }}</div>
         </div>
 
         <div v-if="isAgent && agentStats?.sde" class="grid grid-cols-2 gap-1.5">
@@ -340,7 +340,7 @@ function toggleCat(axis, cat) {
             <p class="font-semibold text-foreground text-sm">{{ val }}</p>
           </div>
         </div>
-        <div v-else-if="perf" class="grid grid-cols-3 gap-1.5">
+        <div v-else-if="perf && data?.mode !== 'coding'" class="grid grid-cols-3 gap-1.5">
           <div v-for="[label, val] in [
             ['Ingest/doc', perf.ingestAvg.toFixed(1) + 'ms'],
             ['Recall p50', pct50(perf.recTimes).toFixed(0) + 'ms'],
