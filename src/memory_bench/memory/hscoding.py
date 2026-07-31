@@ -85,8 +85,11 @@ class HsCodingProvider(MemoryProvider):
         base.mkdir(parents=True, exist_ok=True)
         # 1. build the task repo (deepen reads its git history — the same knowledge the dataset's
         #    git-commit Documents describe, in its native form)
-        await asyncio.to_thread(subprocess.run, ["python", str(build_py), str(src)],
-                                capture_output=True, text=True, env={**os.environ})
+        bp = await asyncio.to_thread(subprocess.run, ["python", str(build_py), str(src)],
+                                     capture_output=True, text=True, env={**os.environ})
+        if bp.returncode != 0 or not (src / ".git").exists():
+            raise RuntimeError(f"task repo build failed for {task_id} (rc={bp.returncode}): "
+                               f"{(bp.stderr or bp.stdout or '')[-200:]}")
         # 2. the plugin's deepen engine (it owns extraction/strategies/pages/git scope)
         cmd = ["node", str(self._plugin_dir / "dist" / "deepen.js"), "--repo", str(src),
                "--bank", bank, "--api-url", self._url, "--git-ingest", "full"]
