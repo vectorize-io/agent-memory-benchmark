@@ -140,9 +140,12 @@ class SdebenchDataset(Dataset):
                     content=f"Git commit: {t['decision_subject']}\n\n{t.get('decision_rationale', '')}",
                     user_id=tid, context="a commit message from this project's git history"))
             for d in decoys:
+                turns = d.get("turns", [])
                 docs.append(Document(
-                    id=f"{tid}:{d.get('id', 'decoy')}", content=_render_chat(d.get("turns", [])),
-                    user_id=tid, context="past developer conversation about this project"))
+                    id=f"{tid}:{d.get('id', 'decoy')}", content=_render_chat(turns),
+                    user_id=tid,
+                    messages=[{"role": m.get("role", "user"), "content": m.get("text", "")} for m in turns],
+                    context="past developer conversation about this project"))
             for sha, msg in noise:
                 docs.append(Document(
                     id=f"{tid}:git-{sha}", content=f"Git commit: {msg}", user_id=tid,
