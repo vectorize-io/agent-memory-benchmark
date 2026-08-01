@@ -34,9 +34,9 @@ def _task_dir(task):
 # $1.50 input / $9.00 output, cached input 90% off ($0.15). reasoning bills as output.
 PRICES = {
     "google/gemini-3.5-flash": {"input": 1.50, "cache_read": 0.15, "cache_write": 1.50, "output": 9.00},
-    # gpt-5.1-codex-mini (Jul 2026): $0.25 in / $2.00 out; cached input 90% off; OpenAI does not
-    # bill cache writes separately (they price as normal input).
-    "gpt-5.1-codex-mini": {"input": 0.25, "cache_read": 0.025, "cache_write": 0.25, "output": 2.00},
+    # gpt-5.4-mini (Aug 2026): $0.75 in / $4.50 out; cached input 90% off; cache writes bill as
+    # input. (Codex-branded models became inaccessible to plain API keys — Aug 2026.)
+    "gpt-5.4-mini": {"input": 0.75, "cache_read": 0.075, "cache_write": 0.75, "output": 4.50},
 }
 
 
@@ -271,7 +271,7 @@ _AGENT_IMAGES = {"opencode": os.environ.get("SDE_AGENT_IMAGE", "sdebench-agent")
                  "claude-code": os.environ.get("SDE_AGENT_IMAGE_CLAUDE", "sdebench-agent-claude"),
                  "codex": os.environ.get("SDE_AGENT_IMAGE_CODEX", "sdebench-agent-codex")}
 _AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5",
-                "codex": "gpt-5.1-codex-mini"}
+                "codex": "gpt-5.4-mini"}
 # The hindsight-coding-agents plugin package (dist/ built) — memory arms only. No default that
 # assumes a particular machine layout: point SDE_HSCODING_PLUGIN_DIR at a checkout of
 # hindsight-integrations/hindsight-coding-agents (or the npm-installed package dir).
@@ -460,6 +460,12 @@ def _parse_codex(stdout: str, elapsed: float) -> dict:
                 turns += 1
                 arg = str(item.get("command") or item.get("path") or item.get("text") or "")[:160]
                 traj.append({"k": "tool", "tool": str(it), "arg": arg, "input": "", "out": ""})
+        elif et in ("turn.failed", "error"):
+            # Fail LOUDLY (same class as the claude is_error guard): a dead codex agent (bad auth,
+            # missing model) otherwise reads as a normal 0-token turn and silently burns the whole
+            # correction budget — an entire garbage campaign arm looked "complete" this way.
+            msg = str((e.get("error") or {}).get("message") or e.get("message") or "")[:200]
+            raise RuntimeError(f"codex agent error: {msg}")
         elif et == "turn.completed":
             u = e.get("usage") or {}
             tok["input"] += u.get("input_tokens", 0) or 0
