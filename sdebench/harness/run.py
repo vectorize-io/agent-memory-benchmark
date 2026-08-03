@@ -390,6 +390,16 @@ def stop_agent_container(cid: str) -> None:
         subprocess.run(["docker", "rm", "-f", cid], capture_output=True, text=True)
 
 
+import re as _re_secrets
+
+_SECRET_RE = _re_secrets.compile(r"(AIzaSy[A-Za-z0-9_-]{25,}|sk-[A-Za-z0-9_-]{20,}|sk-ant-[A-Za-z0-9_-]{20,}|(?:API_KEY|API_TOKEN|SECRET|PASSWORD)=\S+)")
+
+def _redact(s: str) -> str:
+    """Strip secret-shaped strings from anything persisted (trajectories capture tool output —
+    an agent running `env` in-container once exported every API key into a committed result)."""
+    return _SECRET_RE.sub("REDACTED", s or "")
+
+
 def _parse_claude(stdout: str, elapsed: float) -> dict:
     """Parse claude-code's `--output-format stream-json --verbose` JSONL: one event per line —
     assistant messages carry content blocks (text / tool_use), the final `result` event carries
@@ -806,7 +816,7 @@ def main():
             totals[k] += m["tokens"][k]
         totals["turns"] += m["turns"]; totals["wall_s"] += m["elapsed"]
         totals["cost"] += m.get("cost", 0.0)      # agent-reported cost (claude); opencode computes below
-        trace.append({"role": role, "prompt": prompt_text, "trajectory": m["trajectory"],
+        trace.append({"role": role, "prompt": _redact(prompt_text), "trajectory": json.loads(_redact(json.dumps(m["trajectory"]))),
                       "tokens": m["tokens"], "turns": m["turns"], "wall_s": round(m["elapsed"], 1)})
 
     print(f"[{task['task_id']}] history={args.history} model={args.model} — initial attempt…", flush=True)
