@@ -139,7 +139,7 @@ def publish_results(
     results-manifest.json from all local .json.gz files.
 
     Workflow:
-        uv run omb publish-results outputs/personamem/mem0/rag/32k.json --push
+        uv run amb publish-results outputs/personamem/mem0/rag/32k.json --push
         git add outputs/ results-manifest.json && git commit -m 'results: ...' && git push
     """
     import gzip as _gzip
@@ -245,7 +245,7 @@ def unpublish_results(
     """Decompress a result back to .json and optionally remove it from Vercel Blob.
 
     Workflow:
-        uv run omb unpublish-results outputs/personamem/mem0/rag/32k.json.gz --push
+        uv run amb unpublish-results outputs/personamem/mem0/rag/32k.json.gz --push
         git add outputs/ results-manifest.json && git commit -m 'results: remove ...' && git push
     """
     import gzip as _gzip
@@ -336,7 +336,7 @@ def publish_dataset(
     Blob upload skips files whose content hasn't changed (checksum-based).
 
     Workflow (first time or after dataset update):
-        uv run omb publish-dataset --dataset personamem --push
+        uv run amb publish-dataset --dataset personamem --push
         git add data/ && git commit -m 'data: export personamem' && git push
     """
     import gzip as _gzip
@@ -466,7 +466,7 @@ def unpublish_dataset(
     """Remove a dataset's exported files from data/ and optionally from Vercel Blob.
 
     Workflow:
-        uv run omb unpublish-dataset ama-bench --push
+        uv run amb unpublish-dataset ama-bench --push
         git add data/ && git commit -m 'data: remove ama-bench' && git push
     """
     import shutil
@@ -693,7 +693,7 @@ def upload_blob(
 ) -> None:
     """Upload data/ files to Vercel Blob for public deployment.
 
-    Run this after 'omb export-data' to make dataset files available on Vercel.
+    Run this after 'amb export-data' to make dataset files available on Vercel.
     Requires BLOB_READ_WRITE_TOKEN env var or --token option.
     """
     import urllib.request

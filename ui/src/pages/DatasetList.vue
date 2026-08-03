@@ -316,7 +316,7 @@ const vReveal = {
         </div>
         <div v-else-if="error" class="text-destructive text-sm">{{ error }}</div>
         <div v-else-if="datasets.length === 0">
-          <p class="text-muted-foreground text-sm">No results yet. Run <code class="font-mono text-sm bg-secondary px-2 py-0.5 rounded">omb run …</code> to get started.</p>
+          <p class="text-muted-foreground text-sm">No results yet. Run <code class="font-mono text-sm bg-secondary px-2 py-0.5 rounded">amb run …</code> to get started.</p>
         </div>
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           <Card

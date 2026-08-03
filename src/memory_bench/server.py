@@ -196,7 +196,7 @@ def _load_data_file(dataset: str, split: str, name: str):
     except Exception as exc:
         raise FileNotFoundError(
             f"Data file missing locally and from Blob: {relative}\n"
-            f"Run 'omb export-data --dataset {dataset}' to generate it."
+            f"Run 'amb export-data --dataset {dataset}' to generate it."
         ) from exc
 
 

@@ -1,5 +1,5 @@
 [project]
-name = "omb"
+name = "amb"
 version = "0.1.0"
 description = "Open Memory Benchmark"
 requires-python = ">=3.11"
@@ -25,7 +25,8 @@ dependencies = [
 ]
 
 [project.scripts]
-omb = "memory_bench.cli:app"
+amb = "memory_bench.cli:app"
+omb = "memory_bench.cli:app"  # legacy alias (pre-rename); prefer `amb`
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/memory_bench"]
