@@ -67,3 +67,5 @@ Results are saved to `outputs/{dataset}/{memory}/{mode}/{domain}.json` and can b
 - Python ≥ 3.11
 - `GEMINI_API_KEY` in `.env` or environment
 - For MemBench: set `MEMBENCH_DATA_PATH` to your local data directory
+- For `--memory letta`: `LETTA_API_KEY` (Letta Cloud) or `LETTA_BASE_URL` (self-hosted server).
+  Optional: `LETTA_EMBEDDING_MODEL`, `LETTA_MODEL` and `LETTA_MAX_STEPS` (agent mode only)
