@@ -42,7 +42,7 @@ class LettaMemoryProvider(MemoryProvider):
     description = (
         "Letta archival memory: documents are written as passages into a per-unit archive "
         "and retrieved by semantic search. Agent mode answers through a Letta agent that "
-        "searches its own archival memory. k=20."
+        "searches its own archival memory."
     )
     kind = "cloud"
     link = "https://letta.com"
@@ -64,6 +64,10 @@ class LettaMemoryProvider(MemoryProvider):
     def initialize(self) -> None:
         from letta_client import Letta
 
+        if not os.environ.get("LETTA_API_KEY") and not os.environ.get("LETTA_BASE_URL"):
+            raise RuntimeError(
+                "letta provider needs LETTA_API_KEY (Letta Cloud) or LETTA_BASE_URL (self-hosted server)"
+            )
         # api_key comes from LETTA_API_KEY; base_url from LETTA_BASE_URL when self-hosted.
         self._client = Letta()
 
@@ -135,7 +139,7 @@ class LettaMemoryProvider(MemoryProvider):
         self, query: str, k: int = 10, user_id: str | None = None, query_timestamp: str | None = None
     ) -> tuple[list[Document], dict | None]:
         archive_id = self._ensure_archive(self._unit(user_id))
-        results = self._client.passages.search(archive_id=archive_id, query=query, limit=self.k)
+        results = self._client.passages.search(archive_id=archive_id, query=query, limit=k or self.k)
 
         docs = []
         raw_results = []

@@ -98,7 +98,7 @@
     },
     "letta": {
       "key": "letta",
-      "description": "Letta archival memory: documents are written as passages into a per-unit archive and retrieved by semantic search. Agent mode answers through a Letta agent that searches its own archival memory. k=20.",
+      "description": "Letta archival memory: documents are written as passages into a per-unit archive and retrieved by semantic search. Agent mode answers through a Letta agent that searches its own archival memory.",
       "kind": "cloud",
       "link": "https://letta.com",
       "logo": "https://www.google.com/s2/favicons?sz=32&domain=letta.com"
