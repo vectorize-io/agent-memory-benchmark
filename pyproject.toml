@@ -14,6 +14,7 @@ dependencies = [
     "sentence-transformers>=3.0",
     "python-dotenv>=1.0",
     "hindsight-all>=0.4",
+    "letta-client>=1.12.1",
     "supermemory>=0.1",
     "httpx>=0.27",
     "qdrant-client>=1.13",
