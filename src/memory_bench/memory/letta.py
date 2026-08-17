@@ -12,12 +12,23 @@ Works against Letta Cloud (LETTA_API_KEY) or a self-hosted server
 import os
 import threading
 import uuid
+from datetime import datetime
 from pathlib import Path
 
 from ..models import Document
 from .base import MemoryProvider
 
 _BATCH_SIZE = 50
+
+
+def _parse_iso_ts(ts: str | None) -> datetime | None:
+    """Best-effort ISO-8601 parse; returns a timezone-aware UTC datetime or None."""
+    if not ts:
+        return None
+    try:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except (ValueError, TypeError):
+        return None
 
 
 def _message_text(content) -> str:
@@ -127,7 +138,7 @@ class LettaMemoryProvider(MemoryProvider):
         for unit, docs in by_unit.items():
             archive_id = self._ensure_archive(unit)
             passages = [
-                {"text": self._text(doc), "metadata": {"doc_id": doc.id}}
+                {"text": self._text(doc), "metadata": {"doc_id": doc.id, "timestamp": doc.timestamp}}
                 for doc in docs
             ]
             for i in range(0, len(passages), _BATCH_SIZE):
@@ -139,12 +150,21 @@ class LettaMemoryProvider(MemoryProvider):
         self, query: str, k: int = 10, user_id: str | None = None, query_timestamp: str | None = None
     ) -> tuple[list[Document], dict | None]:
         archive_id = self._ensure_archive(self._unit(user_id))
-        results = self._client.passages.search(archive_id=archive_id, query=query, limit=k or self.k)
+        k_eff = k or self.k
+        # Fetch a small buffer so a strict timestamp filter can still return up to k results.
+        results = self._client.passages.search(
+            archive_id=archive_id, query=query, limit=max(k_eff, 50)
+        )
 
-        docs = []
-        raw_results = []
+        query_dt = _parse_iso_ts(query_timestamp)
+        docs: list[Document] = []
+        raw_results: list[dict] = []
         for i, r in enumerate(results):
             passage = r.passage
+            if query_dt is not None:
+                doc_ts = _parse_iso_ts((passage.metadata or {}).get("timestamp"))
+                if doc_ts is not None and doc_ts > query_dt:
+                    continue
             docs.append(Document(id=passage.id or f"letta-{i}", content=passage.text))
             raw_results.append(
                 {
@@ -155,6 +175,8 @@ class LettaMemoryProvider(MemoryProvider):
                     "metadata": passage.metadata,
                 }
             )
+            if len(docs) >= k_eff:
+                break
         return docs, {"results": raw_results}
 
     def _ensure_agent(self, unit: str | None) -> tuple[str, threading.Lock]:
@@ -168,7 +190,14 @@ class LettaMemoryProvider(MemoryProvider):
                     include_base_tools=True,
                     message_buffer_autoclear=True,
                 )
-                self._client.agents.archives.attach(archive_id, agent_id=agent.id)
+                try:
+                    self._client.agents.archives.attach(archive_id, agent_id=agent.id)
+                except Exception:
+                    try:
+                        self._client.agents.delete(agent.id)
+                    except Exception:
+                        pass
+                    raise
                 self._agent_ids[unit] = agent.id
                 self._agent_locks[unit] = threading.Lock()
             return self._agent_ids[unit], self._agent_locks[unit]
@@ -179,9 +208,12 @@ class LettaMemoryProvider(MemoryProvider):
         unit = self._unit(user_id)
         agent_id, lock = self._ensure_agent(unit)
         # A Letta agent processes messages sequentially; concurrent sends interleave.
+        input_text = query
+        if query_timestamp:
+            input_text = f"[Question date: {query_timestamp} UTC]\n{query}"
         with lock:
             response = self._client.agents.messages.create(
-                agent_id, input=query, max_steps=self._max_steps
+                agent_id, input=input_text, max_steps=self._max_steps
             )
 
         answers: list[str] = []
