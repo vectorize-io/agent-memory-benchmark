@@ -1,4 +1,4 @@
-{
+vercel.json
   "buildCommand": "",
   "installCommand": "",
   "outputDirectory": "ui/dist",
