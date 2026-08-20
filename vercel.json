@@ -1,10 +1,8 @@
-vercel.json
-  "buildCommand": "",
-  "installCommand": "",
+{
   "outputDirectory": "ui/dist",
   "rewrites": [
-    { "source": "/api/:path*",     "destination": "/api/index" },
-    { "source": "/sitemap.xml",    "destination": "/api/index" },
+    { "source": "/api/:path*", "destination": "/api/index" },
+    { "source": "/sitemap.xml", "destination": "/api/index" },
     { "source": "/outputs/:path*", "destination": "/api/index" },
     { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ]
