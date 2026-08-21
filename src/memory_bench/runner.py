@@ -42,6 +42,11 @@ class EvalRunner:
         self._judge = GeminiJudge()
 
     def _get_judge(self, dataset: Dataset) -> "GeminiJudge":
+        # Respect OMB_JUDGE_LLM when set; fall back to dataset default.
+        import os
+        override = os.environ.get("OMB_JUDGE_LLM")
+        if override and override != "gemini":
+            return self._judge
         dataset_llm = dataset.default_judge_llm() if hasattr(dataset, "default_judge_llm") else None
         if dataset_llm is not None:
             return GeminiJudge(llm=dataset_llm)
@@ -225,6 +230,14 @@ class EvalRunner:
                 judge_llm = self._get_judge(dataset)._llm
                 score = await asyncio.to_thread(dataset.score_result, tmp_result, judge_llm)
                 score = float(score)
+                # Retry judge if answer is non-empty but score is 0 (likely judge failure).
+                # Observed: 45/400 questions get score=0 with valid answers due to
+                # AGY/Gemini quota or inconsistency. Retry once before accepting.
+                if score == 0.0 and answer_result.answer.strip():
+                    import time as _t
+                    _t.sleep(3)
+                    score = await asyncio.to_thread(dataset.score_result, tmp_result, judge_llm)
+                    score = float(score)
                 correct = score >= 0.5
                 judge_reason = f"score={score:.3f}"
             else:

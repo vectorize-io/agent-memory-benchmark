@@ -24,10 +24,9 @@ console = Console()
 
 def _resolve_gemini_key() -> None:
     key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    if not key:
-        typer.echo("Error: GEMINI_API_KEY environment variable is not set.", err=True)
-        raise typer.Exit(1)
-    os.environ["GOOGLE_API_KEY"] = key
+    if key:
+        os.environ["GOOGLE_API_KEY"] = key
+    # No key? Non-fatal — GeminiLLM will error only if actually instantiated.
 
 
 @app.command()

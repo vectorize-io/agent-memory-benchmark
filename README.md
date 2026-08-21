@@ -67,3 +67,26 @@ Results are saved to `outputs/{dataset}/{memory}/{mode}/{domain}.json` and can b
 - Python ≥ 3.11
 - `GEMINI_API_KEY` in `.env` or environment
 - For MemBench: set `MEMBENCH_DATA_PATH` to your local data directory
+
+---
+
+## ValorBrain memory provider
+
+**ValorBrain** is a hybrid memory engine for AI agents: BM25 + dense vectors (pgvector) + reciprocal-rank fusion + entity-graph reranking + cross-encoder rerank, on PostgreSQL with row-level security, multi-tenant. The provider talks to a running engine over its REST API — retrieval goes through `/api/v1/memory/prepare`, the same production path agents use at runtime (full funnel: consolidation + timeline + snippet delivery), falling back to `/search` (hybrid) when prepare returns nothing. On ingest, ~100k-char AMB chunks are re-windowed into 8k-char windows with 800-char overlap, matching production conversational windows.
+
+### BEAM-100K result
+
+| | |
+|---|---|
+| **Accuracy (avg score per criterion)** | **71.4%** |
+| Binary correct | 304/400 (76.0%) |
+| Reader (answer) | Gemini 3.6 Flash (AGY gateway) |
+| Judge | GLM-5.2 (Z.ai) — different family from the reader |
+| Avg retrieve time | 5.2s |
+| Avg context tokens | 12.6k |
+
+Run file: `outputs/beam/valorbrain/rag/100k.json` (400/400 queries, `--split 100k --memory valorbrain`).
+
+Reproduction: set `VALORBRAIN_URL`, `VALORBRAIN_TOKEN`, `VALORBRAIN_BENCHMARK_TENANT_ID` to a running engine + benchmark tenant, plus reader/judge keys, then `uv run amb run --dataset beam --split 100k --memory valorbrain --name valorbrain`. The judge is overridable via `OMB_JUDGE_LLM`/`OMB_JUDGE_MODEL` (see Known patches below) — we pin a judge from a different model family than the reader to avoid self-preference bias.
+
+The result was independently reproduced with a different reader/judge pair (stealth "Ox Alpha" reader via OpenCode Zen + GLM judge: 70.2% avg score, 76.0% binary on the same 400 queries), supporting that the score measures the memory system rather than one particular reader.
