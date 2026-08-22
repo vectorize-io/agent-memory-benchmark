@@ -27,8 +27,8 @@ Adds [MemoryHub](https://github.com/redhat-ai-americas/memory-hub) as a memory p
 
 - **Architecture:** Verbatim conversation storage in PostgreSQL + pgvector. Hybrid search via vector + keyword + BM25 with cross-encoder reranking and reciprocal-rank fusion.
 - **License:** Apache 2.0, self-hostable on OpenShift/Kubernetes
-- **PersonaMem 32k result:** TBD% accuracy (TBD/589)
-  - Reader: Gemini 3.5 Flash Lite
+- **PersonaMem 32k result:** 83.7% accuracy (493/589)
+  - Answer LLM: Gemini 3.1 Pro Preview
   - Judge: Gemini 3.5 Flash Lite
   - Embeddings: Granite (via server-side pipeline)
 

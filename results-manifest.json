@@ -756,5 +756,21 @@
     "wall_s": 10665.0,
     "tokens_in": 67479034,
     "tokens_out": 1049086
+  },
+  {
+    "path": "outputs/personamem/memoryhub/rag/32k.json",
+    "dataset": "personamem",
+    "run_name": "memoryhub",
+    "memory": "memoryhub",
+    "mode": "rag",
+    "split": "32k",
+    "total_queries": 589,
+    "correct": 493,
+    "accuracy": 0.8370118845500849,
+    "ingestion_time_ms": 0.0,
+    "ingested_docs": 0,
+    "avg_retrieve_time_ms": 1344.3,
+    "avg_context_tokens": 159989.6,
+    "category": null
   }
 ]
