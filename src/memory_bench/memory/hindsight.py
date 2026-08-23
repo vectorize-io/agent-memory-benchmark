@@ -125,6 +125,28 @@ class _HindsightBase(MemoryProvider):
         kwargs: dict = dict(enable_observations=False)
         if self._dataset == "beam":
             kwargs["retain_mission"] = self._BEAM_RETAIN_MISSION
+
+        # Retain-side ingest controls, both unset by default so every existing result stays
+        # comparable. They exist because ingest cost is dominated by fact extraction, and extraction
+        # cost is `corpus_chars / retain_chunk_size` LLM calls:
+        #
+        #   BEAM-10M is 10 conversations totalling ~468M characters. At the server-side default
+        #   chunk size of 3000 chars that is ~156,000 extraction calls for a single run.
+        #
+        # `AMB_HINDSIGHT_EXTRACTION_MODE=chunks` skips the LLM entirely and stores each chunk as its
+        # own unit. That makes a run of that size tractable, but it is NOT the same measurement:
+        # `_BEAM_RETAIN_MISSION` above is an extraction prompt, so chunks mode ignores it and stores
+        # raw text with no fact extraction and no entities. Use it deliberately, and do not compare
+        # a chunks-mode score against an extracted one.
+        #
+        # `AMB_HINDSIGHT_CHUNK_SIZE` trades the same axis more gently: doubling it roughly halves the
+        # call count while keeping extraction, at coarser granularity.
+        mode = os.environ.get("AMB_HINDSIGHT_EXTRACTION_MODE")
+        if mode:
+            kwargs["retain_extraction_mode"] = mode
+        chunk_size = os.environ.get("AMB_HINDSIGHT_CHUNK_SIZE")
+        if chunk_size:
+            kwargs["retain_chunk_size"] = int(chunk_size)
         return kwargs
 
     def _create_bank(self, bank_id: str, force_reset: bool = True) -> None:
