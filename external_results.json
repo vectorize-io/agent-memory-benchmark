@@ -480,6 +480,12 @@
         "accuracy": 0.249,
         "source_url": "https://arxiv.org/abs/2510.27246",
         "source_label": "BEAM Paper (arXiv:2510.27246)"
+      },
+      {
+        "memory": "ValorBrain",
+        "accuracy": 0.512,
+        "source_url": "https://valorbrain.valor.digital/research/beam-100k-sota-ox-alpha-reasoning-effort",
+        "source_label": "ValorBrain Research (2026-08-24)"
       }
     ]
   }
