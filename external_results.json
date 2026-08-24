@@ -143,14 +143,14 @@
         "accuracy": 0.9169,
         "source_url": "https://memmachine.ai/blog/2025/12/memmachine-v0.2-delivers-top-scores-and-efficiency-on-locomo-benchmark/",
         "source_label": "MemMachine v0.2 Blog (Dec 2025)",
-        "comment": "Self-reported by MemMachine. LLM-as-a-judge with GPT-4o-mini. Adversarial questions (cat. 5) excluded. Uses gpt-4.1-mini as backbone \u2014 stronger LLM directly inflates scores vs. gpt-4o-mini entries."
+        "comment": "Self-reported by MemMachine. LLM-as-a-judge with GPT-4o-mini. Adversarial questions (cat. 5) excluded. Uses gpt-4.1-mini as backbone — stronger LLM directly inflates scores vs. gpt-4o-mini entries."
       },
       {
         "memory": "MemMachine v0.2 (gpt-4.1-mini)",
         "accuracy": 0.9123,
         "source_url": "https://memmachine.ai/blog/2025/12/memmachine-v0.2-delivers-top-scores-and-efficiency-on-locomo-benchmark/",
         "source_label": "MemMachine v0.2 Blog (Dec 2025)",
-        "comment": "Self-reported by MemMachine. LLM-as-a-judge with GPT-4o-mini. Adversarial questions (cat. 5) excluded. Uses gpt-4.1-mini as backbone \u2014 stronger LLM directly inflates scores vs. gpt-4o-mini entries."
+        "comment": "Self-reported by MemMachine. LLM-as-a-judge with GPT-4o-mini. Adversarial questions (cat. 5) excluded. Uses gpt-4.1-mini as backbone — stronger LLM directly inflates scores vs. gpt-4o-mini entries."
       },
       {
         "memory": "MemMachine v0.2 (gpt-4o-mini)",
@@ -178,49 +178,49 @@
         "accuracy": 0.8,
         "source_url": "https://memmachine.ai/blog/2025/12/memmachine-v0.2-delivers-top-scores-and-efficiency-on-locomo-benchmark/",
         "source_label": "MemMachine v0.2 Blog (Dec 2025)",
-        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Uses gpt-4.1-mini backbone \u2014 not comparable to the gpt-4o-mini Mem0 entry below."
+        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Uses gpt-4.1-mini backbone — not comparable to the gpt-4o-mini Mem0 entry below."
       },
       {
         "memory": "Letta",
         "accuracy": 0.74,
         "source_url": "https://www.letta.com/blog/benchmarking-ai-agent-memory",
         "source_label": "Letta Blog: Benchmarking AI Agent Memory",
-        "comment": "Self-reported by Letta. LLM-as-a-judge with GPT-4.1 \u2014 a stronger judge than the GPT-4o-mini used in MemMachine comparisons, making scores not directly comparable. Adversarial questions excluded."
+        "comment": "Self-reported by Letta. LLM-as-a-judge with GPT-4.1 — a stronger judge than the GPT-4o-mini used in MemMachine comparisons, making scores not directly comparable. Adversarial questions excluded."
       },
       {
         "memory": "Memobase",
         "accuracy": 0.7578,
         "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
         "source_label": "MemMachine Blog (Sep 2025)",
-        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system \u2014 potential for biased setup or prompt choices."
+        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system — potential for biased setup or prompt choices."
       },
       {
         "memory": "Zep",
         "accuracy": 0.7514,
         "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
         "source_label": "MemMachine Blog (Sep 2025)",
-        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system \u2014 potential for biased setup or prompt choices."
+        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system — potential for biased setup or prompt choices."
       },
       {
         "memory": "Mem0",
         "accuracy": 0.6688,
         "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
         "source_label": "MemMachine Blog (Sep 2025)",
-        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system \u2014 potential for biased setup or prompt choices."
+        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system — potential for biased setup or prompt choices."
       },
       {
         "memory": "LangMem",
         "accuracy": 0.581,
         "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
         "source_label": "MemMachine Blog (Sep 2025)",
-        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system \u2014 potential for biased setup or prompt choices."
+        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system — potential for biased setup or prompt choices."
       },
       {
         "memory": "OpenAI memory",
         "accuracy": 0.529,
         "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
         "source_label": "MemMachine Blog (Sep 2025)",
-        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system \u2014 potential for biased setup or prompt choices."
+        "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system — potential for biased setup or prompt choices."
       }
     ]
   },
@@ -252,7 +252,7 @@
         "accuracy": 0.634,
         "source_url": "https://arxiv.org/abs/2601.02845",
         "source_label": "TiMem Paper (arXiv:2601.02845)",
-        "comment": "Scores for A-MEM vary widely across papers (55\u201363%), likely due to sensitivity to LLM backbone and judge configuration. Uses GPT-4o backbone here."
+        "comment": "Scores for A-MEM vary widely across papers (55–63%), likely due to sensitivity to LLM backbone and judge configuration. Uses GPT-4o backbone here."
       },
       {
         "memory": "MemoryOS",
@@ -266,7 +266,7 @@
         "accuracy": 0.6756,
         "source_url": "https://arxiv.org/abs/2601.02845",
         "source_label": "TiMem Paper (arXiv:2601.02845)",
-        "comment": "Scores for Mem0 vary widely across papers (49\u201368%), likely reflecting different LLM backbones, k-retrieval settings, and judge configurations. Uses GPT-4o backbone here."
+        "comment": "Scores for Mem0 vary widely across papers (49–68%), likely reflecting different LLM backbones, k-retrieval settings, and judge configurations. Uses GPT-4o backbone here."
       },
       {
         "memory": "Zep",
@@ -301,7 +301,7 @@
         "accuracy": 0.746,
         "source_url": "https://arxiv.org/abs/2508.03341",
         "source_label": "Nemori Paper (arXiv:2508.03341)",
-        "comment": "Self-reported. Uses GPT-4.1-mini (a newer, more capable model than GPT-4o-mini) as backbone \u2014 scores may be higher than GPT-4o-mini baselines suggest."
+        "comment": "Self-reported. Uses GPT-4.1-mini (a newer, more capable model than GPT-4o-mini) as backbone — scores may be higher than GPT-4o-mini baselines suggest."
       },
       {
         "memory": "HyMem",
@@ -357,14 +357,14 @@
         "accuracy": 0.816,
         "source_url": "https://arxiv.org/abs/2512.12818",
         "source_label": "Hindsight Paper (arXiv:2512.12818)",
-        "comment": "Evaluated by a competitor (Hindsight/Vectorize). Uses GPT-4o as backbone. Judge: GPT-OSS-120B \u2014 differs from GPT-4o used in the original LongMemEval paper and most other entries here, making direct comparison harder."
+        "comment": "Evaluated by a competitor (Hindsight/Vectorize). Uses GPT-4o as backbone. Judge: GPT-OSS-120B — differs from GPT-4o used in the original LongMemEval paper and most other entries here, making direct comparison harder."
       },
       {
         "memory": "Supermemory (Gemini-3)",
         "accuracy": 0.852,
         "source_url": "https://arxiv.org/abs/2512.12818",
         "source_label": "Hindsight Paper (arXiv:2512.12818)",
-        "comment": "Evaluated by a competitor (Hindsight/Vectorize). Uses Gemini-3 Pro Preview as backbone \u2014 stronger than GPT-4o, inflating score. Judge: GPT-OSS-120B."
+        "comment": "Evaluated by a competitor (Hindsight/Vectorize). Uses Gemini-3 Pro Preview as backbone — stronger than GPT-4o, inflating score. Judge: GPT-OSS-120B."
       },
       {
         "memory": "Honcho",
@@ -408,6 +408,18 @@
         "accuracy": 0.323,
         "source_url": "https://arxiv.org/abs/2510.27246",
         "source_label": "BEAM Paper (arXiv:2510.27246)"
+      },
+      {
+        "memory": "ValorBrain",
+        "accuracy": 0.808,
+        "source_url": "https://valorbrain.valor.digital/research/beam-100k-sota-ox-alpha-reasoning-effort",
+        "source_label": "ValorBrain Research (2026-08-24)"
+      },
+      {
+        "memory": "ValorBrain (GLM-5.2 reader)",
+        "accuracy": 0.709,
+        "source_url": "https://valorbrain.valor.digital/research/memory-quality-beats-reader-quality-beam-100k",
+        "source_label": "ValorBrain Research (2026-08-04)"
       }
     ],
     "500k": [
