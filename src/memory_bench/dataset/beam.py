@@ -245,6 +245,54 @@ class BEAMDataset(Dataset):
     def category_type(self, split: str, category: str) -> str:
         return "query"
 
+    @staticmethod
+    def _sessions_from_plans(chat: list) -> list[list[dict]]:
+        """Sessions for the BEAM-10M shape, which nests two levels deeper than the other splits.
+
+        Most splits store `chat` as a list of sessions, each a list of turn dicts, and the loader
+        chunks those into bounded documents. BEAM-10M instead stores::
+
+            chat[i]["plan-N"][batch]["turns"] -> list of turn GROUPS, each a list of turn dicts
+
+        Nothing there is a `list` at the top level, so it fell through to the "unusual structure"
+        branch and was emitted as ONE document per conversation -- a median of 47,280,119 chars,
+        470x the `_MAX_DOC_CHARS` this same loader enforces on every other split, and for the same
+        reason that limit exists.
+
+        The consequence was not a slow ingest but an impossible one. Retain cost is per-CALL rather
+        than per-byte (measured against a live API: 1 item 1.29s, 50 items 1.39s), and a backend
+        that serializes retains per document gets no parallelism when a 10-conversation split is
+        only 10 documents. Ingest ran at ~1,300 chars/s -- ~100 hours for the split -- so the
+        harness hit its 300s-per-operation timeout and scored a corpus 0.27% loaded.
+
+        Flattening each batch's turn groups into one session restores the normal path: many
+        bounded documents, chunked by the same code as every other split.
+        """
+        sessions: list[list[dict]] = []
+        for element in chat:
+            if not isinstance(element, dict):
+                continue
+            # plan-1, plan-2, ... -- sorted so document ids are stable across runs. A plan can be
+            # null (plan-10 routinely is), which is why the list check is not an assertion.
+            for _plan, batches in sorted(element.items()):
+                if not isinstance(batches, list):
+                    continue
+                for batch in batches:
+                    if not isinstance(batch, dict):
+                        continue
+                    groups = batch.get("turns")
+                    if not isinstance(groups, list):
+                        continue
+                    turns = [
+                        t
+                        for group in groups
+                        for t in (group if isinstance(group, list) else [group])
+                        if isinstance(t, dict) and "role" in t
+                    ]
+                    if turns:
+                        sessions.append(turns)
+        return sessions
+
     def load_documents(
         self,
         split: str,
@@ -274,6 +322,8 @@ class BEAMDataset(Dataset):
             # Max ~100k chars per document to keep PostgreSQL happy.
             _MAX_DOC_CHARS = 100_000
             sessions = [s for s in chat if isinstance(s, list)]
+            if not sessions:
+                sessions = self._sessions_from_plans(chat)
             if sessions:
                 doc_idx = 0
                 for s_idx, session in enumerate(sessions):
@@ -311,7 +361,9 @@ class BEAMDataset(Dataset):
                         doc_idx += 1
                         chunk_start = chunk_end
             else:
-                # Fallback for unusual structures (e.g., BEAM-10M flat turns)
+                # Neither sessions nor plan batches -- keep the conversation whole rather than drop
+                # it. Reaching here means a structure this loader does not model, so there is
+                # nothing to chunk on.
                 documents.append(Document(
                     id=conv_id,
                     content=self._format_chat(chat),
