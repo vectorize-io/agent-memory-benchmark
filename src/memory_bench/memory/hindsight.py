@@ -158,8 +158,26 @@ class _HindsightBase(MemoryProvider):
                 pass
         self._client.create_bank(bank_id=bank_id, name=f"Benchmark Bank ({bank_id})", **kwargs)
 
-    async def _await_operation(self, client, bank_id: str, operation_id: str, max_wait_s: int = 300) -> None:
-        """Poll until an async retain operation completes (5-minute timeout)."""
+    async def _await_operation(self, client, bank_id: str, operation_id: str, max_wait_s: int | None = None) -> None:
+        """Poll until an async retain operation completes.
+
+        The timeout has to scale with the corpus, not sit at a constant. A retain is submitted
+        asynchronously and returns an operation id immediately -- measured in-cluster, submitting a
+        20,000,000-char document takes 3.9s -- but the work behind it runs at roughly 31,000 chars/s,
+        so a BEAM-10M conversation (median 47,280,119 chars) needs ~25 MINUTES to finish.
+
+        At the old fixed 300s this method gave up five minutes in, logged a warning, and let the
+        harness query a corpus that was still loading. That is what produced the published 10m
+        result: `ingested_docs: 1`, `accuracy: 0.0`. The run did not fail, it scored an empty bank.
+
+        `AMB_OPERATION_TIMEOUT_S` overrides it; the default is two hours, which covers the largest
+        single document in any current split with room to spare.
+        """
+        if max_wait_s is None:
+            try:
+                max_wait_s = int(os.environ.get("AMB_OPERATION_TIMEOUT_S", "7200"))
+            except ValueError:
+                max_wait_s = 7200
         from hindsight_client_api.api.operations_api import OperationsApi
         ops_api = OperationsApi(client._api_client)
         waited = 0
@@ -179,9 +197,10 @@ class _HindsightBase(MemoryProvider):
             waited += 1
         if waited >= max_wait_s:
             import logging
-            logging.getLogger(__name__).warning(
-                f"_await_operation timed out after {max_wait_s}s for bank={bank_id} op={operation_id} "
-                f"last_status={last_status!r}; continuing anyway."
+            logging.getLogger(__name__).error(
+                f"_await_operation GAVE UP after {max_wait_s}s for bank={bank_id} op={operation_id} "
+                f"last_status={last_status!r}. Ingestion is INCOMPLETE and any score from this run "
+                f"measures a partially loaded corpus, not the system. Raise AMB_OPERATION_TIMEOUT_S."
             )
 
     # ── Bank creation (async) ─────────────────────────────────────────────────
