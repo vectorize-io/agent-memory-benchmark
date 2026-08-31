@@ -75,10 +75,6 @@
     "sha": "e71811ef87b28cc7b267576dc1f5453cd6e9b8d577d5d221e50ea0aaf588c111",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/locomo/cognee/rag/locomo10.json-0tVRzf3uJUtZHPsuGyu3RYNyNyBrQt.gz"
   },
-  "outputs/beam/hindsight/rag/100k.json.gz": {
-    "sha": "b2556acce9e685593bef9cab745b1b23d1d5aa47b2b19e45bc804e88716d8ad1",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/beam/hindsight/rag/100k.json-Q04qYhsmo1LjLEfy4DdUGd6NXhRudP.gz"
-  },
   "outputs/lifebench/hindsight/rag/en.json.gz": {
     "sha": "d60e7c38a20a173412abc257d3b0ad126a70525ba4e17aa73802312fc93986b1",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/lifebench/hindsight/rag/en.json-9qEDeK3HYPWqYIh11g01UilVNibFas.gz"
@@ -174,13 +170,5 @@
   "outputs/sdebench/hindsight-codex-3/coding/boltons.json.gz": {
     "sha": "ed4f75626819b3aec8a4e54f6055818a7319b33af50c9cad0422b1048af1a477",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-codex-3/coding/boltons.json-CxbRJfNTqk9E13TtLWhHZPnrPVxvxp.gz"
-  },
-  "outputs/beam/hindsight/rag/1m.json.gz": {
-    "sha": "d803c3ea88c836bb21927dd1c4bd74d5d8a910ac756f1d9be7ba93f40ac3bfb0",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/beam/hindsight/rag/1m.json-DVQFx2TMSTCFAQ9OeW54HaAX2CIMKV.gz"
-  },
-  "outputs/beam/hindsight/rag/500k.json.gz": {
-    "sha": "d7d93ffc03e60412116c8b1de137561dbfefaf7e5c8bf6573c4dfd4c3f81a57b",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/beam/hindsight/rag/500k.json-6DEDJ8f8iSIECZZBO5VdPcvbqAF2CO.gz"
   }
 }
