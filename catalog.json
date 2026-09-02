@@ -110,6 +110,13 @@
       "link": "https://mastra.ai",
       "logo": "https://www.google.com/s2/favicons?sz=32&domain=mastra.ai"
     },
+    "memoryhub": {
+      "key": "memoryhub",
+      "description": "MemoryHub: Kubernetes-native agent memory with hybrid vector + keyword search, cross-encoder reranking, and reciprocal-rank fusion. PostgreSQL + pgvector backend.",
+      "kind": "cloud",
+      "link": "https://github.com/redhat-ai-americas/memory-hub",
+      "logo": null
+    },
     "mem0": {
       "link": "https://mem0.ai",
       "logo": "https://www.google.com/s2/favicons?sz=32&domain=mem0.ai",
