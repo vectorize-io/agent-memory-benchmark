@@ -170,5 +170,14 @@
   "outputs/sdebench/hindsight-codex-3/coding/boltons.json.gz": {
     "sha": "ed4f75626819b3aec8a4e54f6055818a7319b33af50c9cad0422b1048af1a477",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-codex-3/coding/boltons.json-CxbRJfNTqk9E13TtLWhHZPnrPVxvxp.gz"
-  }
+  },
+  "outputs/precisionmembench/hindsight/retrieval/single-turn.json.gz": {
+    "sha": "1e3887b9346d49036aa938a2c0a57f4ef88fa1643359304ebd086748071bf21c",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/precisionmembench/hindsight/retrieval/single-turn.json-mdOrUVVgk7n7vWOg1hQlbRTi6zNDny.gz"
+  },
+  "data/precisionmembench/info.json.gz": "e2b02701e3accece8a98ce2eb1842f19dd623ea28628752c48213c02dcdb87ad",
+  "data/precisionmembench/single-turn/categories.json.gz": "d5ff4a1df28138d90bb430d4713b36ec56d6913d063093ac67909acae9f83c9a",
+  "data/precisionmembench/single-turn/documents.json.gz": "a7bb7ed587f1fee494559211313a75a23133170863070c1ef9bb13e95df11b46",
+  "data/precisionmembench/single-turn/queries.json.gz": "fdbd66f0bb907215cc21282f7879bdae88fb499b874ede615d3c0acb3c9fbfa3",
+  "data/precisionmembench/single-turn/stats.json.gz": "c5637f8204805421a7a0f495b5ff0c0520ea287624ee44a50a584742bb96b575"
 }

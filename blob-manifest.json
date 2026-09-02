@@ -170,5 +170,9 @@
   "outputs/sdebench/hindsight-codex-3/coding/boltons.json.gz": {
     "sha": "ed4f75626819b3aec8a4e54f6055818a7319b33af50c9cad0422b1048af1a477",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-codex-3/coding/boltons.json-CxbRJfNTqk9E13TtLWhHZPnrPVxvxp.gz"
+  },
+  "outputs/precisionmembench/hindsight/retrieval/single-turn.json.gz": {
+    "sha": "1e3887b9346d49036aa938a2c0a57f4ef88fa1643359304ebd086748071bf21c",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/precisionmembench/hindsight/retrieval/single-turn.json-mdOrUVVgk7n7vWOg1hQlbRTi6zNDny.gz"
   }
 }
