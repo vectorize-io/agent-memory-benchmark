@@ -14,6 +14,9 @@ class MemoryProvider(ABC):
     link: str | None = None       # URL to provider website / docs
     logo: str | None = None       # URL to provider logo image
     concurrency: int = 4  # max parallel queries; override to 1 for non-thread-safe providers
+    supports_filters: bool = False
+    """Whether retrieve() accepts a `filters` argument (a provider-neutral tag filter,
+    see Dataset.retrieval_filter). Modes must not pass `filters` to providers without it."""
 
     def initialize(self) -> None:
         """Optional hook called once before everything else (before prepare).
@@ -41,13 +44,20 @@ class MemoryProvider(ABC):
         return await asyncio.to_thread(self.ingest, documents)
 
     @abstractmethod
-    def retrieve(self, query: str, k: int = 10, user_id: str | None = None, query_timestamp: str | None = None) -> tuple[list[Document], dict | None]:
+    def retrieve(self, query: str, k: int = 10, user_id: str | None = None, query_timestamp: str | None = None, filters: dict | None = None) -> tuple[list[Document], dict | None]:
         """Retrieve top-k relevant documents for a query, optionally scoped to a user.
-        Returns (documents, raw_response) where raw_response is the unprocessed provider response."""
+        Returns (documents, raw_response) where raw_response is the unprocessed provider response.
+
+        filters — only passed when the provider sets supports_filters. See Dataset.retrieval_filter."""
         ...
 
-    async def async_retrieve(self, query: str, k: int = 10, user_id: str | None = None, query_timestamp: str | None = None) -> tuple[list[Document], dict | None]:
-        """Async version of retrieve. Default falls back to running sync retrieve in a thread."""
+    async def async_retrieve(self, query: str, k: int = 10, user_id: str | None = None, query_timestamp: str | None = None, filters: dict | None = None) -> tuple[list[Document], dict | None]:
+        """Async version of retrieve. Default falls back to running sync retrieve in a thread.
+
+        `filters` is forwarded only to providers that declare supports_filters — every other
+        provider overrides retrieve() with the four-argument signature and would raise."""
+        if filters is not None and self.supports_filters:
+            return await asyncio.to_thread(self.retrieve, query, k, user_id, query_timestamp, filters)
         return await asyncio.to_thread(self.retrieve, query, k, user_id, query_timestamp)
 
     def retrieve_by_steps(self, steps: list[int], query: str, k: int = 10, user_id: str | None = None, query_timestamp: str | None = None) -> tuple[list[Document], dict | None]:

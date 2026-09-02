@@ -108,10 +108,12 @@ def _list_results(published_only: bool = False) -> list[dict]:
         is_gz = f.name.endswith(".json.gz")
         parts = f.relative_to(_output_dir).parts
         run_name = parts[1]
-        # Read only first 512 bytes to extract memory_provider cheaply
+        # Scan the head of the file for the summary scalars. The whole file is already in
+        # memory; the slice only bounds the regex. It has to be wide enough to clear a long
+        # `description` plus any dataset-specific metrics, which sit before the averages.
         try:
             raw = f.read_bytes()
-            snippet_bytes = _gzip.decompress(raw)[:512] if is_gz else raw[:512]
+            snippet_bytes = _gzip.decompress(raw)[:4096] if is_gz else raw[:4096]
             snippet = snippet_bytes.decode("utf-8", errors="ignore")
             import re
             def _extract(key):
@@ -126,9 +128,16 @@ def _list_results(published_only: bool = False) -> list[dict]:
             avg_retrieve_time_ms = _extract("avg_retrieve_time_ms")
             avg_context_tokens = _extract("avg_context_tokens")
             category = _extract("category")
+            # Dataset-specific headline metrics (see Dataset.summary_metrics). Absent for
+            # most datasets; the viewer only shows the columns it finds.
+            mean_precision = _extract("mean_precision")
+            mean_recall = _extract("mean_recall")
+            active_passes = _extract("active_passes")
+            active_total = _extract("active_total")
         except Exception:
             memory_provider = run_name
             total_queries = correct = accuracy = ingestion_time_ms = ingested_docs = category = None
+            mean_precision = mean_recall = active_passes = active_total = None
         split_name = parts[3].removesuffix(".json.gz").removesuffix(".json")
         # Path exposed to the viewer always uses .json (server serves .gz transparently)
         json_path = str(f.relative_to(_root).with_name(split_name + ".json")) if is_gz else str(f.relative_to(_root))
@@ -147,6 +156,10 @@ def _list_results(published_only: bool = False) -> list[dict]:
             "avg_retrieve_time_ms": float(avg_retrieve_time_ms) if avg_retrieve_time_ms and avg_retrieve_time_ms != "null" else None,
             "avg_context_tokens": float(avg_context_tokens) if avg_context_tokens and avg_context_tokens != "null" else None,
             "category": category if category and category != "null" else None,
+            "mean_precision": float(mean_precision) if mean_precision and mean_precision != "null" else None,
+            "mean_recall": float(mean_recall) if mean_recall and mean_recall != "null" else None,
+            "active_passes": int(active_passes) if active_passes and active_passes != "null" else None,
+            "active_total": int(active_total) if active_total and active_total != "null" else None,
         })
         # Coding datasets (sdebench) report agent metrics per-result, not top-level. Read the full file
         # and aggregate them so the dataset page can show interventions/cost/turns/tokens instead of the
@@ -280,7 +293,7 @@ def _generate_catalog() -> dict:
     from .modes import REGISTRY as MODE_REGISTRY
 
     def _task_label(task_type: str) -> str:
-        return "MCQ" if task_type == "mcq" else "LLM-judged"
+        return {"mcq": "MCQ", "retrieval": "ID-set scored"}.get(task_type, "LLM-judged")
 
     import json as _json
     ext_path = _root / "external_results.json"

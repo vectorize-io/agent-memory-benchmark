@@ -91,6 +91,7 @@ def run(
     table.add_row("Correct", str(summary.correct))
     table.add_row("Accuracy", f"{summary.accuracy:.1%}")
     console.print(table)
+    ds.summarize_run(summary.results, console)
 
 
 @app.command("dataset-stats")

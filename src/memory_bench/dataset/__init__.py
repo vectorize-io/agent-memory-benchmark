@@ -4,6 +4,7 @@ from .lifebench import LifeBenchDataset
 from .locomo import LoComoDataset
 from .longmemeval import LongMemEvalDataset
 from .personamem import PersonaMemDataset
+from .precisionmembench import PrecisionMemBenchDataset
 from .sdebench import SdebenchDataset
 
 REGISTRY: dict[str, type[Dataset]] = {
@@ -11,6 +12,7 @@ REGISTRY: dict[str, type[Dataset]] = {
     "lifebench":    LifeBenchDataset,
     "locomo":       LoComoDataset,
     "longmemeval":  LongMemEvalDataset,    "personamem":   PersonaMemDataset,
+    "precisionmembench": PrecisionMemBenchDataset,
     "sdebench":     SdebenchDataset,
 }
 

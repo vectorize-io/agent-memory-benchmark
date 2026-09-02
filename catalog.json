@@ -40,6 +40,13 @@
         "1M"
       ]
     },
+    "precisionmembench": {
+      "description": "Belief-level retrieval precision: 77 cases asserting exactly which memories must and must not surface.",
+      "task": "ID-set scored",
+      "splits": [
+        "single-turn"
+      ]
+    },
     "sdebench": {
       "description": "Does memory help a coding agent? Bug-fix tasks whose obvious fix fails a hidden test.",
       "task": "LLM-judged",
@@ -164,6 +171,9 @@
     },
     "coding": {
       "description": "Build the task repo, run a coding agent with test-feedback interventions, grade by pytest."
+    },
+    "retrieval": {
+      "description": "No LLM. Returns the provider's retrieved memories verbatim; the dataset scores the returned ID set."
     }
   }
 }
