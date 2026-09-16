@@ -284,11 +284,18 @@ class PersonaMemDataset(Dataset):
         category: str | None = None,
         limit: int | None = None,
         ids: set[str] | None = None,
+        user_ids: set[str] | None = None,
     ) -> list[Document]:
         sessions_by_ctx = self._load_sessions(split)
         documents: list[Document] = []
 
         for ctx_id, sessions in sessions_by_ctx.items():
+            # Kept accepting-and-filtering rather than ignored: PersonaMem sets no
+            # isolation_unit today, so the runner never passes this — but the base
+            # signature declares it, and a dataset that silently drops it is the
+            # bug LoComo had.
+            if user_ids is not None and ctx_id not in user_ids:
+                continue
             for i, session in enumerate(sessions):
                 doc_id = f"{ctx_id}_{i}"
                 if ids is not None and doc_id not in ids:
