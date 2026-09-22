@@ -34,6 +34,9 @@ def _task_dir(task):
 # $1.50 input / $9.00 output, cached input 90% off ($0.15). reasoning bills as output.
 PRICES = {
     "google/gemini-3.5-flash": {"input": 1.50, "cache_read": 0.15, "cache_write": 1.50, "output": 9.00},
+    # gemini-3.6-flash (Sep 2026): introductory $0.75 in / $3.75 out, cached input $0.075, through
+    # 2026-12-31; list price doubles from 2027-01-01 ($1.50 / $7.50 / $0.15).
+    "google/gemini-3.6-flash": {"input": 0.75, "cache_read": 0.075, "cache_write": 0.75, "output": 3.75},
     # gpt-5.4-mini (Aug 2026): $0.75 in / $4.50 out; cached input 90% off; cache writes bill as
     # input. (Codex-branded models became inaccessible to plain API keys — Aug 2026.)
     "gpt-5.4-mini": {"input": 0.75, "cache_read": 0.075, "cache_write": 0.75, "output": 4.50},
@@ -284,10 +287,16 @@ def _container_url(url: str) -> str:
     return url.replace("localhost", "host.docker.internal").replace("127.0.0.1", "host.docker.internal")
 
 
+# Where the plugin's per-reflect diagnostics land inside the container. The plugin writes to
+# ~/.hindsight/coding-agents-logs/diag.jsonl since hindsight#4325 unless HINDSIGHT_DIAG_FILE says
+# otherwise, so it is pinned here: unpinned, every memory arm reads as "never reflected".
+PLUGIN_DIAG = "/tmp/hindsight-plugin.log"
+
+
 def _mem_docker_env(env: dict) -> list[str]:
     """Docker -e flags carrying model auth + memory settings (both agents read HINDSIGHT_*; the
     opencode plugin also gets a config file, the claude hook reads these env vars directly)."""
-    denv: list[str] = []
+    denv: list[str] = ["-e", f"HINDSIGHT_DIAG_FILE={PLUGIN_DIAG}"]
     key = env.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
     if key:
         denv += ["-e", f"GEMINI_API_KEY={key}", "-e", f"GOOGLE_GENERATIVE_AI_API_KEY={key}"]
@@ -392,7 +401,9 @@ def stop_agent_container(cid: str) -> None:
 
 import re as _re_secrets
 
-_SECRET_RE = _re_secrets.compile(r"(AIzaSy[A-Za-z0-9_-]{25,}|sk-[A-Za-z0-9_-]{20,}|sk-ant-[A-Za-z0-9_-]{20,}|(?:API_KEY|API_TOKEN|SECRET|PASSWORD)=\S+)")
+# The value stops at a quote or backslash: _redact runs over json.dumps() output, and a greedy \S+
+# swallowed the closing quote, so json.loads() on the result crashed the run with no result.json.
+_SECRET_RE = _re_secrets.compile(r'(AIzaSy[A-Za-z0-9_-]{25,}|sk-[A-Za-z0-9_-]{20,}|sk-ant-[A-Za-z0-9_-]{20,}|(?:API_KEY|API_TOKEN|SECRET|PASSWORD)=[^\s"\\]+)')
 
 def _redact(s: str) -> str:
     """Strip secret-shaped strings from anything persisted (trajectories capture tool output —
@@ -867,7 +878,7 @@ def main():
         # A memory arm whose reflect silently failed is NOT a memory run — record and shout.
         mem_diag = None
         if memory_bank:
-            _p = subprocess.run(["docker", "exec", cid, "cat", "/tmp/hindsight-plugin.log"],
+            _p = subprocess.run(["docker", "exec", cid, "cat", PLUGIN_DIAG],
                                 capture_output=True, text=True)
             mem_diag = [json.loads(l) for l in (_p.stdout or "").splitlines() if l.strip()] or None
             _ok = any(d.get("event") in ("reflect_ok", "recall_ok", "inject_ok") for d in (mem_diag or []))
