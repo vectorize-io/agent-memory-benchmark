@@ -9,6 +9,8 @@ class Document:
     messages: list[dict] | None = None   # structured conversation turns, e.g. for Mem0
     timestamp: str | None = None         # ISO-8601 datetime when the document occurred
     context: str | None = None           # optional hint about document provenance (passed to Hindsight)
+    source_ids: list[str] | None = None  # on retrieval: IDs of the ingested documents this memory came from
+    tags: list[str] | None = None        # on ingest: dataset-supplied labels a provider may index and filter on
 
 
 @dataclass

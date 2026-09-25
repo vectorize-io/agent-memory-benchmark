@@ -25,6 +25,12 @@ The only credible benchmark result is one you can reproduce yourself. AMB publis
 
 Retrieval time is tracked separately from generation; ingestion time is also recorded.
 
+One dataset breaks this shape on purpose. **PrecisionMemBench** ([upstream](https://github.com/tenurehq/precisionmembench)) asserts, per case, exactly which memories must and must not come back — noise is a hard failure, not an invisible cost — so it runs with `--mode retrieval`: no answer LLM, no judge, and the score is the fraction of cases whose returned belief-ID set satisfies every assertion.
+
+```bash
+uv run amb run --dataset precisionmembench --split single-turn --memory hindsight-cloud --mode retrieval
+```
+
 ## Setup
 
 ```bash

@@ -40,6 +40,7 @@ class EvalRunner:
     def __init__(self, output_dir: Path = Path("outputs")):
         self.output_dir = output_dir
         self._judge = GeminiJudge()
+        self._dataset_metrics: dict = {}
 
     def _get_judge(self, dataset: Dataset) -> "GeminiJudge":
         dataset_llm = dataset.default_judge_llm() if hasattr(dataset, "default_judge_llm") else None
@@ -142,6 +143,13 @@ class EvalRunner:
         if dataset.isolation_unit is not None:
             unit_ids = {uid for doc in documents if (uid := dataset.get_isolation_id(doc)) is not None}
 
+        # Controlled vocabularies the provider's extractor should classify facts against —
+        # must be set before prepare/ingest so the bank carries them at retain time.
+        labels = dataset.extraction_labels()
+        if labels and hasattr(memory, "set_extraction_labels"):
+            memory.set_extraction_labels(labels)
+            console.print(f"[dim]Extraction labels: {', '.join(l['key'] for l in labels)}[/dim]")
+
         memory.prepare(store_dir, unit_ids=unit_ids, reset=not skip_ingestion)
 
         stored_contexts: dict[str, str] = {}
@@ -176,6 +184,9 @@ class EvalRunner:
             t_start = time.perf_counter()
             logger.info("[query:%s] start — %s", q.id, q.query[:80])
             meta = {**q.meta, "_prompt_fn": _prompt_fn}
+            rf = dataset.retrieval_filter(q)
+            if rf is not None:
+                meta["retrieval_filter"] = rf
             if skip_answer:
                 from .models import AnswerResult
                 ctx = stored_contexts.get(q.id, "")
@@ -208,6 +219,12 @@ class EvalRunner:
                     answer_result.context = raw["memory_context"]
                 coding_trajectory = raw.get("trajectory")
                 coding_git_history = raw.get("git_history")
+            elif task_type == "retrieval":
+                # Belief-ID-scored datasets (PrecisionMemBench): the retrieved document
+                # set IS the answer — no LLM, no judge, and an empty result can be a
+                # legitimate pass, so this must run before the empty-context guard.
+                docs = (answer_result.raw_response or {}).get("documents") or []
+                correct, judge_reason = dataset.score_retrieval(q, docs)
             elif not answer_result.context:
                 correct, judge_reason = False, "empty context — no memories retrieved"
             elif task_type == "mcq":
@@ -355,7 +372,7 @@ class EvalRunner:
                         accuracy=0.0, ingestion_time_ms=round(ingestion_ms, 1),
                         ingested_docs=ingested_docs_count,
                         description=description, answer_llm=mode.llm_id,
-                        judge_llm=(None if dataset.task_type == "coding" else self._get_judge(dataset)._llm.model_id),
+                        judge_llm=(None if dataset.task_type in ("coding", "retrieval") else self._get_judge(dataset)._llm.model_id),
                         results=[r for r in all_results if r],
                     )
                     self._save(partial)
@@ -431,13 +448,14 @@ class EvalRunner:
             ingested_docs=ingested_docs_count,
             description=description,
             answer_llm=mode.llm_id,
-            judge_llm=(None if dataset.task_type == "coding" else self._get_judge(dataset)._llm.model_id),
+            judge_llm=(None if dataset.task_type in ("coding", "retrieval") else self._get_judge(dataset)._llm.model_id),
             results=results,
         )
         # Final save truncates to THIS run's query set: without it, a later smaller run (e.g. -q 6)
         # keeps stale rows from an earlier larger run under the same run name, and the output file
         # silently reads as a bigger run than actually happened. Partial saves (mid-run, above)
         # deliberately do NOT truncate — they accumulate units as they complete.
+        self._dataset_metrics = dataset.summary_metrics(results) or {}
         self._save(summary, query_ids={q.id for q in queries})
         memory.cleanup()
         return summary
@@ -480,6 +498,16 @@ class EvalRunner:
         if query_ids is not None:
             merged = [r for r in merged if r.query_id in query_ids]
         d = asdict(summary)
+        # Dataset-specific headline metrics, inserted next to accuracy: the manifest reader
+        # regexes only the first 512 bytes of the file, so they have to land early.
+        extra = self._dataset_metrics or {}
+        if extra:
+            reordered = {}
+            for key, value in d.items():
+                reordered[key] = value
+                if key == "accuracy":
+                    reordered.update(extra)
+            d = reordered
         if summary.mode == "coding":
             d["view"] = "agent"   # the UI's multi-turn agent renderer
         results_dicts      = [asdict(r) for r in merged]

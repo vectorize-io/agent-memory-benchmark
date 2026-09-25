@@ -106,6 +106,10 @@ const bySplit = computed(() => {
   return allSplits.map(sp => [sp, map[sp]])
 })
 
+// Retrieval-scored datasets carry precision/recall/active-pass counts; every other dataset
+// leaves them null, and the columns stay hidden rather than showing a row of dashes.
+const hasRetrievalMetrics = rows => (rows || []).some(r => r.mean_precision != null || r.mean_recall != null)
+
 const localSortCol = ref('accuracy'); const localSortDir = ref('desc')
 const extSortCol   = ref('accuracy'); const extSortDir   = ref('desc')
 
@@ -447,6 +451,9 @@ function hasCategoryData(local, split) {
                     <TableHead :sortable="true" :right="true" @click="toggleLocalSort('total_queries')">Queries{{ sortIcon('total_queries', localSortCol, localSortDir) }}</TableHead>
                     <TableHead :sortable="true" :right="true" @click="toggleLocalSort('correct')">Correct{{ sortIcon('correct', localSortCol, localSortDir) }}</TableHead>
                     <TableHead :sortable="true" :right="true" @click="toggleLocalSort('accuracy')">Accuracy{{ sortIcon('accuracy', localSortCol, localSortDir) }}</TableHead>
+                    <TableHead v-if="hasRetrievalMetrics(local)" :sortable="true" :right="true" @click="toggleLocalSort('mean_precision')">Precision{{ sortIcon('mean_precision', localSortCol, localSortDir) }}</TableHead>
+                    <TableHead v-if="hasRetrievalMetrics(local)" :sortable="true" :right="true" @click="toggleLocalSort('mean_recall')">Recall{{ sortIcon('mean_recall', localSortCol, localSortDir) }}</TableHead>
+                    <TableHead v-if="hasRetrievalMetrics(local)" :sortable="true" :right="true" @click="toggleLocalSort('active_passes')">Active{{ sortIcon('active_passes', localSortCol, localSortDir) }}</TableHead>
                     <TableHead :sortable="true" :right="true" @click="toggleLocalSort('ingest')">Ingest/doc{{ sortIcon('ingest', localSortCol, localSortDir) }}</TableHead>
                     <TableHead :sortable="true" :right="true" @click="toggleLocalSort('avg_retrieve_time_ms')">Recall avg{{ sortIcon('avg_retrieve_time_ms', localSortCol, localSortDir) }}</TableHead>
                     <TableHead :sortable="true" :right="true" @click="toggleLocalSort('avg_context_tokens')">Ctx tokens{{ sortIcon('avg_context_tokens', localSortCol, localSortDir) }}</TableHead>
@@ -471,6 +478,9 @@ function hasCategoryData(local, split) {
                     <TableCell :right="true" class="font-semibold">
                       {{ item.accuracy != null ? (item.accuracy * 100).toFixed(1) + '%' : '—' }}
                     </TableCell>
+                    <TableCell v-if="hasRetrievalMetrics(local)" :right="true">{{ item.mean_precision != null ? item.mean_precision.toFixed(2) : '—' }}</TableCell>
+                    <TableCell v-if="hasRetrievalMetrics(local)" :right="true">{{ item.mean_recall != null ? item.mean_recall.toFixed(2) : '—' }}</TableCell>
+                    <TableCell v-if="hasRetrievalMetrics(local)" :right="true">{{ item.active_passes != null && item.active_total ? item.active_passes + '/' + item.active_total : '—' }}</TableCell>
                     <TableCell :right="true">{{ (item.ingestion_time_ms != null && item.ingested_docs) ? Math.round(item.ingestion_time_ms / item.ingested_docs) + 'ms' : '—' }}</TableCell>
                     <TableCell :right="true">{{ item.avg_retrieve_time_ms != null ? Math.round(item.avg_retrieve_time_ms) + 'ms' : '—' }}</TableCell>
                     <TableCell :right="true">{{ item.avg_context_tokens != null ? Math.round(item.avg_context_tokens).toLocaleString() : '—' }}</TableCell>
@@ -554,6 +564,10 @@ function hasCategoryData(local, split) {
                   <TableRow>
                     <TableHead :sortable="true" @click="toggleExtSort('memory')">Memory{{ sortIcon('memory', extSortCol, extSortDir) }}</TableHead>
                     <TableHead :sortable="true" :right="true" @click="toggleExtSort('accuracy')">Accuracy{{ sortIcon('accuracy', extSortCol, extSortDir) }}</TableHead>
+                    <TableHead v-if="hasRetrievalMetrics(external)" :sortable="true" :right="true" @click="toggleExtSort('mean_precision')">Precision{{ sortIcon('mean_precision', extSortCol, extSortDir) }}</TableHead>
+                    <TableHead v-if="hasRetrievalMetrics(external)" :sortable="true" :right="true" @click="toggleExtSort('mean_recall')">Recall{{ sortIcon('mean_recall', extSortCol, extSortDir) }}</TableHead>
+                    <TableHead v-if="hasRetrievalMetrics(external)" :sortable="true" :right="true" @click="toggleExtSort('active_passes')">Active{{ sortIcon('active_passes', extSortCol, extSortDir) }}</TableHead>
+                    <TableHead v-if="hasRetrievalMetrics(external)" :sortable="true" :right="true" @click="toggleExtSort('avg_retrieve_time_ms')">Recall avg{{ sortIcon('avg_retrieve_time_ms', extSortCol, extSortDir) }}</TableHead>
                     <TableHead>Source</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -572,6 +586,10 @@ function hasCategoryData(local, split) {
                     <TableCell :right="true" class="font-semibold">
                       {{ item.accuracy != null ? (item.accuracy * 100).toFixed(1) + '%' : '—' }}
                     </TableCell>
+                    <TableCell v-if="hasRetrievalMetrics(external)" :right="true">{{ item.mean_precision != null ? item.mean_precision.toFixed(2) : '—' }}</TableCell>
+                    <TableCell v-if="hasRetrievalMetrics(external)" :right="true">{{ item.mean_recall != null ? item.mean_recall.toFixed(2) : '—' }}</TableCell>
+                    <TableCell v-if="hasRetrievalMetrics(external)" :right="true">{{ item.active_passes != null && item.active_total ? item.active_passes + '/' + item.active_total : '—' }}</TableCell>
+                    <TableCell v-if="hasRetrievalMetrics(external)" :right="true">{{ item.avg_retrieve_time_ms != null ? Math.round(item.avg_retrieve_time_ms) + 'ms' : '—' }}</TableCell>
                     <TableCell class="text-ca text-sm">
                       <span v-if="item.source_label">{{ item.source_label }} ↗</span>
                       <span v-else class="text-muted-foreground">View source ↗</span>

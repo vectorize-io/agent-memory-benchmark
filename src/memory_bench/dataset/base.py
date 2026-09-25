@@ -37,7 +37,7 @@ class Dataset(ABC):
     name: str
     description: str
     splits: list[str]
-    task_type: Literal["open", "mcq", "coding"] = "open"
+    task_type: Literal["open", "mcq", "coding", "retrieval"] = "open"
     isolation_unit: str | None = None
     links: list[dict] = []
     published: bool = False
@@ -168,6 +168,40 @@ class Dataset(ABC):
     def supports_oracle(self) -> bool:
         """Return True if this dataset provides gold_ids for oracle mode."""
         return True
+
+    def extraction_labels(self) -> list[dict] | None:
+        """Controlled vocabularies the memory provider should classify each fact against.
+
+        Provider-neutral shape, modelled on Hindsight's bank `entity_labels`:
+            [{"key": "state", "type": "value", "tag": True, "optional": False,
+              "description": "...", "values": [{"value": "...", "description": "..."}]}]
+        A provider that supports extraction-time classification turns these into filterable
+        labels; others ignore them. Returning None means no classification is requested."""
+        return None
+
+    def retrieval_filter(self, query: "Query") -> dict | None:
+        """Provider-neutral hard filter for this query, or None for no filtering.
+
+        Shape: {"all": [...], "any": [[...], [...]], "none": [...]} over ingest-time tags
+        (see Document.tags) — `all` tags must all be present, each `any` group needs at least
+        one match, and no `none` tag may be present. Only passed to providers that declare
+        supports_filters."""
+        return None
+
+    def summary_metrics(self, results: list) -> dict:
+        """Extra headline numbers for this dataset, stored alongside accuracy and shown by
+        the viewer. Default: none.
+
+        For datasets whose single accuracy figure hides the thing that matters — a retrieval
+        benchmark where returning everything scores well on recall and badly on precision —
+        this is where the honest pair goes."""
+        return {}
+
+    def summarize_run(self, results: list, console) -> None:
+        """Print a dataset-specific summary of a finished run. Default: nothing extra.
+
+        Datasets whose headline number needs more than accuracy (PrecisionMemBench's
+        active/structural pass split, say) override this."""
 
     def dataset_stats(self, console) -> None:
         """Print dataset-specific statistics. Implement per dataset."""
