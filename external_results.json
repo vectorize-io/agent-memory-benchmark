@@ -221,6 +221,20 @@
         "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
         "source_label": "MemMachine Blog (Sep 2025)",
         "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system \u2014 potential for biased setup or prompt choices."
+      },
+      {
+        "memory": "infiniteMem (mini top-50)",
+        "accuracy": 0.759,
+        "source_url": "https://github.com/marcot3ssar1/InfiniteMemOs/releases/tag/v1.2-top50-kimi",
+        "source_label": "infiniteMem v1.2 (self-reported, reproducible)",
+        "comment": "Self-reported. Brute top-50 contexts, mini reader+judge, Mem0 prompts verbatim, cat5 excluded, n=1535. Engine re-certified: contexts bit-identical to frozen engine output (see MEASUREMENT_NOTE.md). Per-question cache in repo."
+      },
+      {
+        "memory": "infiniteMem (kimi-k3 top-50)",
+        "accuracy": 0.8599,
+        "source_url": "https://github.com/marcot3ssar1/InfiniteMemOs/releases/tag/v1.2-top50-kimi",
+        "source_label": "infiniteMem v1.2 (self-reported, reproducible)",
+        "comment": "Self-reported. kimi-k3 reader, brute top-50, mini judge pinned, Mem0 prompts verbatim, cat5 excluded, n=1535. Different reader from mini rows - not directly comparable. Per-question cache in repo."
       }
     ]
   },
@@ -386,6 +400,20 @@
         "source_url": "https://arxiv.org/abs/2603.16862",
         "source_label": "Chronos Paper (arXiv:2603.16862)",
         "comment": "Self-reported by Chronos authors. Best of two configurations tested; the GPT-4o configuration achieved 92.6%. This configuration uses Claude Opus 4.6 as backbone, which is considerably more capable than the models used by most other entries here."
+      },
+      {
+        "memory": "infiniteMem (mini top-10)",
+        "accuracy": 0.598,
+        "source_url": "https://github.com/marcot3ssar1/InfiniteMemOs/releases/tag/v1.3-lmem-kimi",
+        "source_label": "infiniteMem v1.3 (self-reported, reproducible)",
+        "comment": "Self-reported. Brute top-10 sessions, mini reader+judge, upstream prompts verbatim, n=500 incl. ABS. Per-question cache in repo."
+      },
+      {
+        "memory": "infiniteMem (kimi-k3 top-5)",
+        "accuracy": 0.888,
+        "source_url": "https://github.com/marcot3ssar1/InfiniteMemOs/releases/tag/v1.3-lmem-kimi",
+        "source_label": "infiniteMem v1.3 (self-reported, reproducible)",
+        "comment": "Self-reported. kimi-k3 reader (max_tokens 1500), brute top-5 sessions, mini judge pinned, upstream prompts verbatim, n=500 incl. ABS. 6 structural errors declared. Per-question cache in repo."
       }
     ]
   },
