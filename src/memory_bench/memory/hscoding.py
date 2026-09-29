@@ -115,6 +115,11 @@ class HsCodingProvider(MemoryProvider):
         if p.returncode != 0:
             raise RuntimeError(f"deepen failed (rc={p.returncode}) for bank {bank}: "
                                f"{(p.stderr or p.stdout or '')[-300:]}")
+        # deepen exits 0 even when items never reached the bank ("… (N items failed to enqueue)"),
+        # and a bank missing part of its history scores the memory arm below what it is.
+        if "failed to enqueue" in (p.stdout or "") + (p.stderr or ""):
+            raise RuntimeError(f"deepen left items out of bank {bank}: "
+                               f"{[l for l in (p.stdout or '').splitlines() if 'failed to enqueue' in l][-3:]}")
         # 3. poll the plugin's sync status until seeded memory is fully queryable
         st = ["node", str(self._plugin_dir / "dist" / "status.js"), "--repo", str(src),
               "--bank", bank, "--api-url", self._url, "--config", str(cfg)]
