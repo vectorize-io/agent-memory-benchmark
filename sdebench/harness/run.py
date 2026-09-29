@@ -303,7 +303,11 @@ def _mem_docker_env(env: dict) -> list[str]:
     okey = env.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY", "")
     if okey:
         denv += ["-e", f"OPENAI_API_KEY={okey}"]
-    for k in ("HINDSIGHT_DISABLED", "HINDSIGHT_BANK_ID", "HINDSIGHT_MEMORY_MODE"):
+    # HINDSIGHT_API_TOKEN: an authenticated server (Hindsight Cloud) — without it the plugin's
+    # reflect is refused and the memory arm silently runs with no memory.
+    # CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY: claude-code auth without mounting OAuth creds.
+    for k in ("HINDSIGHT_DISABLED", "HINDSIGHT_BANK_ID", "HINDSIGHT_MEMORY_MODE", "HINDSIGHT_API_TOKEN",
+              "CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY"):
         if env.get(k) is not None:
             denv += ["-e", f"{k}={env[k]}"]
     if env.get("HINDSIGHT_API_URL"):
@@ -317,7 +321,7 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
     mounts = ["-v", f"{workdir}:/work"]
     if _PLUGIN_DIR:  # the plugin (opencode plugin / codex + claude hooks) — memory arms
         mounts += ["-v", f"{_PLUGIN_DIR}:/opt/hindsight-coding-agents:ro"]
-    if agent == "claude-code":
+    if agent == "claude-code" and not (env.get("CLAUDE_CODE_OAUTH_TOKEN") or env.get("ANTHROPIC_API_KEY")):
         mounts += ["-v", f"{_CLAUDE_CREDS}:/root/.claude/.credentials.json"]  # rw: claude may refresh it
     cmd = ["docker", "run", "-d", "--rm", *mounts, "-w", "/work",
            "--add-host", "host.docker.internal:host-gateway",
@@ -403,7 +407,7 @@ import re as _re_secrets
 
 # The value stops at a quote or backslash: _redact runs over json.dumps() output, and a greedy \S+
 # swallowed the closing quote, so json.loads() on the result crashed the run with no result.json.
-_SECRET_RE = _re_secrets.compile(r'(AIzaSy[A-Za-z0-9_-]{25,}|sk-[A-Za-z0-9_-]{20,}|sk-ant-[A-Za-z0-9_-]{20,}|(?:API_KEY|API_TOKEN|SECRET|PASSWORD)=[^\s"\\]+)')
+_SECRET_RE = _re_secrets.compile(r'(AIzaSy[A-Za-z0-9_-]{25,}|sk-[A-Za-z0-9_-]{20,}|sk-ant-[A-Za-z0-9_-]{20,}|hsk_[A-Za-z0-9_-]{16,}|(?:API_KEY|API_TOKEN|SECRET|PASSWORD)=[^\s"\\]+)')
 
 def _redact(s: str) -> str:
     """Strip secret-shaped strings from anything persisted (trajectories capture tool output —

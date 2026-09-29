@@ -90,9 +90,14 @@ class HsCodingProvider(MemoryProvider):
         if bp.returncode != 0 or not (src / ".git").exists():
             raise RuntimeError(f"task repo build failed for {task_id} (rc={bp.returncode}): "
                                f"{(bp.stderr or bp.stdout or '')[-200:]}")
-        # 2. the plugin's deepen engine (it owns extraction/strategies/pages/git scope)
+        # 2. the plugin's deepen engine (it owns extraction/strategies/pages/git scope).
+        #    An empty config of its own: the runner's ~/.hindsight/coding-agent.json would otherwise
+        #    win over the env (its apiToken, bank overrides, seed limits), so the ingest would depend
+        #    on whose machine ran it — and could land in another tenant entirely.
+        cfg = base / "coding-agent.json"
+        cfg.write_text("{}")
         cmd = ["node", str(self._plugin_dir / "dist" / "deepen.js"), "--repo", str(src),
-               "--bank", bank, "--api-url", self._url, "--git-ingest", "full"]
+               "--bank", bank, "--api-url", self._url, "--git-ingest", "full", "--config", str(cfg)]
         chats = [{"id": d.id, "turns": [{"role": m["role"], "text": m["content"]}
                                         for m in (d.messages or [])]}
                  for d in documents if d.messages]
@@ -110,7 +115,7 @@ class HsCodingProvider(MemoryProvider):
                                f"{(p.stderr or p.stdout or '')[-300:]}")
         # 3. poll the plugin's sync status until seeded memory is fully queryable
         st = ["node", str(self._plugin_dir / "dist" / "status.js"), "--repo", str(src),
-              "--bank", bank, "--api-url", self._url]
+              "--bank", bank, "--api-url", self._url, "--config", str(cfg)]
         deadline = time.monotonic() + 900
         while time.monotonic() < deadline:
             sp = await asyncio.to_thread(subprocess.run, st, capture_output=True, text=True,
@@ -129,20 +134,38 @@ class HsCodingProvider(MemoryProvider):
         return [], None
 
     # ── helpers ──────────────────────────────────────────────────────────────────
+    def _headers(self) -> dict:
+        # Same token the plugin reads (HINDSIGHT_API_TOKEN) — an authenticated server otherwise 401s,
+        # and the swallowed error would reuse a stale bank instead of resetting it.
+        token = os.environ.get("HINDSIGHT_API_TOKEN")
+        return {"Authorization": f"Bearer {token}"} if token else {}
+
     def _bank_has_memories(self, bank: str) -> bool:
         import urllib.request
         try:
-            with urllib.request.urlopen(
-                    f"{self._url}/v1/default/banks/{bank}/memories/list?limit=1", timeout=10) as r:
+            req = urllib.request.Request(f"{self._url}/v1/default/banks/{bank}/memories/list?limit=1",
+                                         headers=self._headers())
+            with urllib.request.urlopen(req, timeout=10) as r:
                 d = json.loads(r.read())
             return bool(d.get("items") or d.get("memories") or d.get("total"))
         except Exception:
             return False
 
     def _delete_bank(self, bank: str) -> None:
+        import urllib.error
         import urllib.request
+        # Look before deleting: some deployments answer DELETE on a missing bank with a 500, not a
+        # 404, and a missing bank is already reset.
         try:
-            req = urllib.request.Request(f"{self._url}/v1/default/banks/{bank}", method="DELETE")
+            req = urllib.request.Request(f"{self._url}/v1/default/banks/{bank}/stats", headers=self._headers())
             urllib.request.urlopen(req, timeout=30).read()
-        except Exception:
-            pass
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return
+            raise RuntimeError(f"could not check bank {bank}: HTTP {e.code}") from e
+        try:
+            req = urllib.request.Request(f"{self._url}/v1/default/banks/{bank}", method="DELETE",
+                                         headers=self._headers())
+            urllib.request.urlopen(req, timeout=30).read()
+        except urllib.error.HTTPError as e:
+            raise RuntimeError(f"could not reset bank {bank}: HTTP {e.code}") from e
