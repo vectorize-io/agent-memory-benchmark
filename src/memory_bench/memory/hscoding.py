@@ -31,7 +31,9 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def bank_for(task_id: str) -> str:
-    return f"sde-coding-{task_id}"
+    # SDE_HSCODING_BANK_PREFIX: a run of its own banks, so one campaign can never reset or reuse
+    # another's — and a bank id a server has wedged can be stepped around.
+    return f"{os.environ.get('SDE_HSCODING_BANK_PREFIX') or 'sde-coding'}-{task_id}"
 
 
 class HsCodingProvider(MemoryProvider):
