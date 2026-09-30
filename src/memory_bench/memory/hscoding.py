@@ -30,6 +30,13 @@ from ..models import Document
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
+def bank_path(path: str) -> str:
+    """Quote the bank id (the first segment) — bank ids may carry characters a URL path can't."""
+    from urllib.parse import quote
+    bank, _, rest = path.partition("/")
+    return quote(bank, safe="") + ("/" + rest if rest else "")
+
+
 def bank_for(task_id: str) -> str:
     # SDE_HSCODING_BANK_PREFIX: a run of its own banks, so one campaign can never reset or reuse
     # another's — and a bank id a server has wedged can be stepped around.
@@ -76,6 +83,7 @@ class HsCodingProvider(MemoryProvider):
             return
         bank = bank_for(task_id)
         if self._skip and await asyncio.to_thread(self._bank_has_memories, bank):
+            await asyncio.to_thread(self._refresh_pages, bank)
             return
         from ..dataset.sdebench import task_json_path
         tj = task_json_path(task_id)
@@ -96,8 +104,11 @@ class HsCodingProvider(MemoryProvider):
         #    An empty config of its own: the runner's ~/.hindsight/coding-agent.json would otherwise
         #    win over the env (its apiToken, bank overrides, seed limits), so the ingest would depend
         #    on whose machine ran it — and could land in another tenant entirely.
+        #    Pages are seeded "manual": their default cron trigger refreshes them up to an hour after
+        #    the seed, so an agent starting right after `synced` would read pages built from nothing.
+        #    Step 4 refreshes them once, explicitly, instead.
         cfg = base / "coding-agent.json"
-        cfg.write_text("{}")
+        cfg.write_text(json.dumps({"pageTriggerType": "manual"}))
         cmd = ["node", str(self._plugin_dir / "dist" / "deepen.js"), "--repo", str(src),
                "--bank", bank, "--api-url", self._url, "--git-ingest", "full", "--config", str(cfg)]
         chats = [{"id": d.id, "turns": [{"role": m["role"], "text": m["content"]}
@@ -128,10 +139,13 @@ class HsCodingProvider(MemoryProvider):
             sp = await asyncio.to_thread(subprocess.run, st, capture_output=True, text=True,
                                          env={**os.environ}, timeout=120)
             try:
-                if json.loads(sp.stdout.strip().splitlines()[-1]).get("synced"):
-                    return
+                synced = json.loads(sp.stdout.strip().splitlines()[-1]).get("synced")
             except Exception:
-                pass
+                synced = False
+            if synced:
+                # 4. `synced` only means the pages EXIST (they are created before the history lands)
+                await asyncio.to_thread(self._refresh_pages, bank)
+                return
             await asyncio.sleep(5)
         raise RuntimeError(f"hscoding ingest never reached synced for bank {bank}")
 
@@ -146,6 +160,42 @@ class HsCodingProvider(MemoryProvider):
         # and the swallowed error would reuse a stale bank instead of resetting it.
         token = os.environ.get("HINDSIGHT_API_TOKEN")
         return {"Authorization": f"Bearer {token}"} if token else {}
+
+    def _api(self, method: str, path: str) -> dict:
+        import urllib.request
+        req = urllib.request.Request(f"{self._url}/v1/default/banks/{bank_path(path)}", method=method,
+                                     headers=self._headers())
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return json.loads(r.read() or b"{}")
+
+    def _refresh_pages(self, bank: str, timeout_s: int = 1800) -> None:
+        """Refresh every knowledge page once over the seeded bank and wait for all of them.
+
+        Fails the unit when a refresh fails or leaves a page empty: a memory arm injecting blank
+        pages measures no memory at all, and must not be scored as if it had one.
+        """
+        pages = self._api("GET", f"{bank}/mental-models?limit=100").get("items") or []
+        if not pages:
+            raise RuntimeError(f"bank {bank} has no knowledge pages to refresh")
+        ops = {m["id"]: self._api("POST", f"{bank}/mental-models/{m['id']}/refresh")["operation_id"]
+               for m in pages}
+        deadline = time.monotonic() + timeout_s
+        pending = dict(ops)
+        while pending and time.monotonic() < deadline:
+            for mm_id, op_id in list(pending.items()):
+                status = (self._api("GET", f"{bank}/operations/{op_id}").get("status") or "").lower()
+                if status == "failed":
+                    raise RuntimeError(f"knowledge page {mm_id} refresh failed on bank {bank}")
+                if status in ("completed", "cancelled"):
+                    del pending[mm_id]
+            if pending:
+                time.sleep(10)
+        if pending:
+            raise RuntimeError(f"{len(pending)} knowledge page refresh(es) still running on bank {bank}")
+        full = self._api("GET", f"{bank}/mental-models?limit=100&detail=full").get("items") or []
+        empty = [m["name"] for m in full if not (m.get("content") or "").strip()]
+        if empty:
+            raise RuntimeError(f"knowledge pages still empty after refresh on bank {bank}: {empty}")
 
     def _bank_has_memories(self, bank: str) -> bool:
         import urllib.request
