@@ -7,6 +7,7 @@ import { fmtTokens } from '../utils.js'
 import Card from '@/components/ui/card.vue'
 import Badge from '@/components/ui/badge.vue'
 import BarChart from '@/components/ui/bar-chart.vue'
+import CodingScatter from '@/components/ui/coding-scatter.vue'
 import TopNav from '@/components/ui/top-nav.vue'
 import UiTable from '@/components/ui/table.vue'
 import TableHeader from '@/components/ui/table-header.vue'
@@ -223,6 +224,27 @@ const codingArm = item => {
 }
 const fmtTok = v => v == null ? '—' : (v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'k' : v)
 const sortCoding = rows => [...rows].sort((a,b) => (b.interventions ?? -1) - (a.interventions ?? -1))
+// Scatter for coding datasets: per agent+model, vanilla vs hindsight, each metric per task and
+// averaged over every run of that arm — so a 3-run campaign and a 1-run check read the same way.
+const CODING_METRIC_KEYS = ['interventions', 'cost_usd', 'wall_s']
+function codingGroups(local) {
+  const groups = {}
+  for (const item of local) {
+    const arm = codingArm(item)
+    if ((arm !== 'vanilla' && arm !== 'hindsight') || !item.tasks) continue
+    const label = `${item.agent} · ${item.model ?? '?'}`
+    ;(groups[label] ??= { label, agent: item.agent, model: item.model, vanilla: [], hindsight: [] })[arm].push(item)
+  }
+  const mean = (runs, k) => runs.reduce((sum, r) => sum + r[k] / r.tasks, 0) / runs.length
+  return Object.values(groups)
+    .filter(g => g.vanilla.length && g.hindsight.length)
+    .map(g => ({
+      label: g.label, agent: g.agent, model: g.model,
+      runs: { vanilla: g.vanilla.length, hindsight: g.hindsight.length },
+      metrics: Object.fromEntries(CODING_METRIC_KEYS.map(key =>
+        [key, { vanilla: mean(g.vanilla, key), hindsight: mean(g.hindsight, key) }])),
+    }))
+}
 const sortIcon = (col, active, dir) => active === col ? (dir === 'asc' ? ' ↑' : ' ↓') : ''
 const getViewMode = split => splitViewMode.value[split] ?? 'overall'
 async function setViewMode(split, mode) {
@@ -374,6 +396,11 @@ function hasCategoryData(local, split) {
 
           <!-- ── OVERALL VIEW ── -->
           <template v-if="getViewMode(split) === 'overall'">
+
+            <!-- Chart (coding datasets): corrections vs cost/time, vanilla → hindsight per agent -->
+            <Card v-if="isCoding(local) && codingGroups(local).length" class="p-4 mb-4">
+              <CodingScatter :groups="codingGroups(local)" />
+            </Card>
 
             <!-- ── CODING dataset (sdebench): agent metrics, not QA metrics ── -->
             <Card v-if="isCoding(local)" class="overflow-hidden mb-4">
