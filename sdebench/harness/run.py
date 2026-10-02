@@ -999,6 +999,12 @@ def main():
         # attribution: did the agent visibly credit Hindsight, and which hindsight_* tools it called
         "memory_usage": mem_usage,
         "credited": any(u.get("credited") for u in (mem_usage or [])) if memory_bank else None,
+        # The same credit read straight off the agent's replies: the plugin's log under-counts a
+        # headless run, whose Stop hook fires before the final reply is flushed to the transcript
+        # and never gets the next turn that would correct it.
+        "credited_reply": any(re.search(r"from hindsight memory", s_.get("text", ""), re.I)
+                              for rnd in trace for s_ in rnd.get("trajectory") or [] if s_.get("k") == "say")
+                          if memory_bank else None,
         "hindsight_calls": sum(len(u.get("calls") or []) for u in (mem_usage or [])) if memory_bank else None,
     }
     (work / "result.json").write_text(json.dumps(result, indent=2))

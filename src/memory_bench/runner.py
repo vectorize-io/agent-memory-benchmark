@@ -210,7 +210,7 @@ class EvalRunner:
                 q.meta.update({k: raw.get(k) for k in
                                ("solved", "interventions", "capped", "cost_usd", "turns", "wall_s",
                                 "final_pytest", "tokens", "agent", "model", "credited", "hindsight_calls",
-                                "reflect_attempts")
+                                "reflect_attempts", "credited_reply")
                                if raw.get(k) is not None})
                 # Agent-view payload: the patch is the "answer", injected memory the "context",
                 # and the step trace + repo history land as row fields (view: "agent" in _save).
