@@ -306,8 +306,10 @@ def _mem_docker_env(env: dict) -> list[str]:
     # HINDSIGHT_API_TOKEN: an authenticated server (Hindsight Cloud) — without it the plugin's
     # reflect is refused and the memory arm silently runs with no memory.
     # CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY: claude-code auth without mounting OAuth creds.
+    # HINDSIGHT_AUTO_INJECT: what the plugin injects on the first prompt (reflect | pages | recall |
+    # none) — the knob that separates a reflect arm from a knowledge-pages-only arm.
     for k in ("HINDSIGHT_DISABLED", "HINDSIGHT_BANK_ID", "HINDSIGHT_MEMORY_MODE", "HINDSIGHT_API_TOKEN",
-              "CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY"):
+              "CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY", "HINDSIGHT_AUTO_INJECT"):
         if env.get(k) is not None:
             denv += ["-e", f"{k}={env[k]}"]
     if env.get("HINDSIGHT_API_URL"):
