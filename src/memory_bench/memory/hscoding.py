@@ -51,6 +51,9 @@ class HsCodingProvider(MemoryProvider):
     variant = "coding-plugin"
     link = "https://github.com/vectorize-io/hindsight"
     concurrency = int(os.environ.get("SDE_CONCURRENCY", "4"))
+    # Banks are per task, so several tasks can be seeded at once. 3 is what a rate-limited remote
+    # server held without refusing work; more made the server's own page refreshes time out.
+    unit_concurrency = int(os.environ.get("SDE_UNIT_CONCURRENCY", "3"))
 
     def __init__(self) -> None:
         self._url = os.environ.get("SDE_HINDSIGHT_URL", "http://localhost:8888")

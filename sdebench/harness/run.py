@@ -375,28 +375,26 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
                             "printf 'codex_hooks = true\n' > /root/.codex/config.toml"],
                            capture_output=True, text=True)
     if agent == "claude-code" and env.get("HINDSIGHT_BANK_ID"):
-        # Memory via the ACTUAL product integration: the plugin's UserPromptSubmit hook, exactly as
-        # the installer wires it (nested settings style, 30s timeout > the hook's 25s reflect cap).
-        # The old --append-system-prompt workaround predated the calibrated <hindsight_memory>
-        # wrapper + historian reflect; with those, claude uses hook-injected memory like any other
-        # harness. Vanilla arm: no hooks (parity by absence). Settings are MERGED so the image's
-        # permissions allow-list survives.
-        hs_cfg = {"apiUrl": _container_url(env.get("HINDSIGHT_API_URL", HINDSIGHT_URL)),
-                  "bankId": env["HINDSIGHT_BANK_ID"],
-                  "retainSessions": False, "autoSeed": False, "codebaseSurvey": False}
+        # Memory via the ACTUAL product: the plugin's own installer, run in the container exactly as a
+        # user runs it (`install claude-code`) — all three hooks, the hindsight_* MCP tools and the
+        # skill. The benchmark only sets plugin CONFIG, never the wiring: the bank, the server, and
+        # trial isolation (no session write-back, no auto-seed or survey racing the controlled
+        # ingest, no npm auto-update). Hand-merging just the prompt hook (the old way) left the
+        # agent without the MCP tools, so the reflect/page tools a user's agent can reach for were
+        # never in the run. Vanilla arm: nothing installed (parity by absence).
+        api_url = _container_url(env.get("HINDSIGHT_API_URL", HINDSIGHT_URL))
+        hs_cfg = {"serverMode": "self-hosted", "apiUrl": api_url, "bankId": env["HINDSIGHT_BANK_ID"],
+                  "retainSessions": False, "autoSeed": False, "codebaseSurvey": False, "autoUpdate": False}
         subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
                         "mkdir -p /root/.hindsight && cat > /root/.hindsight/coding-agent.json"],
-                       input=json.dumps(hs_cfg), capture_output=True, text=True)
-        merge = (
-            "import json\n"
-            "p = '/root/.claude/settings.json'\n"
-            "try: s = json.load(open(p))\n"
-            "except Exception: s = {}\n"
-            "s.setdefault('hooks', {})['UserPromptSubmit'] = [{'hooks': [{'type': 'command',\n"
-            "  'command': 'node \"/opt/hindsight-coding-agents/dist/claude-hook.js\"', 'timeout': 30}]}]\n"
-            "json.dump(s, open(p, 'w'))\n")
-        subprocess.run(["docker", "exec", "-i", cid, "python3", "-"],
-                       input=merge, capture_output=True, text=True)
+                       input=json.dumps(hs_cfg), capture_output=True, text=True, check=True)
+        inst = subprocess.run(["docker", "exec", cid, "node", "/opt/hindsight-coding-agents/dist/installer.js",
+                               "install", "claude-code", "--server", "self-hosted", "--api-url", api_url],
+                              capture_output=True, text=True)
+        out = (inst.stdout or "") + (inst.stderr or "")
+        # Fail the task, not the measurement: an arm without hooks or tools measures no memory.
+        if inst.returncode != 0 or "hooks merged" not in out or "MCP server registered" not in out:
+            raise RuntimeError(f"plugin install failed in the agent container (rc={inst.returncode}): {out[-600:]}")
     return cid
 
 
