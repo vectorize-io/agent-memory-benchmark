@@ -9,7 +9,7 @@ corpus into the selected provider (isolation_unit = task), then this mode dispat
   - any other provider => generic arm: `provider.retrieve(bug_report)` and the top memories are
     injected into the task prompt (`provided` arm) — how any AMB memory system runs the benchmark.
 
-Env: SDE_AGENT (opencode|claude-code|codex), SDE_HINDSIGHT_URL (Hindsight server, default :8888),
+Env: SDE_AGENT (opencode|claude-code|codex|pi), SDE_HINDSIGHT_URL (Hindsight server, default :8888),
 SDE_HSCODING_PLUGIN_DIR (plugin dir with dist/ built; hscoding only), SDE_MODEL.
 """
 import asyncio
@@ -34,7 +34,7 @@ class CodingMode(ResponseMode):
     description = "Build the task repo, run a coding agent with test-feedback interventions, grade by pytest."
 
     _AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5",
-                    "codex": "gpt-5.4-mini"}
+                    "codex": "gpt-5.4-mini", "pi": "openai-codex/gpt-5.6-luna"}
 
     def __init__(self, model: str | None = None):
         self._agent = os.environ.get("SDE_AGENT", "opencode")   # --agent, so claude runs land in the UI

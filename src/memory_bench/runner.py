@@ -209,7 +209,7 @@ class EvalRunner:
                 judge_reason = f"interventions={raw.get('interventions')} pytest={(raw.get('final_pytest') or '')[:80]}"
                 q.meta.update({k: raw.get(k) for k in
                                ("solved", "interventions", "capped", "cost_usd", "turns", "wall_s",
-                                "final_pytest", "tokens", "agent", "model")
+                                "final_pytest", "tokens", "agent", "model", "credited", "hindsight_calls")
                                if raw.get(k) is not None})
                 # Agent-view payload: the patch is the "answer", injected memory the "context",
                 # and the step trace + repo history land as row fields (view: "agent" in _save).
