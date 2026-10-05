@@ -76,7 +76,11 @@ class SdebenchDataset(Dataset):
         flt = os.environ.get("SDE_TASK_FILTER", "").strip()
         if flt:
             subs = [s.strip() for s in flt.split(",") if s.strip()]
-            files = [f for f in files if any(s in f.parents[2].name for s in subs)]
+            # "=name" matches one task dir exactly ("boltons-csvquote" alone would also match
+            # "boltons-csvquote-history"); a bare entry stays a substring.
+            files = [f for f in files
+                     if any(f.parents[2].name == s[1:] if s.startswith("=") else s in f.parents[2].name
+                            for s in subs)]
         return files
 
     def get_isolation_id(self, doc: Document) -> str | None:
