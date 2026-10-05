@@ -165,11 +165,22 @@ class HsCodingProvider(MemoryProvider):
         return {"Authorization": f"Bearer {token}"} if token else {}
 
     def _api(self, method: str, path: str) -> dict:
+        import urllib.error
         import urllib.request
-        req = urllib.request.Request(f"{self._url}/v1/default/banks/{bank_path(path)}", method=method,
-                                     headers=self._headers())
-        with urllib.request.urlopen(req, timeout=60) as r:
-            return json.loads(r.read() or b"{}")
+        # A rate-limited server (Hindsight Cloud) answers bursts with 429: wait it out, honouring
+        # Retry-After, instead of failing the unit — the same rule the plugin's deepen follows.
+        for attempt in range(8):
+            req = urllib.request.Request(f"{self._url}/v1/default/banks/{bank_path(path)}", method=method,
+                                         headers=self._headers())
+            try:
+                with urllib.request.urlopen(req, timeout=60) as r:
+                    return json.loads(r.read() or b"{}")
+            except urllib.error.HTTPError as e:
+                if e.code != 429 or attempt == 7:
+                    raise
+                wait = float(e.headers.get("Retry-After") or 0) or min(60, 2 ** attempt)
+                time.sleep(wait)
+        return {}
 
     def _refresh_pages(self, bank: str, timeout_s: int = 1800) -> None:
         """Refresh every knowledge page once over the seeded bank and wait for all of them.
