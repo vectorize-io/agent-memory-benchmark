@@ -393,40 +393,6 @@ class BEAMDataset(Dataset):
             queries = queries[:limit]
         return queries
 
-    _BEHAVIORAL = {
-        "summarization": (
-            "\nThis is a SUMMARY request: write a COMPREHENSIVE, chronological summary that covers "
-            "EVERY distinct phase, issue, decision, technical choice, problem, and development found "
-            "in the memories \u2014 be exhaustive (completeness across all topics matters more than "
-            "brevity), and include specific names, dates, versions, and details. Do NOT reply that you "
-            "lack information if ANY relevant memories exist; summarize everything available.\n"
-        ),
-        # temporal_reasoning: NO extra guidance — duration-specific guidance regressed non-duration
-        # questions (0.744 -> 0.662). mem0's generic "pay attention to dates" rule already suffices.
-        # knowledge_update: NO extra guidance — "report only the latest value" regressed questions
-        # that aren't update-chains (0.613 -> 0.538). mem0's rule 3 (prefer more recent) suffices.
-        # multi_session_reasoning: NO extra guidance — counting clause regressed non-counting
-        # questions (0.639 -> 0.626). Recall-bound; revisit via mission/recall, not prompt.
-        "instruction_following": (
-            "\nThe user gave a STANDING formatting/style/behavior instruction earlier in the conversation. "
-            "Recall that instruction from the memories and follow it exactly when forming your answer.\n"
-        ),
-        "contradiction_resolution": (
-            "\nThe memories contain CONTRADICTORY statements about this. Explicitly state that there is "
-            "conflicting information, quote BOTH conflicting statements with their specific details, and "
-            "then ask the user which one is correct \u2014 do not pick a side or guess.\n"
-        ),
-        "abstention": (
-            "\nOnly answer if the memories DIRECTLY contain the specific thing asked. Do NOT infer, guess, "
-            "or substitute tangential/profile information. If the specific information is not present, reply "
-            "exactly: \"Based on the provided chat, there is no information related to [topic].\"\n"
-        ),
-        # event_ordering: NO extra guidance \u2014 explicit re-derivation guidance regressed it
-        # (0.543 -> 0.436); the topic-framing mismatch is recall/abstraction-bound, not prompt.
-        # information_extraction: handled by the GLOBAL anti-over-abstention rule #4 (resolve indirect
-        # references before giving up). Per-category "dig hard" guidance was a wash (over-claiming).
-    }
-
     def build_rag_prompt(
         self,
         query: str,
@@ -436,10 +402,9 @@ class BEAMDataset(Dataset):
         category: str | None = None,
         meta: dict | None = None,
     ) -> str:
-        # mem0's BEAM answer-generation prompt (verbatim): question + retrieved memories, NO leak,
-        # NO per-category gold/rubric injection. Generic behavioral rules only — for parity with mem0.
-        cat = (meta or {}).get("question_category", category or "")
-        extra = self._BEHAVIORAL.get(cat, "")
+        # mem0's BEAM answer-generation prompt, verbatim: the question, the retrieved memories
+        # and the shared behavioural rules. One prompt for every query, for parity with mem0 and
+        # because the alternative keys the wording on the query's own ground-truth category.
         return (
             "You are an AI assistant with access to stored memories from prior conversations with a user.\n"
             "Use these memories to answer the following question as accurately and completely as possible.\n\n"
@@ -453,7 +418,6 @@ class BEAMDataset(Dataset):
             "7. For preference questions: use the most recently stated preference.\n"
             "8. Be specific and direct \u2014 include exact names, dates, numbers, and details from the memories.\n"
             "9. Do NOT invent or assume information that isn't in the memories.\n"
-            + extra +
             f"\nQUESTION: {query}\n\n"
             f"RETRIEVED MEMORIES:\n{context}\n\n"
             "ANSWER:"
@@ -461,10 +425,11 @@ class BEAMDataset(Dataset):
 
 
     def default_judge_llm(self):
-        # BEAM is judged with gemini-3.5-flash in code (more reliable rubric scoring than
-        # 2.5-flash-lite; env-independent so results are consistent across runs).
+        # Judged with gemini-3.5-flash by default (more reliable rubric scoring than
+        # 2.5-flash-lite). The judge moves the score, so a comparison across runs has to
+        # pin it: OMB_JUDGE_MODEL scores a run with the judge an earlier one used.
         from ..llm.gemini import GeminiLLM
-        return GeminiLLM("gemini-3.5-flash")
+        return GeminiLLM(os.environ.get("OMB_JUDGE_MODEL") or "gemini-3.5-flash")
 
     def build_judge_prompt(self, query: str, gold_answers: list[str], answer: str) -> str:
         # Overridden per-query via get_judge_prompt_fn when meta is available.
