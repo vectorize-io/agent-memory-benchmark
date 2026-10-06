@@ -9,7 +9,7 @@ corpus into the selected provider (isolation_unit = task), then this mode dispat
   - any other provider => generic arm: `provider.retrieve(bug_report)` and the top memories are
     injected into the task prompt (`provided` arm) — how any AMB memory system runs the benchmark.
 
-Env: SDE_AGENT (opencode|claude-code|codex), SDE_HINDSIGHT_URL (Hindsight server, default :8888),
+Env: SDE_AGENT (opencode|claude-code|codex|pi), SDE_HINDSIGHT_URL (Hindsight server, default :8888),
 SDE_HSCODING_PLUGIN_DIR (plugin dir with dist/ built; hscoding only), SDE_MODEL.
 """
 import asyncio
@@ -34,7 +34,7 @@ class CodingMode(ResponseMode):
     description = "Build the task repo, run a coding agent with test-feedback interventions, grade by pytest."
 
     _AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5",
-                    "codex": "gpt-5.4-mini"}
+                    "codex": "gpt-5.4-mini", "pi": "openai-codex/gpt-5.6-luna"}
 
     def __init__(self, model: str | None = None):
         self._agent = os.environ.get("SDE_AGENT", "opencode")   # --agent, so claude runs land in the UI
@@ -91,16 +91,33 @@ class CodingMode(ResponseMode):
                "--history", arm, "--agent", self._agent, "--model", self._model, "--run-id", run_id]
         if external_memory_file:
             cmd += ["--external-memory", external_memory_file]
+        # A memory task whose automatic reflect never answered (timeout, server error) ran without
+        # the memory it is supposed to measure, so its score says nothing about memory. Rerun the
+        # whole task (a fresh container and session) instead of scoring it, up to
+        # SDE_REFLECT_RETRIES times; the attempts are recorded. Only for the reflect injection: a
+        # pages/recall arm never reflects on its own.
+        reflect_arm = arm == "hscoding" and os.environ.get("HINDSIGHT_AUTO_INJECT", "reflect") == "reflect"
+        retries = int(os.environ.get("SDE_REFLECT_RETRIES", "3")) if reflect_arm else 0
         t0 = time.perf_counter()
-        proc = await asyncio.to_thread(
-            subprocess.run, cmd, capture_output=True, text=True, cwd=str(_REPO_ROOT), env=env,
-        )
+        for attempt in range(retries + 1):
+            if attempt:
+                run_id = f"omb-{uuid.uuid4().hex[:8]}"
+                cmd[cmd.index("--run-id") + 1] = run_id
+            proc = await asyncio.to_thread(
+                subprocess.run, cmd, capture_output=True, text=True, cwd=str(_REPO_ROOT), env=env,
+            )
+            work = Path("/tmp/sdebench/run") / f"{task_id}_{arm}_{run_id}"
+            if not reflect_arm or not (work / "result.json").exists():
+                break
+            diag = json.loads((work / "result.json").read_text()).get("memory_diag") or []
+            if any(d.get("event") == "reflect_ok" for d in diag):
+                break
         elapsed_ms = (time.perf_counter() - t0) * 1000
 
-        work = Path("/tmp/sdebench/run") / f"{task_id}_{arm}_{run_id}"
         result_path = work / "result.json"
         if result_path.exists():
             result = json.loads(result_path.read_text())
+            result["reflect_attempts"] = attempt + 1 if reflect_arm else None
             trace_path = work / "trace.json"
             if trace_path.exists():
                 # Surface WHAT HAPPENED to the UI's agent view: flatten the per-round trace into one

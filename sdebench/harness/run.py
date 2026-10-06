@@ -40,6 +40,10 @@ PRICES = {
     # gpt-5.4-mini (Aug 2026): $0.75 in / $4.50 out; cached input 90% off; cache writes bill as
     # input. (Codex-branded models became inaccessible to plain API keys — Aug 2026.)
     "gpt-5.4-mini": {"input": 0.75, "cache_read": 0.075, "cache_write": 0.75, "output": 4.50},
+    # gpt-5.6-luna (Oct 2026), from pi's model catalog: $0.20 in / $1.20 out, cached input $0.02,
+    # cache writes $0.25. Priced the same whichever pi provider (API key or Codex subscription) runs it.
+    "openai-codex/gpt-5.6-luna": {"input": 0.20, "cache_read": 0.02, "cache_write": 0.25, "output": 1.20},
+    "openai/gpt-5.6-luna": {"input": 0.20, "cache_read": 0.02, "cache_write": 0.25, "output": 1.20},
 }
 
 
@@ -272,13 +276,15 @@ def gen_index_doc(task: dict) -> str:
 # that reflects+injects (no MCP), OAuth creds mounted at runtime.
 _AGENT_IMAGES = {"opencode": os.environ.get("SDE_AGENT_IMAGE", "sdebench-agent"),
                  "claude-code": os.environ.get("SDE_AGENT_IMAGE_CLAUDE", "sdebench-agent-claude"),
-                 "codex": os.environ.get("SDE_AGENT_IMAGE_CODEX", "sdebench-agent-codex")}
+                 "codex": os.environ.get("SDE_AGENT_IMAGE_CODEX", "sdebench-agent-codex"),
+                 "pi": os.environ.get("SDE_AGENT_IMAGE_PI", "sdebench-agent-pi")}
 _AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5",
-                "codex": "gpt-5.4-mini"}
+                "codex": "gpt-5.4-mini", "pi": "openai-codex/gpt-5.6-luna"}
 # The hindsight-coding-agents plugin package (dist/ built) — memory arms only. No default that
 # assumes a particular machine layout: point SDE_HSCODING_PLUGIN_DIR at a checkout of
 # hindsight-integrations/hindsight-coding-agents (or the npm-installed package dir).
 _PLUGIN_DIR = os.path.expanduser(os.environ.get("SDE_HSCODING_PLUGIN_DIR", ""))
+_PI_AUTH = os.path.expanduser(os.environ.get("SDE_PI_AUTH", str(Path.home() / ".pi" / "agent" / "auth.json")))
 _CLAUDE_CREDS = os.path.expanduser(os.environ.get("SDE_CLAUDE_CREDS", str(Path.home() / ".sdebench" / "claude_creds.json")))
 
 
@@ -291,12 +297,16 @@ def _container_url(url: str) -> str:
 # ~/.hindsight/coding-agents-logs/diag.jsonl since hindsight#4325 unless HINDSIGHT_DIAG_FILE says
 # otherwise, so it is pinned here: unpinned, every memory arm reads as "never reflected".
 PLUGIN_DIAG = "/tmp/hindsight-plugin.log"
+# The plugin's own attribution log (what `hindsight-coding-agents stats` reads): one line per user
+# turn with the hindsight_* tools called and whether the reply credited memory ("From Hindsight
+# memory"). Pinned like the diag file so the harness can read it back per task.
+PLUGIN_USAGE = "/tmp/hindsight-usage.jsonl"
 
 
 def _mem_docker_env(env: dict) -> list[str]:
     """Docker -e flags carrying model auth + memory settings (both agents read HINDSIGHT_*; the
     opencode plugin also gets a config file, the claude hook reads these env vars directly)."""
-    denv: list[str] = ["-e", f"HINDSIGHT_DIAG_FILE={PLUGIN_DIAG}"]
+    denv: list[str] = ["-e", f"HINDSIGHT_DIAG_FILE={PLUGIN_DIAG}", "-e", f"HINDSIGHT_USAGE_FILE={PLUGIN_USAGE}"]
     key = env.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
     if key:
         denv += ["-e", f"GEMINI_API_KEY={key}", "-e", f"GOOGLE_GENERATIVE_AI_API_KEY={key}"]
@@ -306,8 +316,10 @@ def _mem_docker_env(env: dict) -> list[str]:
     # HINDSIGHT_API_TOKEN: an authenticated server (Hindsight Cloud) — without it the plugin's
     # reflect is refused and the memory arm silently runs with no memory.
     # CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY: claude-code auth without mounting OAuth creds.
+    # HINDSIGHT_AUTO_INJECT: what the plugin injects on the first prompt (reflect | pages | recall |
+    # none) — the knob that separates a reflect arm from a knowledge-pages-only arm.
     for k in ("HINDSIGHT_DISABLED", "HINDSIGHT_BANK_ID", "HINDSIGHT_MEMORY_MODE", "HINDSIGHT_API_TOKEN",
-              "CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY"):
+              "CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY", "HINDSIGHT_AUTO_INJECT"):
         if env.get(k) is not None:
             denv += ["-e", f"{k}={env[k]}"]
     if env.get("HINDSIGHT_API_URL"):
@@ -323,6 +335,8 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
         mounts += ["-v", f"{_PLUGIN_DIR}:/opt/hindsight-coding-agents:ro"]
     if agent == "claude-code" and not (env.get("CLAUDE_CODE_OAUTH_TOKEN") or env.get("ANTHROPIC_API_KEY")):
         mounts += ["-v", f"{_CLAUDE_CREDS}:/root/.claude/.credentials.json"]  # rw: claude may refresh it
+    if agent == "pi":
+        mounts += ["-v", f"{_PI_AUTH}:/root/.pi/agent/auth.json"]  # rw: pi refreshes OAuth tokens
     cmd = ["docker", "run", "-d", "--rm", *mounts, "-w", "/work",
            "--add-host", "host.docker.internal:host-gateway",
            *_mem_docker_env(env), _AGENT_IMAGES[agent], "sleep", "infinity"]
@@ -373,28 +387,41 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
                             "printf 'codex_hooks = true\n' > /root/.codex/config.toml"],
                            capture_output=True, text=True)
     if agent == "claude-code" and env.get("HINDSIGHT_BANK_ID"):
-        # Memory via the ACTUAL product integration: the plugin's UserPromptSubmit hook, exactly as
-        # the installer wires it (nested settings style, 30s timeout > the hook's 25s reflect cap).
-        # The old --append-system-prompt workaround predated the calibrated <hindsight_memory>
-        # wrapper + historian reflect; with those, claude uses hook-injected memory like any other
-        # harness. Vanilla arm: no hooks (parity by absence). Settings are MERGED so the image's
-        # permissions allow-list survives.
-        hs_cfg = {"apiUrl": _container_url(env.get("HINDSIGHT_API_URL", HINDSIGHT_URL)),
-                  "bankId": env["HINDSIGHT_BANK_ID"],
-                  "retainSessions": False, "autoSeed": False, "codebaseSurvey": False}
+        # Memory via the ACTUAL product: the plugin's own installer, run in the container exactly as a
+        # user runs it (`install claude-code`) — all three hooks, the hindsight_* MCP tools and the
+        # skill. The benchmark only sets plugin CONFIG, never the wiring: the bank, the server, and
+        # trial isolation (no session write-back, no auto-seed or survey racing the controlled
+        # ingest, no npm auto-update). Hand-merging just the prompt hook (the old way) left the
+        # agent without the MCP tools, so the reflect/page tools a user's agent can reach for were
+        # never in the run. Vanilla arm: nothing installed (parity by absence).
+        api_url = _container_url(env.get("HINDSIGHT_API_URL", HINDSIGHT_URL))
+        hs_cfg = {"serverMode": "self-hosted", "apiUrl": api_url, "bankId": env["HINDSIGHT_BANK_ID"],
+                  "retainSessions": False, "autoSeed": False, "codebaseSurvey": False, "autoUpdate": False}
         subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
                         "mkdir -p /root/.hindsight && cat > /root/.hindsight/coding-agent.json"],
-                       input=json.dumps(hs_cfg), capture_output=True, text=True)
-        merge = (
-            "import json\n"
-            "p = '/root/.claude/settings.json'\n"
-            "try: s = json.load(open(p))\n"
-            "except Exception: s = {}\n"
-            "s.setdefault('hooks', {})['UserPromptSubmit'] = [{'hooks': [{'type': 'command',\n"
-            "  'command': 'node \"/opt/hindsight-coding-agents/dist/claude-hook.js\"', 'timeout': 30}]}]\n"
-            "json.dump(s, open(p, 'w'))\n")
-        subprocess.run(["docker", "exec", "-i", cid, "python3", "-"],
-                       input=merge, capture_output=True, text=True)
+                       input=json.dumps(hs_cfg), capture_output=True, text=True, check=True)
+        inst = subprocess.run(["docker", "exec", cid, "node", "/opt/hindsight-coding-agents/dist/installer.js",
+                               "install", "claude-code", "--server", "self-hosted", "--api-url", api_url],
+                              capture_output=True, text=True)
+        out = (inst.stdout or "") + (inst.stderr or "")
+        # Fail the task, not the measurement: an arm without hooks or tools measures no memory.
+        if inst.returncode != 0 or "hooks merged" not in out or "MCP server registered" not in out:
+            raise RuntimeError(f"plugin install failed in the agent container (rc={inst.returncode}): {out[-600:]}")
+    if agent == "pi" and env.get("HINDSIGHT_BANK_ID"):
+        # Same rule as claude-code: the plugin's own installer (`install pi` registers its extension,
+        # native tools included, and the skill); the benchmark only sets config.
+        api_url = _container_url(env.get("HINDSIGHT_API_URL", HINDSIGHT_URL))
+        hs_cfg = {"serverMode": "self-hosted", "apiUrl": api_url, "bankId": env["HINDSIGHT_BANK_ID"],
+                  "retainSessions": False, "autoSeed": False, "codebaseSurvey": False, "autoUpdate": False}
+        subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
+                        "mkdir -p /root/.hindsight && cat > /root/.hindsight/coding-agent.json"],
+                       input=json.dumps(hs_cfg), capture_output=True, text=True, check=True)
+        inst = subprocess.run(["docker", "exec", cid, "node", "/opt/hindsight-coding-agents/dist/installer.js",
+                               "install", "pi", "--server", "self-hosted", "--api-url", api_url],
+                              capture_output=True, text=True)
+        out = (inst.stdout or "") + (inst.stderr or "")
+        if inst.returncode != 0 or "extension registered" not in out:
+            raise RuntimeError(f"plugin install failed in the pi container (rc={inst.returncode}): {out[-600:]}")
     return cid
 
 
@@ -503,6 +530,48 @@ def _parse_codex(stdout: str, elapsed: float) -> dict:
 
 
 
+def _parse_pi(stdout: str, elapsed: float) -> dict:
+    """Parse `pi -p --mode json` JSONL (pi 1.0): every finished message is a `message_end` event;
+    assistant ones carry content blocks (text / toolCall) and `usage` (input, output, cacheRead,
+    cacheWrite, reasoning)."""
+    tok = {"input": 0, "output": 0, "reasoning": 0, "cache_read": 0, "cache_write": 0}
+    turns = 0
+    traj = []
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            e = json.loads(line)
+        except Exception:
+            continue
+        if e.get("type") != "message_end":
+            continue
+        msg = e.get("message") or {}
+        if msg.get("role") != "assistant":
+            continue
+        if msg.get("stopReason") == "error":
+            # Fail LOUDLY, as for claude/codex: a dead agent (expired login, unknown model) otherwise
+            # reads as a normal empty turn and burns the whole correction budget.
+            raise RuntimeError(f"pi agent error: {str(msg.get('errorMessage') or msg)[:200]}")
+        turns += 1
+        u = msg.get("usage") or {}
+        tok["input"] += u.get("input", 0) or 0
+        tok["output"] += u.get("output", 0) or 0
+        tok["reasoning"] += u.get("reasoning", 0) or 0
+        tok["cache_read"] += u.get("cacheRead", 0) or 0
+        tok["cache_write"] += u.get("cacheWrite", 0) or 0
+        for blk in msg.get("content") or []:
+            if blk.get("type") == "text" and blk.get("text"):
+                traj.append({"k": "say", "text": str(blk["text"])[:1500]})
+            elif blk.get("type") == "toolCall":
+                a = blk.get("arguments") or {}
+                arg = str(a.get("command") or a.get("path") or a.get("file_path") or json.dumps(a))[:160]
+                traj.append({"k": "tool", "tool": str(blk.get("name", "")).lower(), "arg": arg,
+                             "input": "", "out": ""})
+    return {"elapsed": elapsed, "tokens": tok, "turns": turns, "trajectory": traj}
+
+
 def run_agent(cid: str, model: str, timeout: int, message: str, resume: bool = False,
               agent: str = "opencode", system_append: str | None = None) -> dict:
     # One turn: exec the agent into the already-running per-task container (session store lives inside,
@@ -521,6 +590,16 @@ def run_agent(cid: str, model: str, timeout: int, message: str, resume: bool = F
         t0 = time.perf_counter()
         proc = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
         return _parse_claude(proc.stdout, time.perf_counter() - t0)
+    if agent == "pi":
+        cmd = ["docker", "exec", "-w", "/work", cid, "pi", "-p", "--mode", "json", "--model", model]
+        if resume:
+            cmd.append("--continue")   # the session store lives in the container: same session
+        cmd.append(message)
+        t0 = time.perf_counter()
+        proc = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
+        if proc.returncode != 0 and not proc.stdout.strip():
+            raise RuntimeError(f"pi agent failed (rc={proc.returncode}): {(proc.stderr or '')[-300:]}")
+        return _parse_pi(proc.stdout, time.perf_counter() - t0)
     if agent == "codex":
         base = ["docker", "exec", "-w", "/work", cid, "codex", "exec", "--json", "-m", model,
                 "--dangerously-bypass-approvals-and-sandbox",   # the container IS the sandbox
@@ -734,7 +813,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", required=True, help="path to a task.json (sdebench/datasets/boltons-*/tasks/main/task.json)")
     ap.add_argument("--history", choices=["full", "squashed", "hindsight", "hscoding", "memtool", "inject", "oracle", "hybrid", "index", "provided", "conversations", "skill"], default="full")
-    ap.add_argument("--agent", choices=["opencode", "claude-code", "codex"], default="opencode")
+    ap.add_argument("--agent", choices=["opencode", "claude-code", "codex", "pi"], default="opencode")
     ap.add_argument("--model", default=None, help="agent model; defaults per --agent")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--run-id", default="r1")
@@ -881,6 +960,7 @@ def main():
         # memory observability: the plugin records every reflect outcome to /tmp inside the container.
         # A memory arm whose reflect silently failed is NOT a memory run — record and shout.
         mem_diag = None
+        mem_usage = None
         if memory_bank:
             _p = subprocess.run(["docker", "exec", cid, "cat", PLUGIN_DIAG],
                                 capture_output=True, text=True)
@@ -888,6 +968,17 @@ def main():
             _ok = any(d.get("event") in ("reflect_ok", "recall_ok", "inject_ok") for d in (mem_diag or []))
             print(f"  [memory] reflect diagnostics: {mem_diag if mem_diag else 'NO LOG — plugin never reflected'}"
                   + ("" if _ok else "  ⚠️ MEMORY ARM RAN WITHOUT INJECTED MEMORY"), flush=True)
+            _u = subprocess.run(["docker", "exec", cid, "cat", PLUGIN_USAGE], capture_output=True, text=True)
+            # The Stop hook re-emits a turn once its reply is flushed (usage.ts reviseLastTurn): the
+            # LAST line per (session, turn) is the settled one — the same dedupe `stats` applies.
+            _turns: dict = {}
+            for l in (_u.stdout or "").splitlines():
+                try:
+                    _r = json.loads(l)
+                    _turns[(_r.get("session"), _r.get("turn"))] = _r
+                except Exception:
+                    pass
+            mem_usage = list(_turns.values()) or None
     finally:
         stop_agent_container(cid)
 
@@ -905,6 +996,16 @@ def main():
         "turns": totals["turns"], "wall_s": round(totals["wall_s"], 1),
         "cost_usd": round(cost, 4),                   # 0 when the model has no PRICES entry
         "memory_diag": mem_diag if memory_bank else None,
+        # attribution: did the agent visibly credit Hindsight, and which hindsight_* tools it called
+        "memory_usage": mem_usage,
+        "credited": any(u.get("credited") for u in (mem_usage or [])) if memory_bank else None,
+        # The same credit read straight off the agent's replies: the plugin's log under-counts a
+        # headless run, whose Stop hook fires before the final reply is flushed to the transcript
+        # and never gets the next turn that would correct it.
+        "credited_reply": any(re.search(r"from hindsight memory", s_.get("text", ""), re.I)
+                              for rnd in trace for s_ in rnd.get("trajectory") or [] if s_.get("k") == "say")
+                          if memory_bank else None,
+        "hindsight_calls": sum(len(u.get("calls") or []) for u in (mem_usage or [])) if memory_bank else None,
     }
     (work / "result.json").write_text(json.dumps(result, indent=2))
     (work / "trace.json").write_text(json.dumps(

@@ -209,7 +209,8 @@ class EvalRunner:
                 judge_reason = f"interventions={raw.get('interventions')} pytest={(raw.get('final_pytest') or '')[:80]}"
                 q.meta.update({k: raw.get(k) for k in
                                ("solved", "interventions", "capped", "cost_usd", "turns", "wall_s",
-                                "final_pytest", "tokens", "agent", "model")
+                                "final_pytest", "tokens", "agent", "model", "credited", "hindsight_calls",
+                                "reflect_attempts", "credited_reply")
                                if raw.get(k) is not None})
                 # Agent-view payload: the patch is the "answer", injected memory the "context",
                 # and the step trace + repo history land as row fields (view: "agent" in _save).
@@ -315,7 +316,7 @@ class EvalRunner:
                 ingested_docs_count = self._load_previous_ingested_docs(dataset.name, split, effective_name, mode.name)
             else:
                 pending_units = len(docs_by_unit) - len(already_done_units)
-                console.print(f"[dim]Ingesting {pending_units} units into {memory.name} (unit-sequential)...[/dim]")
+                console.print(f"[dim]Ingesting {pending_units} units into {memory.name} ({getattr(memory, 'unit_concurrency', 1)} at a time)...[/dim]")
 
             # Pre-load previous results for skip-ingested fast-path
             _prev_by_unit: dict[str, list[QueryResult]] = {}
@@ -337,47 +338,57 @@ class EvalRunner:
                 nonlocal ingestion_ms, ingested_docs_count
                 concurrency = getattr(memory, "concurrency", _CONCURRENCY)
                 sem = asyncio.Semaphore(concurrency)
-                all_results = []
+                # Units are independent (that is what an isolation unit is), so a provider that can
+                # ingest several at once says so with `unit_concurrency`. Within a unit the order
+                # stays ingest -> answer. Default 1: units run one after another, as before.
+                unit_sem = asyncio.Semaphore(max(1, int(getattr(memory, "unit_concurrency", 1))))
+                results_by_unit: dict[str, list] = {}
 
-                for unit_id, unit_docs in docs_by_unit.items():
-                    if unit_id in already_done_units:
-                        unit_prev = _prev_by_unit.get(unit_id, [])
-                        all_results.extend(unit_prev)
-                        progress.advance(task_id, len(unit_prev))
-                        continue
-
-                    if not skip_ingestion:
-                        t0 = time.perf_counter()
-                        await memory.async_ingest(unit_docs)
-                        ingestion_ms += (time.perf_counter() - t0) * 1000
-                        ingested_docs_count += len(unit_docs)
-
-                    unit_queries = queries_by_unit.get(unit_id, [])
-                    unit_results = [None] * len(unit_queries)
-
-                    async def bounded(i, q):
-                        async with sem:
-                            unit_results[i] = await _process_one(q)
-                            progress.advance(task_id)
-
-                    await asyncio.gather(*[bounded(i, q) for i, q in enumerate(unit_queries)])
-                    all_results.extend(unit_results)
-                    # Save incrementally after each unit to survive crashes
-                    partial = EvalSummary(
+                def _save_partial() -> None:
+                    done = [r for uid in docs_by_unit for r in results_by_unit.get(uid, []) if r]
+                    self._save(EvalSummary(
                         dataset=dataset.name, split=split, category=category,
                         memory_provider=memory.name, run_name=effective_name,
                         mode=mode.name, oracle=oracle,
-                        total_queries=len(all_results),
-                        correct=sum(1 for r in all_results if r and r.correct),
+                        total_queries=len(done),
+                        correct=sum(1 for r in done if r.correct),
                         accuracy=0.0, ingestion_time_ms=round(ingestion_ms, 1),
                         ingested_docs=ingested_docs_count,
                         description=description, answer_llm=mode.llm_id,
                         judge_llm=(None if dataset.task_type in ("coding", "retrieval") else self._get_judge(dataset)._llm.model_id),
-                        results=[r for r in all_results if r],
-                    )
-                    self._save(partial)
+                        results=done,
+                    ))
 
-                return all_results
+                async def run_unit(unit_id, unit_docs):
+                    nonlocal ingestion_ms, ingested_docs_count
+                    if unit_id in already_done_units:
+                        unit_prev = _prev_by_unit.get(unit_id, [])
+                        results_by_unit[unit_id] = unit_prev
+                        progress.advance(task_id, len(unit_prev))
+                        return
+                    async with unit_sem:
+                        if not skip_ingestion:
+                            t0 = time.perf_counter()
+                            await memory.async_ingest(unit_docs)
+                            ingestion_ms += (time.perf_counter() - t0) * 1000
+                            ingested_docs_count += len(unit_docs)
+
+                        unit_queries = queries_by_unit.get(unit_id, [])
+                        unit_results = [None] * len(unit_queries)
+
+                        async def bounded(i, q):
+                            async with sem:
+                                unit_results[i] = await _process_one(q)
+                                progress.advance(task_id)
+
+                        await asyncio.gather(*[bounded(i, q) for i, q in enumerate(unit_queries)])
+                        results_by_unit[unit_id] = unit_results
+                    # Save incrementally after each unit to survive crashes
+                    _save_partial()
+
+                await asyncio.gather(*[run_unit(uid, docs) for uid, docs in docs_by_unit.items()])
+                # Same order as the units, whatever order they finished in.
+                return [r for uid in docs_by_unit for r in results_by_unit.get(uid, [])]
 
             with Progress(SpinnerColumn(), "[progress.description]{task.description}", BarColumn(),
                           TaskProgressColumn(), TimeElapsedColumn(), console=console) as progress:
