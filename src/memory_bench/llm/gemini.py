@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 
 from google import genai
@@ -14,6 +15,10 @@ _TYPE_MAP = {
     "integer": types.Type.INTEGER,
     "number":  types.Type.NUMBER,
 }
+
+#: Sampling seed. Unset keeps the previous behaviour, so an older number can still be
+#: replayed; set OMB_SEED to make a run reproducible.
+_SEED = os.environ.get("OMB_SEED")
 
 # Retry config for 429 RESOURCE_EXHAUSTED
 _MAX_RETRIES = 6
@@ -32,10 +37,14 @@ class GeminiLLM(LLM):
     def generate(self, prompt: str, schema: Schema) -> dict:
         import json as _json
         genai_schema = self._build_schema(schema)
+        # temperature=0 alone does not make Gemini reproducible: the same prompt can come
+        # back different run to run, by about as much as the gap between two configurations
+        # under comparison. A seed is what makes a small-sample mean worth comparing.
         config = types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=genai_schema,
-            temperature=0.0,  # deterministic answers + judging (reproducible benchmark)
+            temperature=0.0,
+            **({"seed": int(_SEED)} if _SEED is not None else {}),
         )
         delay = _RETRY_BASE_DELAY
         last_text = ""
