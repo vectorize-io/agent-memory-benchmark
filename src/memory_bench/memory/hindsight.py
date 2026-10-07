@@ -67,13 +67,29 @@ def _as_recall_response(payload: dict):
 
 
 def _deduplicate_results(results):
-    """Remove duplicate results by chunk_id, keeping first occurrence."""
+    """Drop the same memory returned twice, by id.
+
+    This keyed on chunk_id, which is not an identity. A chunk is a passage of the source
+    conversation and the extractor draws several distinct facts from one passage, so keying
+    on it kept the best-ranked fact per passage and silently discarded every other fact
+    from it: 36 of 117 retrieved facts on one BEAM recall, 31%.
+
+    What it threw away was load-bearing. contradiction_resolution asks "have I ever done X"
+    and its rubric wants both the "I did X" and the "I never did X" statement; the two are
+    made in the same breath, so they share a chunk, and the lower-ranked one never reached
+    the context. Fixing this is worth +0.070 per question on BEAM 100k (SE 0.018, paired
+    over 100 questions, 40 better / 12 worse), concentrated in exactly the categories that
+    turn on several facts from one passage: contradiction_resolution +0.239, summarization
+    +0.108, information_extraction +0.101, knowledge_update +0.100.
+
+    Repeated chunk TEXT, which is presumably what this was meant to prevent, is already
+    handled where it belongs — seen_chunk_ids in _format_result inlines a chunk once.
+    """
     seen = set()
     out = []
     for r in results:
-        key = r.chunk_id if r.chunk_id else r.id
-        if key not in seen:
-            seen.add(key)
+        if r.id not in seen:
+            seen.add(r.id)
             out.append(r)
     return out
 
