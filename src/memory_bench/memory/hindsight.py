@@ -206,13 +206,21 @@ class _HindsightBase(MemoryProvider):
 
     # ── Bank creation (sync) ──────────────────────────────────────────────────
 
+    # BEAM conversations are a user working with an assistant. Keep both sides: what the user
+    # says, decided and measured, and what the assistant proposed or built at the level of the
+    # approach. Example values inside the assistant's code (sample batch sizes, TTLs, ports) are
+    # left out — stored, they outvote the user's actual settings on "what value do I use?".
     _BEAM_RETAIN_MISSION = (
-        "Extract ALL factual claims the user makes about themselves, their project, "
-        "and their experience — including NEGATIVE statements (e.g. 'I have never done X', "
-        "'I don't know Y', 'I haven't used Z'). Negative self-assessments and denials "
-        "are as important as positive ones. Also preserve contradictions: if the user "
-        "says opposite things at different points, extract BOTH statements as separate facts. "
-        "Preserve specific numbers, dates, versions, and quantities exactly as stated."
+        "This is a conversation between a user and an AI assistant about the user's work. Extract what "
+        "the user says about themselves, their project, decisions, problems, results and plans — "
+        "including negative statements ('I have never done X') and statements that contradict earlier "
+        "ones, each as its own fact. Settings, versions and numbers the user states they use, chose, "
+        "changed or measured are the most important facts: keep them exactly. ALSO extract what the "
+        "assistant proposed, explained, designed or built in reply, at the level of the approach: which "
+        "technique, component, tool or design it recommended and for what (e.g. 'Assistant suggested "
+        "batching the import job and adding an index on created_at'). Do NOT record example values from "
+        "the assistant's code or illustrations (sample batch sizes, TTLs, ports, thresholds) — those are "
+        "not the user's settings. Do not restate the user profile given as context."
     )
 
     # PrecisionMemBench seeds one belief per document and scores which beliefs come
