@@ -274,6 +274,15 @@ class BEAMDataset(Dataset):
             # Max ~100k chars per document to keep PostgreSQL happy.
             _MAX_DOC_CHARS = 100_000
             sessions = [s for s in chat if isinstance(s, list)]
+            if not sessions and chat and all(isinstance(x, dict) for x in chat):
+                # BEAM-10M nests sessions as {"plan-N": [batch, ...]}, each batch a dated
+                # session whose turns come in small groups. Flatten every batch into one
+                # session so 10M is split and dated exactly like the smaller splits.
+                sessions = [
+                    [t for group in batch.get("turns") or [] for t in group]
+                    for plan in chat for batches in plan.values() if batches
+                    for batch in batches
+                ]
             if sessions:
                 doc_idx = 0
                 for s_idx, session in enumerate(sessions):
