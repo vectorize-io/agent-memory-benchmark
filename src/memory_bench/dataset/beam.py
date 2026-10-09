@@ -274,6 +274,15 @@ class BEAMDataset(Dataset):
             # Max ~100k chars per document to keep PostgreSQL happy.
             _MAX_DOC_CHARS = 100_000
             sessions = [s for s in chat if isinstance(s, list)]
+            if not sessions and chat and all(isinstance(x, dict) for x in chat):
+                # BEAM-10M nests sessions as {"plan-N": [batch, ...]}, each batch a dated
+                # session whose turns come in small groups. Flatten every batch into one
+                # session so 10M is split and dated exactly like the smaller splits.
+                sessions = [
+                    [t for group in batch.get("turns") or [] for t in group]
+                    for plan in chat for batches in plan.values() if batches
+                    for batch in batches
+                ]
             if sessions:
                 doc_idx = 0
                 for s_idx, session in enumerate(sessions):
@@ -411,13 +420,9 @@ class BEAMDataset(Dataset):
             "IMPORTANT RULES:\n"
             "1. Scan ALL provided memories before answering \u2014 do not stop after the first relevant one.\n"
             "2. If multiple memories contain relevant information, combine and cross-reference them.\n"
-            "3. If the memories contain contradictory information, prefer the more recent one.\n"
-            "4. The question may refer to something indirectly (e.g. 'the person I met at the festival') — resolve such references by searching the memories before concluding. Only if the specific information is genuinely absent after a careful search, say exactly: \"I don't have enough information to answer this question.\"\n"
-            "5. For temporal questions: pay attention to dates and relative time references.\n"
-            "6. For ordering questions: present events in chronological order.\n"
-            "7. For preference questions: use the most recently stated preference.\n"
-            "8. Be specific and direct \u2014 include exact names, dates, numbers, and details from the memories.\n"
-            "9. Do NOT invent or assume information that isn't in the memories.\n"
+            "3. The question may refer to something indirectly (e.g. 'the person I met at the festival') — resolve such references by searching the memories before concluding. Only if the specific information is genuinely absent after a careful search, say exactly: \"I don't have enough information to answer this question.\"\n"
+            "4. Be specific and direct \u2014 include exact names, dates, numbers, and details from the memories.\n"
+            "5. Do NOT invent or assume information that isn't in the memories.\n"
             f"\nQUESTION: {query}\n\n"
             f"RETRIEVED MEMORIES:\n{context}\n\n"
             "ANSWER:"
