@@ -392,7 +392,7 @@
   "beam": {
     "100k": [
       {
-        "memory": "Hindsight RAG (Honcho)",
+        "memory": "Honcho",
         "accuracy": 0.63,
         "source_url": "https://evals.honcho.dev/",
         "source_label": "Honcho (evals.honcho.dev)"
@@ -412,7 +412,7 @@
     ],
     "500k": [
       {
-        "memory": "Hindsight RAG (Honcho)",
+        "memory": "Honcho",
         "accuracy": 0.649,
         "source_url": "https://evals.honcho.dev/",
         "source_label": "Honcho (evals.honcho.dev)"
@@ -432,7 +432,7 @@
     ],
     "1m": [
       {
-        "memory": "Hindsight RAG (Honcho)",
+        "memory": "Honcho",
         "accuracy": 0.631,
         "source_url": "https://evals.honcho.dev/",
         "source_label": "Honcho (evals.honcho.dev)"
@@ -452,7 +452,7 @@
     ],
     "10m": [
       {
-        "memory": "Hindsight RAG (Honcho)",
+        "memory": "Honcho",
         "accuracy": 0.406,
         "source_url": "https://evals.honcho.dev/",
         "source_label": "Honcho (evals.honcho.dev)"
