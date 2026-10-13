@@ -210,6 +210,7 @@ name = "amb"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "atmem" },
     { name = "cognee" },
     { name = "datasets" },
     { name = "fastapi", extra = ["standard"] },
@@ -233,6 +234,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "atmem", specifier = "==2.2.7b1" },
     { name = "cognee", specifier = ">=0.5.4" },
     { name = "datasets", specifier = ">=2.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.135.1" },
@@ -420,6 +422,28 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ba/7a/15e37d45e7f7c94facc1e9148c0e455e8f33c08f0b8a0b1deb2c5171771b/asyncpg-0.31.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:8df714dba348efcc162d2adf02d213e5fab1bd9f557e1305633e851a61814a7a", size = 3429426, upload-time = "2025-11-24T23:26:41.032Z" },
     { url = "https://files.pythonhosted.org/packages/13/d5/71437c5f6ae5f307828710efbe62163974e71237d5d46ebd2869ea052d10/asyncpg-0.31.0-cp314-cp314t-win32.whl", hash = "sha256:1b41f1afb1033f2b44f3234993b15096ddc9cd71b21a42dbd87fc6a57b43d65d", size = 614495, upload-time = "2025-11-24T23:26:42.659Z" },
     { url = "https://files.pythonhosted.org/packages/3c/d7/8fb3044eaef08a310acfe23dae9a8e2e07d305edc29a53497e52bc76eca7/asyncpg-0.31.0-cp314-cp314t-win_amd64.whl", hash = "sha256:bd4107bb7cdd0e9e65fae66a62afd3a249663b844fa34d479f6d5b3bef9c04c3", size = 706062, upload-time = "2025-11-24T23:26:44.086Z" },
+]
+
+[[package]]
+name = "atmem"
+version = "2.2.7b1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "atmem-atbot" },
+    { name = "cryptography" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/70/81/6176d404c1eaaac21eea156a8419221bed69838f8abbc0aa49d5870f15c8/atmem-2.2.7b1.tar.gz", hash = "sha256:e218726d096f26ad7f28bd0ea9f74207b9f88c085d5c37fd9dbfddf75e16549d", size = 1016070, upload-time = "2026-09-09T09:59:01.166Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/91/8a/293be51574e76043a4f3dedd86b8513d3691dfbea40804ac8451503621ab/atmem-2.2.7b1-py3-none-any.whl", hash = "sha256:c08fe85c2b02ec327b5c62dff92c12d0464633d1fcb1afa6e31d67a508a605c0", size = 616704, upload-time = "2026-09-09T09:58:58.904Z" },
+]
+
+[[package]]
+name = "atmem-atbot"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6c/d6/9321de4e8d374e014bb37f227fdbb988e281f02423600279add7a588f75c/atmem_atbot-0.1.0.tar.gz", hash = "sha256:3324c1da545d6cd0daf0d7e32e1f50d8ca05a5494346ebe08056f09d2f8cee79", size = 26433, upload-time = "2026-09-09T09:53:35.981Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/be/69/548d9d91df6a865f9faf5022f0c8c4209f1f15c2711bdd389a118872d902/atmem_atbot-0.1.0-py3-none-any.whl", hash = "sha256:994201212ec3974a4d20adfb1231961182bcf818184fc7e57bcef5b944859c0d", size = 28961, upload-time = "2026-09-09T09:53:34.584Z" },
 ]
 
 [[package]]

@@ -56,6 +56,13 @@
     }
   },
   "providers": {
+    "atmem": {
+      "key": "atmem",
+      "description": "Local auditable memory with deterministic extraction, lifecycle governance, SQLite persistence, lexical/graph retrieval, and calibrated direct-support selection.",
+      "kind": "local",
+      "link": "https://github.com/aetna000/atmem",
+      "logo": "https://www.google.com/s2/favicons?sz=32&domain=github.com"
+    },
     "vanilla": {
       "key": "none",
       "description": "No memory system (vanilla baseline).",
