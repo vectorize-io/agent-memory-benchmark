@@ -137,7 +137,9 @@ class HsCodingProvider(MemoryProvider):
         # 3. poll the plugin's sync status until seeded memory is fully queryable
         st = ["node", str(self._plugin_dir / "dist" / "status.js"), "--repo", str(src),
               "--bank", bank, "--api-url", self._url, "--config", str(cfg)]
-        deadline = time.monotonic() + 900
+        # An hour, not 15 minutes: a bank's whole history plus its pages took longer than 15 minutes
+        # to settle when the extraction LLM stalled (Gemini calls hanging until their own timeout).
+        deadline = time.monotonic() + 3600
         while time.monotonic() < deadline:
             sp = await asyncio.to_thread(subprocess.run, st, capture_output=True, text=True,
                                          env={**os.environ}, timeout=120)

@@ -127,9 +127,11 @@ class EvalRunner:
                 raise ValueError("Oracle mode requested but no gold_ids found in queries")
             documents = dataset.load_documents(split, category=doc_category, ids=gold_ids)
             console.print(f"  {len(documents)} gold documents loaded [dim](oracle mode)[/dim]")
-        elif dataset.isolation_unit is not None and (query_limit is not None or unit is not None):
-            # For isolated datasets with a query limit, only load docs for the queried units
-            # to avoid loading the entire dataset into memory unnecessarily.
+        elif dataset.isolation_unit is not None and (query_limit is not None or unit is not None or query_id):
+            # For isolated datasets narrowed to some queries (--query-limit, --unit, --query-id), load
+            # only the queried units' documents. --query-id used to fall through to the full load,
+            # so prepare() reset every unit's storage (on hindsight-coding: deleted every bank) to
+            # run one query.
             query_user_ids = {q.user_id for q in queries if q.user_id}
             documents = dataset.load_documents(split, category=doc_category, limit=doc_limit, user_ids=query_user_ids)
             console.print(f"  {len(documents)} documents loaded")
