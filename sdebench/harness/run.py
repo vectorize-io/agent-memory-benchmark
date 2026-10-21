@@ -282,8 +282,10 @@ _AGENT_IMAGES = {"opencode": os.environ.get("SDE_AGENT_IMAGE", "sdebench-agent")
                  "codex": os.environ.get("SDE_AGENT_IMAGE_CODEX", "sdebench-agent-codex"),
                  "pi": os.environ.get("SDE_AGENT_IMAGE_PI", "sdebench-agent-pi"),
                  "hermes": os.environ.get("SDE_AGENT_IMAGE_HERMES", "sdebench-agent-hermes")}
-_AGENT_MODEL = {"opencode": "google/gemini-3.5-flash", "claude-code": "claude-sonnet-5",
-                "codex": "gpt-5.4-mini", "pi": "openai-codex/gpt-5.6-luna", "hermes": "gpt-5.6-luna"}
+_AGENT_MODEL = {"opencode": "google/gemini-3.5-flash",
+                "claude-code": os.environ.get("SDE_CLAUDE_MODEL", "claude-sonnet-5"),
+                "codex": os.environ.get("SDE_CODEX_MODEL", "gpt-5.4-mini"),
+                "pi": "openai-codex/gpt-5.6-luna", "hermes": "gpt-5.6-luna"}
 # Hermes runs on the Codex subscription (provider openai-codex): the Codex CLI login is mounted
 # read-only and imported into Hermes' own auth store at container start. No Gemini key reaches it.
 _CODEX_AUTH = os.path.expanduser(os.environ.get("SDE_CODEX_AUTH", str(Path.home() / ".codex" / "auth.json")))
@@ -376,10 +378,16 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
                         "mkdir -p /root/.hindsight && cat > /root/.hindsight/coding-agent.json"],
                        input=json.dumps(cfg), capture_output=True, text=True)
     elif agent == "codex":
-        # API-key auth: login in-container (the host auth.json holds ChatGPT tokens that go stale).
-        subprocess.run(["docker", "exec", cid, "sh", "-c",
-                        "printenv OPENAI_API_KEY | codex login --with-api-key"],
-                       capture_output=True, text=True)
+        if os.environ.get("SDE_CODEX_SUBSCRIPTION") == "1":
+            # The Codex subscription: a COPY of the host login (docker cp), so a token refresh inside
+            # the container never touches the real ~/.codex.
+            subprocess.run(["docker", "exec", cid, "mkdir", "-p", "/root/.codex"], check=True)
+            subprocess.run(["docker", "cp", _CODEX_AUTH, f"{cid}:/root/.codex/auth.json"], check=True)
+        else:
+            # API-key auth: login in-container (the host auth.json holds ChatGPT tokens that go stale).
+            subprocess.run(["docker", "exec", cid, "sh", "-c",
+                            "printenv OPENAI_API_KEY | codex login --with-api-key"],
+                           capture_output=True, text=True)
         # Memory via the ACTUAL product integration: the hindsight-codex-hook wired through Codex's
         # own hooks mechanism. Vanilla arm: no hooks file -> no memory (parity by absence).
         if env.get("HINDSIGHT_BANK_ID"):
