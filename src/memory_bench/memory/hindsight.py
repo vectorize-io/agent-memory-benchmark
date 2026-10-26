@@ -240,7 +240,8 @@ class _HindsightBase(MemoryProvider):
     )
 
     def _bank_kwargs(self, bank_id: str | None = None) -> dict:
-        kwargs: dict = dict(enable_observations=False)
+        # AMB_ENABLE_OBSERVATIONS=1: let the bank consolidate retained facts into observations.
+        kwargs: dict = dict(enable_observations=os.environ.get("AMB_ENABLE_OBSERVATIONS", "") in ("1", "true"))
         if self._dataset == "beam":
             kwargs["retain_mission"] = self._BEAM_RETAIN_MISSION
         elif self._dataset == "precisionmembench":
@@ -771,6 +772,9 @@ class _HindsightBase(MemoryProvider):
         }
         if include_chunks:
             kwargs["max_chunk_tokens"] = max_chunk_tokens
+        # AMB_RECALL_TYPES=observation: recall only those memory types (comma-separated).
+        if env_types := os.environ.get("AMB_RECALL_TYPES"):
+            kwargs["types"] = [t.strip() for t in env_types.split(",") if t.strip()]
         if query_timestamp:
             kwargs["query_timestamp"] = query_timestamp
         gate = (filters or {}).get("query_gate")
@@ -1277,6 +1281,11 @@ class HindsightHTTPMemoryProvider(HindsightCloudMemoryProvider):
         self._cloud_api_key = os.environ.get("HINDSIGHT_HTTP_KEY", "")
         self._cloud_base_url = os.environ.get("HINDSIGHT_HTTP_URL", "http://localhost:8888")
         self._client = HindsightClient(base_url=self._cloud_base_url, api_key=self._cloud_api_key)
+        # AMB_CONCURRENCY: queries answered at once; AMB_UNIT_CONCURRENCY: units (banks) ingested at once.
+        if v := os.environ.get("AMB_CONCURRENCY"):
+            self.concurrency = int(v)
+        if v := os.environ.get("AMB_UNIT_CONCURRENCY"):
+            self.unit_concurrency = int(v)
 
     def _bank_id_for(self, user_id: str | None) -> str:
         if self._per_unit and user_id is not None:

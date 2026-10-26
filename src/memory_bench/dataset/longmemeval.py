@@ -325,10 +325,16 @@ If it's correct, set correct=true."""
             min_len = min(len(sessions), len(dates), len(session_ids))
             sessions, dates, session_ids = sessions[:min_len], dates[:min_len], session_ids[:min_len]
 
+            seen_doc_ids: dict[str, int] = {}
             for session_turns, date_str, session_id in zip(sessions, dates, session_ids):
                 doc_id = f"{question_id}_{session_id}"
                 if ids is not None and doc_id not in ids:
                     continue
+                # 13 questions in split s repeat a session (same turns, a later date). Hindsight
+                # rejects an async batch with duplicate document ids, so the repeat gets its own.
+                seen_doc_ids[doc_id] = seen_doc_ids.get(doc_id, 0) + 1
+                if seen_doc_ids[doc_id] > 1:
+                    doc_id = f"{doc_id}~{seen_doc_ids[doc_id]}"
 
                 # Clean turns (remove has_answer key)
                 cleaned = [
