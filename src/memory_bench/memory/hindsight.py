@@ -800,8 +800,16 @@ class _HindsightBase(MemoryProvider):
             "bank_id": self._bank_id_for(user_id),
             "query": query[:1900],
         }
-        if query_timestamp:
-            kwargs["query_timestamp"] = query_timestamp
+        # Reflect has no query_timestamp field (recall does), and the unknown field was dropped,
+        # so every question was answered as of today. The date goes in as context, with the
+        # answer rules the dataset's RAG prompt gives the answer model.
+        context = f"The question is being asked on: {query_timestamp} UTC\n" if query_timestamp else ""
+        if self._dataset in ("locomo", "locomo-fixed"):
+            from ..dataset.locomo import ANSWER_RULES
+
+            context += ANSWER_RULES
+        if context:
+            kwargs["context"] = context
         if user_id is not None and not self._per_unit:
             kwargs["tags"] = [f"user:{uid}"]
             kwargs["tags_match"] = "any_strict"

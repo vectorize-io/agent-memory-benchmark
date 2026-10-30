@@ -50,6 +50,18 @@ _CATEGORY_NAMES = {
 
 _SKIP_CATEGORIES = {5}  # adversarial — excluded from benchmark
 
+# The answer rules of the RAG prompt. Shared so a provider that answers by itself (Hindsight's
+# reflect, in agent mode) answers under the same rules as the answer model does in RAG mode.
+ANSWER_RULES = """# INSTRUCTIONS:
+1. Carefully analyze all provided memories
+2. Pay special attention to the timestamps to determine the answer
+3. If the question asks about a specific event or fact, look for direct evidence in the memories
+4. If the memories contain contradictory information or multiple instances of an event, say them all
+5. Always convert relative time references to specific dates, months, or years.
+6. Be as specific as possible when talking about people, places, and events
+7. If the answer is not explicitly stated in the memories, use logical reasoning based on the information available to answer (e.g. calculate duration of an event from different memories).
+"""
+
 
 class LoComoDataset(Dataset):
     """
@@ -93,11 +105,14 @@ class LoComoDataset(Dataset):
 
     @staticmethod
     def _session_keys(conv: dict) -> list[str]:
-        """Return sorted session keys (e.g. ['session_1', 'session_2', ...])."""
+        """Return session keys in session order (e.g. ['session_1', 'session_2', ...])."""
+        # Numeric order: as strings, session_9 sorts after session_19, becomes the "last"
+        # session, and dates every question months before the conversation ends.
         return sorted(
-            k for k in conv
-            if k.startswith("session_") and not k.endswith("_date_time")
-            and isinstance(conv[k], list)
+            (k for k in conv
+             if k.startswith("session_") and not k.endswith("_date_time")
+             and isinstance(conv[k], list)),
+            key=lambda k: int(k.removeprefix("session_")),
         )
 
     @staticmethod
@@ -146,15 +161,7 @@ class LoComoDataset(Dataset):
 # CONTEXT:
 You have access to facts and entities from a conversation.
 {date_str}
-# INSTRUCTIONS:
-1. Carefully analyze all provided memories
-2. Pay special attention to the timestamps to determine the answer
-3. If the question asks about a specific event or fact, look for direct evidence in the memories
-4. If the memories contain contradictory information or multiple instances of an event, say them all
-5. Always convert relative time references to specific dates, months, or years.
-6. Be as specific as possible when talking about people, places, and events
-7. If the answer is not explicitly stated in the memories, use logical reasoning based on the information available to answer (e.g. calculate duration of an event from different memories).
-
+{ANSWER_RULES}
 Context:
 
 {ctx}
