@@ -24,6 +24,13 @@
         "locomo10"
       ]
     },
+    "locomo-fixed": {
+      "description": "LoComo without the questions its conversations cannot answer (gold answer absent from the conversation, gold contradicting it, or the question naming the wrong person).",
+      "task": "LLM-judged",
+      "splits": [
+        "locomo10"
+      ]
+    },
     "longmemeval": {
       "description": "Long-term memory evaluation in LLM-based chat assistants.",
       "task": "LLM-judged",

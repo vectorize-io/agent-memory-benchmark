@@ -3,8 +3,9 @@ LoComo with its broken questions removed.
 
 Some LoComo questions cannot be answered from the conversation they ask about: the gold
 answer names something the conversation never says (a book title that appears in no turn
-and no image caption), or the question names the wrong person (it asks about Melanie's
-bowl; the bowl is Caroline's). A system that answers those correctly is guessing, and one
+and no image caption), the gold contradicts the conversation (a count that misses a
+visit the conversation mentions), or the question names the wrong person (it asks about
+Melanie's bowl; the bowl is Caroline's). A system that answers those correctly is guessing, and one
 that answers them faithfully is marked wrong.
 
 Each removed question is listed in ``locomo_fixed_exclusions.json`` with the reason, checked
@@ -33,7 +34,7 @@ class LoComoFixedDataset(LoComoDataset):
     published = True
     description = (
         "LoComo without the questions its conversations cannot answer "
-        "(gold answer absent from the conversation, or the question names the wrong person)."
+        "(gold answer absent from the conversation, gold contradicting it, or the question naming the wrong person)."
     )
 
     def load_queries(
