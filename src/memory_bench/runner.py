@@ -212,7 +212,7 @@ class EvalRunner:
                 q.meta.update({k: raw.get(k) for k in
                                ("solved", "interventions", "capped", "cost_usd", "turns", "wall_s",
                                 "final_pytest", "tokens", "agent", "model", "credited", "hindsight_calls",
-                                "reflect_attempts", "credited_reply")
+                                "reflect_attempts", "credited_reply", "memory_cost", "memory_cost_usd")
                                if raw.get(k) is not None})
                 # Agent-view payload: the patch is the "answer", injected memory the "context",
                 # and the step trace + repo history land as row fields (view: "agent" in _save).
@@ -467,9 +467,10 @@ class EvalRunner:
         # Final save truncates to THIS run's query set: without it, a later smaller run (e.g. -q 6)
         # keeps stale rows from an earlier larger run under the same run name, and the output file
         # silently reads as a bigger run than actually happened. Partial saves (mid-run, above)
-        # deliberately do NOT truncate — they accumulate units as they complete.
+        # deliberately do NOT truncate — they accumulate units as they complete. --only-failed reruns a
+        # subset INTO the earlier run, so it keeps every row (truncating dropped all the passed ones).
         self._dataset_metrics = dataset.summary_metrics(results) or {}
-        self._save(summary, query_ids={q.id for q in queries})
+        self._save(summary, query_ids=None if only_failed else {q.id for q in queries})
         memory.cleanup()
         return summary
 

@@ -12,3 +12,4 @@ data/tempo/
 .vercel
 .env*.local
 .env
+outputs-archive/

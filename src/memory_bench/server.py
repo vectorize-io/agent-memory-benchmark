@@ -1,5 +1,6 @@
 """FastAPI server for the OMB result viewer."""
 import gzip as _gzip
+import hashlib as _hashlib
 import json as _json
 import os
 import tempfile
@@ -70,6 +71,8 @@ if (_ui_dist / "assets").exists():
 
 _results_cache: list[dict] | None = None
 _results_cache_mtime: dict[str, float] = {}
+# path -> (mtime, entry): a run saving one file re-reads that file, not all of outputs/
+_entry_cache: dict[str, tuple[float, dict]] = {}
 
 
 def _list_results(published_only: bool = False) -> list[dict]:
@@ -105,6 +108,10 @@ def _list_results(published_only: bool = False) -> list[dict]:
     import gzip as _gzip
     entries = []
     for f in files:
+        hit = _entry_cache.get(str(f))
+        if hit and hit[0] == current_mtime[str(f)]:
+            entries.append(hit[1])
+            continue
         is_gz = f.name.endswith(".json.gz")
         parts = f.relative_to(_output_dir).parts
         run_name = parts[1]
@@ -171,13 +178,29 @@ def _list_results(published_only: bool = False) -> list[dict]:
                 metas = [r.get("meta", {}) or {} for r in rs]
                 def _sum(k):
                     return sum((m.get(k) or 0) for m in metas)
+                def _sum_known(costs, k):
+                    return round(sum(c[k] for c in costs), 4) if costs and all(c.get(k) is not None for c in costs) else None
                 def _toks(sel):
                     return sum(sum((m.get("tokens", {}) or {}).get(x, 0) or 0 for x in sel) for m in metas)
                 agent = next((m.get("agent") for m in metas if m.get("agent")), None) or "opencode"
                 model = next((m.get("model") for m in metas if m.get("model")), None)
+                mem_costs = [m.get("memory_cost") or {} for m in metas]
+                ids = sorted(r.get("query_id") or "" for r in rs)
                 entries[-1].update({
                     "coding": True, "agent": agent, "model": model,
                     "tasks": len(rs),
+                    # runs over the same tasks are comparable; the UI groups on this
+                    "task_set": _hashlib.sha1("\n".join(ids).encode()).hexdigest()[:8],
+                    "task_ids": ids if len(ids) <= 10 else None,
+                    # the memory server's own bill, split into what the agent's queries cost and the
+                    # one-time seeding of each task's bank (None when a run predates it or a model is unpriced)
+                    "memory_query_usd": _sum_known(mem_costs, "query_usd"),
+                    "memory_ingest_usd": _sum_known(mem_costs, "ingest_usd"),
+                    "decision_model": any("decision" in c for c in mem_costs),
+                    # runs from before the memory bill was recorded all ran Hindsight on gemini-2.5-flash-lite
+                    "memory_llm": next((c["llm"]["model"] for c in mem_costs if "llm" in c), None)
+                                  or ("gemini-2.5-flash-lite" if memory_provider in ("hscoding", "hindsight-coding") else None),
+                    "memory_decision": next((c["decision"]["model"] for c in mem_costs if "decision" in c), None),
                     "solved": sum(1 for r in rs if (r.get("meta", {}) or {}).get("solved")),
                     "interventions": _sum("interventions"),
                     "cost_usd": round(_sum("cost_usd"), 2),
@@ -188,6 +211,7 @@ def _list_results(published_only: bool = False) -> list[dict]:
                 })
             except Exception:
                 pass
+        _entry_cache[str(f)] = (current_mtime[str(f)], entries[-1])
 
     _results_cache = entries
     _results_cache_mtime = current_mtime

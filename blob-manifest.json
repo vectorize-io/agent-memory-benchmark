@@ -187,5 +187,29 @@
   "outputs/locomo-fixed/hindsight-gemma4-hs-decide/agent/locomo10.json.gz": {
     "sha": "ef5793555f91a8f45c3b5954e531474db6a49e2adb6a5bc30e6daed8af996d37",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/locomo-fixed/hindsight-gemma4-hs-decide/agent/locomo10.json-lDAeH1wCHq6MJjziNwhBylqgvm9ddi.gz"
+  },
+  "outputs/sdebench/hindsight-gemma-claude-1/coding/boltons.json.gz": {
+    "sha": "5aabc428511bff84adc5747a5fd31caaed061a87a09e22089583bd341be8f5df",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-claude-1/coding/boltons.json-nwSHKeMRvGhMl0SQ8W3Ys3d1HHmbq5.gz"
+  },
+  "outputs/sdebench/hindsight-gemma-claude-2/coding/boltons.json.gz": {
+    "sha": "0c0bbf2b6d8f2dc41f9246c3d8af1bc2eeefb200b3f6ddd9f53d581bbde840c1",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-claude-2/coding/boltons.json-9bPD1DA9zITRv1JN7YXphGFpO3PyEd.gz"
+  },
+  "outputs/sdebench/hindsight-gemma-claude-3/coding/boltons.json.gz": {
+    "sha": "43de3683d88e30e59c90f35487536af8638068e58f035f550130a5aafef70bb8",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-claude-3/coding/boltons.json-eqgCtaasobOgQu5BZefqdeJzcin0m3.gz"
+  },
+  "outputs/sdebench/hindsight-gemma-decide-claude-1/coding/boltons.json.gz": {
+    "sha": "d0225addcd1d7d6ab2ef397e99e94d730c66ed5d4e13f18460dc3bae580e4ab6",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-claude-1/coding/boltons.json-DtLzi4eUC5PporEezS7gZ1GtACfkFI.gz"
+  },
+  "outputs/sdebench/hindsight-gemma-decide-claude-2/coding/boltons.json.gz": {
+    "sha": "308ba9529b2934f57d2839a7fd9bfbe6da9ff657baba092155bc46b0d01ad617",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-claude-2/coding/boltons.json-5BXJMRSWUGblXVNpdNn90YjTV27yWa.gz"
+  },
+  "outputs/sdebench/hindsight-gemma-decide-claude-3/coding/boltons.json.gz": {
+    "sha": "5e511200a056ac51c4f4262520872a8d1dc593374272826463069803b1efff97",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-claude-3/coding/boltons.json-6UoX2dnALiajMcFtzEzb3JcVAXPAg3.gz"
   }
 }

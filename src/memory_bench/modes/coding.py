@@ -100,6 +100,14 @@ class CodingMode(ResponseMode):
         reflect_arm = (arm == "hscoding" and self._agent != "hermes"
                        and os.environ.get("HINDSIGHT_AUTO_INJECT", "reflect") == "reflect")
         retries = int(os.environ.get("SDE_REFLECT_RETRIES", "3")) if reflect_arm else 0
+        # a bank reused across runs (--skip-ingestion) already holds earlier runs' queries: this task's
+        # query cost is the difference across its run
+        cost_before = None
+        if arm == "hscoding":
+            try:
+                cost_before = await asyncio.to_thread(memory.memory_cost, env["SDE_HSCODING_BANK"])
+            except Exception:
+                pass
         t0 = time.perf_counter()
         for attempt in range(retries + 1):
             if attempt:
@@ -138,6 +146,16 @@ class CodingMode(ResponseMode):
                           if d.get("event") == "reflect_ok" and d.get("answer")]
             if mem_blocks:
                 result["memory_context"] = "\n".join(f"## Memory (reflect)\n{a}" for a in mem_blocks)
+            if arm == "hscoding":
+                # the memory side's own bill (ingest + reflects), so the run's total cost is agent + memory
+                try:
+                    cost = await asyncio.to_thread(memory.memory_cost, env["SDE_HSCODING_BANK"])
+                    if cost_before and None not in (cost["query_usd"], cost_before.get("query_usd")):
+                        cost["query_usd"] = round(cost["query_usd"] - cost_before["query_usd"], 4)
+                    result["memory_cost"] = cost
+                    result["memory_cost_usd"] = cost["usd"]
+                except Exception as e:
+                    result["memory_cost"] = {"error": str(e)[:200]}
         else:
             # harness crashed before grading — surface stderr tail so it's debuggable
             result = {"solved": False, "interventions": None,

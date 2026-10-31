@@ -1,14 +1,19 @@
 <script setup>
 import { computed, ref } from 'vue'
 
-// groups: [{ label, agent, model, runs: {vanilla, hindsight}, metrics: {key: {vanilla, hindsight}} }]
+// groups: [{ label, agent, model, tasks, arms: [{ arm, runs, metrics: {key: value} }] }], arms[0] = no memory
 const props = defineProps({ groups: { type: Array, required: true } })
 
+const usd = v => '$' + (v < 0.1 ? v.toFixed(3) : v.toFixed(2))
+const USD_TICKS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5]
 const X_AXES = {
-  cost_usd: { title: 'Cost / task (USD, log scale)', fmt: v => '$' + (v < 0.1 ? v.toFixed(3) : v.toFixed(2)), ticks: [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5] },
-  wall_s:   { title: 'Wall time / task (seconds, log scale)', fmt: v => Math.round(v) + 's', ticks: [5, 10, 20, 50, 100, 200, 500, 1000] },
+  total_cost: { name: 'Total cost', title: 'Total cost / task — agent + memory (USD, log scale)', fmt: usd, ticks: USD_TICKS },
+  agent_cost: { name: 'Agent cost', title: 'Agent cost / task — memory not counted (USD, log scale)', fmt: usd, ticks: USD_TICKS },
+  wall_s:   { name: 'Time', title: 'Wall time / task (seconds, log scale)', fmt: v => Math.round(v) + 's', ticks: [5, 10, 20, 50, 100, 200, 500, 1000] },
 }
-const xKey = ref('cost_usd')
+// total cost when some memory arm has it measured; runs before that only know the agent's bill
+const xKey = ref(props.groups.some(g => g.arms.some(a => a.arm !== 'vanilla' && a.metrics.total_cost != null))
+  ? 'total_cost' : 'agent_cost')
 const Y_KEY = 'interventions'
 
 const W = 1200, H = 440, L = 64, R = 24, T = 16, B = 48
@@ -27,8 +32,15 @@ const agentOf = agent => AGENTS[agent] ?? { name: agent, logo: null }
 const letter = agent => (agent || '?')[0].toUpperCase()
 const shortModel = m => (m ?? '?').replace(/^google\//, '').replace(/^claude-/, '')
 
-const values = computed(() => props.groups.flatMap(g =>
-  ['vanilla', 'hindsight'].map(arm => ({ x: g.metrics[xKey.value][arm], y: g.metrics[Y_KEY][arm] }))))
+// Runs from before the memory bill was recorded have no total: on that axis they sit at their agent
+// cost (a lower bound) and say so. Only groups that keep their no-memory baseline plus a memory arm.
+const xOf = a => a.metrics[xKey.value] ?? (xKey.value === 'total_cost' ? a.metrics.agent_cost : null)
+const shown = computed(() => props.groups
+  .map(g => ({ ...g, arms: g.arms.filter(a => xOf(a) > 0 && a.metrics[Y_KEY] != null) }))  // log axis: no zeros
+  .filter(g => g.arms.length > 1 && g.arms[0].arm === 'vanilla'))
+const values = computed(() => shown.value.flatMap(g =>
+  g.arms.map(a => ({ x: xOf(a), y: a.metrics[Y_KEY] }))))
+const ARM_NAME = { vanilla: 'no memory', hindsight: 'Hindsight', 'hindsight-dm': 'Hindsight + decision model' }
 
 // x: log scale padded around the data; y: corrections with 0 at the TOP — fewer is better, so the
 // attractive corner is top-left, as in an accuracy-vs-cost plot.
@@ -45,18 +57,19 @@ const sy = v => T + v / yMax.value * PH
 const xTicks = computed(() => X_AXES[xKey.value].ticks.filter(t => t >= xDomain.value[0] && t <= xDomain.value[1]))
 const yTicks = computed(() => Array.from({ length: Math.round(yMax.value / 0.25) + 1 }, (_, i) => i * 0.25))
 
-const points = computed(() => props.groups.map(g => {
-  const at = arm => ({ x: sx(g.metrics[xKey.value][arm]), y: sy(g.metrics[Y_KEY][arm]), v: g.metrics[Y_KEY][arm] })
-  return { ...g, van: at('vanilla'), hs: at('hindsight') }
-}))
-const agents = computed(() => [...new Set(props.groups.map(g => g.agent))])
+const points = computed(() => shown.value.map(g => ({
+  ...g,
+  pts: g.arms.map(a => ({ arm: a.arm, key: a.key ?? a.arm, llm: a.llm, runs: a.runs, x: sx(xOf(a)), y: sy(a.metrics[Y_KEY]),
+                          v: a.metrics[Y_KEY], xv: xOf(a), agentOnly: a.metrics[xKey.value] == null })),
+})))
+const agents = computed(() => [...new Set(shown.value.map(g => g.agent))])
 
 // Label placement: each point tries right, left, above, below and takes the first spot that hits no
 // circle and no label already placed — at this density a fixed "always right" label ran into its
 // neighbours (Sonnet 5's vanilla point sits right under opencode's hindsight one).
 const LOGO = 32, R_PT = 18, CHAR_W = 7.4, LINE_H = 16
 const labels = computed(() => {
-  const dots = points.value.flatMap(p => [p.van, p.hs])
+  const dots = points.value.flatMap(p => p.pts)
   const boxes = []
   const hits = b =>
     b.x0 < L || b.x1 > W - R || b.y0 < T || b.y1 > H - B ||
@@ -64,8 +77,9 @@ const labels = computed(() => {
     boxes.some(o => o.x0 < b.x1 && o.x1 > b.x0 && o.y0 < b.y1 && o.y1 > b.y0)
   const out = []
   for (const p of points.value) {
-    for (const [arm, pt] of [['van', p.van], ['hs', p.hs]]) {
-      const text = shortModel(p.model), val = pt.v.toFixed(2)
+    for (const pt of p.pts) {
+      const arm = pt.arm === 'vanilla' ? 'van' : 'hs'
+      const text = shortModel(p.model) + (pt.llm ? ' · ' + pt.llm.replace(/-\d+b-a\d+b/, '').replace(/^(.*) \+ (.*)$/, '$1 +$2').replace('systemone-', '').replace('hs-decide-1-flash', 'hs-decide') : '') + (pt.agentOnly ? ' (agent $ only)' : ''), val = pt.v.toFixed(2)
       const w = (text.length + val.length + 1) * CHAR_W
       const tries = [
         { x: pt.x + R_PT + 6, y: pt.y + 4, anchor: 'start', x0: pt.x + R_PT + 4, y0: pt.y - LINE_H / 2 },
@@ -75,7 +89,7 @@ const labels = computed(() => {
       ].map(c => ({ ...c, x1: c.x0 + w, y1: c.y0 + LINE_H }))
       const pick = tries.find(c => !hits(c)) ?? tries[0]
       boxes.push(pick)
-      out.push({ key: p.label + arm, arm, text, val, ...pick })
+      out.push({ key: p.label + pt.key, arm, text, val, ...pick })
     }
   }
   return out
@@ -85,13 +99,14 @@ const labels = computed(() => {
 <template>
   <div>
     <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-1">
-      Corrections vs. {{ xKey === 'cost_usd' ? 'cost' : 'time' }}
+      Corrections vs. {{ X_AXES[xKey].name.toLowerCase() }}
     </p>
     <p class="text-muted-foreground/70 text-sm mb-4">per task, mean over runs · arrow: no memory → Hindsight</p>
     <div class="flex flex-wrap items-center justify-between gap-3 mb-3 text-xs">
       <div class="flex items-center gap-4">
         <span class="flex items-center gap-1.5"><span class="swatch swatch-van"></span>No memory (grey)</span>
         <span class="flex items-center gap-1.5"><img :src="HS_MARK" class="h-3.5 w-auto" alt="" />Hindsight</span>
+        <span class="flex items-center gap-1.5"><span class="dm-line"></span>+DM: with decision model</span>
       </div>
       <div class="flex items-center gap-3 text-muted-foreground">
         <span v-for="a in agents" :key="a" class="flex items-center gap-1.5">
@@ -103,12 +118,15 @@ const labels = computed(() => {
         <button v-for="(ax, key) in X_AXES" :key="key" @click="xKey = key"
                 class="px-2.5 py-1 transition-colors"
                 :class="xKey === key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'">
-          {{ key === 'cost_usd' ? 'Cost' : 'Time' }}
+          {{ ax.name }}
         </button>
       </div>
     </div>
 
-    <svg :viewBox="`0 0 ${W} ${H}`" class="w-full h-auto" role="img"
+    <p v-if="!shown.length" class="text-muted-foreground/70 text-sm py-10 text-center">
+      No head-to-head has a {{ X_AXES[xKey].name.toLowerCase() }} for both arms yet.
+    </p>
+    <svg v-else :viewBox="`0 0 ${W} ${H}`" class="w-full h-auto" role="img"
          :aria-label="`Corrections per task versus ${X_AXES[xKey].title}`">
       <defs>
         <marker id="scatter-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -133,24 +151,26 @@ const labels = computed(() => {
             :transform="`rotate(-90 14 ${T + PH / 2})`">Corrections / task — fewer ↑</text>
 
       <!-- vanilla → hindsight, per agent+model -->
-      <line v-for="p in points" :key="'l' + p.label"
-            :x1="p.van.x" :y1="p.van.y" :x2="p.hs.x" :y2="p.hs.y"
-            class="link" marker-end="url(#scatter-arrow)" />
+      <template v-for="p in points" :key="'l' + p.label">
+        <line v-for="pt in p.pts.slice(1)" :key="pt.key"
+              :x1="p.pts[0].x" :y1="p.pts[0].y" :x2="pt.x" :y2="pt.y"
+              class="link" :class="{ 'link-dm': pt.arm === 'hindsight-dm' }" marker-end="url(#scatter-arrow)" />
+      </template>
 
       <g v-for="p in points" :key="'p' + p.label">
-        <g v-for="[arm, pt] in [['van', p.van], ['hs', p.hs]]" :key="arm">
-          <title>{{ p.label }} · {{ arm === 'hs' ? 'Hindsight' : 'no memory' }} (×{{ arm === 'hs' ? p.runs.hindsight : p.runs.vanilla }} runs)
-{{ pt.v.toFixed(2) }} corrections · {{ X_AXES[xKey].fmt(p.metrics[xKey][arm === 'hs' ? 'hindsight' : 'vanilla']) }}</title>
+        <g v-for="pt in p.pts" :key="pt.key">
+          <title>{{ p.label }} tasks · {{ ARM_NAME[pt.arm] ?? pt.arm }}{{ pt.llm ? ' on ' + pt.llm : '' }} (×{{ pt.runs }} runs)
+{{ pt.v.toFixed(2) }} corrections · {{ X_AXES[xKey].fmt(pt.xv) }}{{ pt.agentOnly ? ' (agent only: memory cost not recorded for this run)' : '' }}</title>
           <!-- the logo alone marks the point (a ring around it read as clutter); no memory is the same
                logo in grey, Hindsight the logo in colour with the Hindsight badge -->
           <circle :cx="pt.x" :cy="pt.y" :r="R_PT" class="pt-hit" />
           <image v-if="agentOf(p.agent).logo" :href="agentOf(p.agent).logo"
                  :x="pt.x - LOGO / 2" :y="pt.y - LOGO / 2" :width="LOGO" :height="LOGO"
                  preserveAspectRatio="xMidYMid meet" class="pt-logo"
-                 :class="{ 'logo-invert': agentOf(p.agent).invert, 'pt-faded': arm === 'van' }" />
+                 :class="{ 'logo-invert': agentOf(p.agent).invert, 'pt-faded': pt.arm === 'vanilla' }" />
           <text v-else :x="pt.x" :y="pt.y + 5" text-anchor="middle" class="pt-letter"
-                :class="{ 'pt-faded': arm === 'van' }">{{ letter(p.agent) }}</text>
-          <image v-if="arm === 'hs'" :href="HS_MARK" :x="pt.x + LOGO / 2 - 9" :y="pt.y - LOGO / 2 - 9"
+                :class="{ 'pt-faded': pt.arm === 'vanilla' }">{{ letter(p.agent) }}</text>
+          <image v-if="pt.arm !== 'vanilla'" :href="HS_MARK" :x="pt.x + LOGO / 2 - 9" :y="pt.y - LOGO / 2 - 9"
                  width="20" height="15" preserveAspectRatio="xMidYMid meet" class="pt-badge" />
         </g>
       </g>
@@ -169,7 +189,9 @@ const labels = computed(() => {
 .grid { stroke: var(--border); stroke-opacity: 0.5; stroke-width: 1; }
 .tick { fill: var(--muted-foreground); font-size: 12px; font-family: ui-monospace, monospace; }
 .axis { fill: var(--muted-foreground); font-size: 12px; }
+.dm-line { width: 18px; border-top: 2px dotted var(--primary); display: inline-block; }
 .link { stroke: var(--muted-foreground); stroke-width: 1.5; stroke-dasharray: 5 4; opacity: 0.8; }
+.link-dm { stroke: var(--primary); stroke-dasharray: 2 4; }
 .arrow { fill: var(--muted-foreground); }
 .pt-hit { fill: transparent; }
 .pt-logo { pointer-events: none; }

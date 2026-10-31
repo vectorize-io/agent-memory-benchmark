@@ -215,35 +215,71 @@ const chartRecall   = local => _chartData(local, 'avg_retrieve_time_ms', true)
 const chartTokens   = local => _chartData(local, 'avg_context_tokens', true)
 // coding datasets (sdebench) report agent metrics (interventions/cost/turns/tokens), not QA metrics
 const isCoding = rows => rows.length > 0 && rows.every(r => r.coding)
+// Memory arms: no memory, Hindsight, Hindsight with a decision model (runs record whether the
+// server's decision model was called; older runs fall back to an "hsdm" run name).
+const ARMS = [
+  { key: 'vanilla',     label: 'No memory' },
+  { key: 'hindsight',   label: 'Hindsight' },
+  { key: 'hindsight-dm', label: 'Hindsight + decision model' },
+]
 const codingArm = item => {
   const m = (item.memory || '').toLowerCase(); const rn = (item.run_name || '').toLowerCase()
   if (m === 'none' || m === 'vanilla' || /(^|[-_])(none|vanilla|full)([-_]|$)/.test(rn)) return 'vanilla'
-  if (m === 'hscoding' || m === 'hindsight-coding') return 'hindsight'
+  if (m === 'hscoding' || m === 'hindsight-coding')
+    return item.decision_model || /(^|[-_])hsdm([-_]|$)/.test(rn) ? 'hindsight-dm' : 'hindsight'
   const info = providerByKey.value[item.memory]
   return info?.family ?? item.memory ?? 'memory'
 }
-const fmtTok = v => v == null ? '—' : (v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'k' : v)
-const sortCoding = rows => [...rows].sort((a,b) => (b.interventions ?? -1) - (a.interventions ?? -1))
-// Scatter for coding datasets: per agent+model, vanilla vs hindsight, each metric per task and
-// averaged over every run of that arm — so a 3-run campaign and a 1-run check read the same way.
-const CODING_METRIC_KEYS = ['interventions', 'cost_usd', 'wall_s']
-function codingGroups(local) {
+const armLabel = key => ARMS.find(a => a.key === key)?.label ?? key
+const fmtUsd = v => v == null ? '—' : '$' + (v < 0.1 ? v.toFixed(3) : v.toFixed(2))
+const fmtPct = (v, base) => (v == null || !base) ? '' : ((v - base) / base * 100 >= 0 ? '+' : '') + Math.round((v - base) / base * 100) + '%'
+// Head-to-head groups: runs of one agent+model over the same task set, one row per memory arm,
+// each metric per task and averaged over every run of that arm — so 3 repeats read as one line.
+// Total cost = the agent's bill + the memory server's (unknown memory cost keeps total unknown).
+const shortAgent = a => ({ 'claude-code': 'Claude Code', codex: 'Codex CLI', opencode: 'opencode' }[a] ?? a)
+function codingHeadToHead(local) {
   const groups = {}
   for (const item of local) {
-    const arm = codingArm(item)
-    if ((arm !== 'vanilla' && arm !== 'hindsight') || !item.tasks) continue
-    const label = `${item.agent} · ${item.model ?? '?'}`
-    ;(groups[label] ??= { label, agent: item.agent, model: item.model, vanilla: [], hindsight: [] })[arm].push(item)
+    if (!item.tasks) continue
+    const key = `${item.agent}|${item.model}|${item.task_set ?? item.tasks}`
+    const g = (groups[key] ??= { key, agent: item.agent, model: item.model, tasks: item.tasks, task_ids: item.task_ids, arms: {} })
+    // one row per arm AND memory-server model: Hindsight on gemma and on gemini are different setups
+    const models = [item.memory_llm, item.memory_decision].filter(Boolean).join(' + ')
+    const arm = codingArm(item) + (models ? '|' + models : '')
+    ;(g.arms[arm] ??= []).push(item)
   }
-  const mean = (runs, k) => runs.reduce((sum, r) => sum + r[k] / r.tasks, 0) / runs.length
-  return Object.values(groups)
-    .filter(g => g.vanilla.length && g.hindsight.length)
-    .map(g => ({
-      label: g.label, agent: g.agent, model: g.model,
-      runs: { vanilla: g.vanilla.length, hindsight: g.hindsight.length },
-      metrics: Object.fromEntries(CODING_METRIC_KEYS.map(key =>
-        [key, { vanilla: mean(g.vanilla, key), hindsight: mean(g.hindsight, key) }])),
-    }))
+  const mean = (runs, f) => { const vs = runs.map(f); return vs.some(v => v == null) ? null : vs.reduce((a, b) => a + b, 0) / vs.length }
+  return Object.values(groups).map(g => {
+    const rows = Object.entries(g.arms).map(([armKey, runs]) => {
+      const [arm, memoryLlm] = armKey.split('|')
+      const per = k => r => r[k] == null ? null : r[k] / r.tasks
+      const agentCost = mean(runs, per('cost_usd'))
+      const memCost = arm === 'vanilla' ? 0 : mean(runs, per('memory_query_usd'))
+      return {
+        arm, memoryLlm, key: armKey, runs: [...runs].sort((a, b) => a.run_name.localeCompare(b.run_name)),
+        solved: mean(runs, r => r.solved / r.tasks),
+        interventions: mean(runs, per('interventions')),
+        agent_cost: agentCost, memory_cost: memCost,
+        ingest_cost: arm === 'vanilla' ? 0 : mean(runs, per('memory_ingest_usd')),
+        total_cost: agentCost == null || memCost == null ? null : agentCost + memCost,
+        wall_s: mean(runs, per('wall_s')),
+      }
+    }).sort((a, b) => (ARMS.findIndex(x => x.key === a.arm) - ARMS.findIndex(x => x.key === b.arm))
+                      || (a.memoryLlm ?? '').localeCompare(b.memoryLlm ?? ''))
+    const base = rows.find(r => r.arm === 'vanilla')
+    return { ...g, rows, base, comparable: !!base && rows.length > 1 }
+  }).sort((a, b) => (b.comparable - a.comparable) || (b.tasks - a.tasks) || a.key.localeCompare(b.key))
+}
+const openArms = ref({})
+const toggleArm = k => { openArms.value = { ...openArms.value, [k]: !openArms.value[k] } }
+// Scatter: one group per agent+model+task set that has a no-memory baseline; x = total cost.
+const CODING_METRIC_KEYS = ['interventions', 'agent_cost', 'total_cost', 'wall_s']
+function codingGroups(local) {
+  return codingHeadToHead(local).filter(g => g.comparable).map(g => ({
+    label: `${g.agent} · ${g.model ?? '?'} · ${g.tasks}`, agent: g.agent, model: g.model, tasks: g.tasks,
+    arms: g.rows.map(r => ({ arm: r.arm, key: r.key, llm: r.memoryLlm, runs: r.runs.length,
+                             metrics: Object.fromEntries(CODING_METRIC_KEYS.map(k => [k, r[k]])) })),
+  }))
 }
 const sortIcon = (col, active, dir) => active === col ? (dir === 'asc' ? ' ↑' : ' ↓') : ''
 const getViewMode = split => splitViewMode.value[split] ?? 'overall'
@@ -402,47 +438,72 @@ function hasCategoryData(local, split) {
               <CodingScatter :groups="codingGroups(local)" />
             </Card>
 
-            <!-- ── CODING dataset (sdebench): agent metrics, not QA metrics ── -->
-            <Card v-if="isCoding(local)" class="overflow-hidden mb-4">
-              <UiTable>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Run</TableHead>
-                    <TableHead>Agent</TableHead>
-                    <TableHead>Model</TableHead>
-                    <TableHead :right="true">Tasks</TableHead>
-                    <TableHead :right="true">Solved</TableHead>
-                    <TableHead :right="true">Interventions</TableHead>
-                    <TableHead :right="true">Cost</TableHead>
-                    <TableHead :right="true">Turns</TableHead>
-                    <TableHead :right="true">Tokens in / out</TableHead>
-                    <TableHead :right="true">Wall</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow v-for="item in sortCoding(local)" :key="item.path" :clickable="true"
-                            @click="router.push('/run/' + item.path.replace(/\.json(\.gz)?$/, ''))">
-                    <TableCell :primary="true">
-                      <div class="flex items-center gap-2">
-                        <span>{{ item.run_name }}</span>
-                        <Badge :variant="codingArm(item) === 'vanilla' ? 'secondary' : 'default'">{{ codingArm(item) }}</Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>{{ item.agent }}</TableCell>
-                    <TableCell class="text-muted-foreground/85">{{ item.model ?? "—" }}</TableCell>
-                    <TableCell :right="true">{{ item.tasks ?? '—' }}</TableCell>
-                    <TableCell :right="true">{{ item.solved != null ? item.solved + '/' + item.tasks : '—' }}</TableCell>
-                    <TableCell :right="true" class="font-semibold" title="Human-like feedback rounds needed (lower is better)">{{ item.interventions ?? '—' }}</TableCell>
-                    <TableCell :right="true">{{ item.cost_usd != null ? '$' + item.cost_usd.toFixed(2) : '—' }}</TableCell>
-                    <TableCell :right="true">{{ item.turns ?? '—' }}</TableCell>
-                    <TableCell :right="true" class="text-muted-foreground/85">{{ fmtTok(item.tokens_in) }} / {{ fmtTok(item.tokens_out) }}</TableCell>
-                    <TableCell :right="true">{{ item.wall_s != null ? Math.round(item.wall_s) + 's' : '—' }}</TableCell>
-                    <TableCell :right="true" class="text-muted-foreground/70 text-sm">→</TableCell>
-                  </TableRow>
-                </TableBody>
-              </UiTable>
-            </Card>
+            <!-- ── CODING dataset (sdebench): head-to-head per agent · model · task set ── -->
+            <template v-if="isCoding(local)">
+              <Card v-for="g in codingHeadToHead(local)" :key="g.key" class="overflow-hidden mb-4">
+                <div class="flex flex-wrap items-baseline justify-between gap-2 px-4 pt-3 pb-2">
+                  <div class="flex items-baseline gap-2">
+                    <span class="font-semibold">{{ shortAgent(g.agent) }}</span>
+                    <span class="text-muted-foreground/85">{{ g.model ?? '?' }}</span>
+                    <Badge variant="secondary">{{ g.tasks }} task{{ g.tasks === 1 ? '' : 's' }}</Badge>
+                  </div>
+                  <span v-if="g.task_ids" class="text-muted-foreground/70 text-xs font-mono truncate">{{ g.task_ids.map(t => t.replace(/^boltons-|-001$/g, '')).join(' · ') }}</span>
+                </div>
+                <UiTable>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Memory</TableHead>
+                      <TableHead :right="true">Runs</TableHead>
+                      <TableHead :right="true">Solved</TableHead>
+                      <TableHead :right="true" title="Human-like feedback rounds needed per task (lower is better)">Corrections / task</TableHead>
+                      <TableHead :right="true" title="The coding agent's own bill per task">Agent $ / task</TableHead>
+                      <TableHead :right="true" title="The memory server's LLM + decision-model bill for the agent's reflects/recalls">Memory $ / task</TableHead>
+                      <TableHead :right="true" title="Agent + memory during the task">Total $ / task</TableHead>
+                      <TableHead :right="true" title="Seeding the bank from the repo's history and chats: paid once per repo, not per task">One-time load $</TableHead>
+                      <TableHead :right="true">Wall / task</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <template v-for="r in g.rows" :key="r.key">
+                      <TableRow :clickable="true" @click="toggleArm(g.key + r.key)">
+                        <TableCell :primary="true">
+                          <span class="inline-block w-3 text-muted-foreground/70">{{ openArms[g.key + r.key] ? '▾' : '▸' }}</span>
+                          <Badge :variant="r.arm === 'vanilla' ? 'secondary' : 'default'">{{ armLabel(r.arm) }}</Badge>
+                          <span v-if="r.memoryLlm" class="ml-2 text-muted-foreground/85 text-xs font-mono">{{ r.memoryLlm }}</span>
+                        </TableCell>
+                        <TableCell :right="true">{{ r.runs.length }}</TableCell>
+                        <TableCell :right="true">{{ r.solved != null ? Math.round(r.solved * 100) + '%' : '—' }}</TableCell>
+                        <TableCell :right="true" class="font-semibold">
+                          {{ r.interventions != null ? r.interventions.toFixed(2) : '—' }}
+                          <span v-if="r !== g.base" class="delta">{{ fmtPct(r.interventions, g.base?.interventions) }}</span>
+                        </TableCell>
+                        <TableCell :right="true">{{ fmtUsd(r.agent_cost) }}</TableCell>
+                        <TableCell :right="true" class="text-muted-foreground/85">{{ r.arm === 'vanilla' ? '—' : fmtUsd(r.memory_cost) }}</TableCell>
+                        <TableCell :right="true" class="font-semibold">
+                          {{ fmtUsd(r.total_cost) }}
+                          <span v-if="r !== g.base" class="delta">{{ fmtPct(r.total_cost, g.base?.total_cost) }}</span>
+                        </TableCell>
+                        <TableCell :right="true" class="text-muted-foreground/85">{{ r.arm === 'vanilla' ? '—' : fmtUsd(r.ingest_cost) }}</TableCell>
+                        <TableCell :right="true">{{ r.wall_s != null ? Math.round(r.wall_s) + 's' : '—' }}</TableCell>
+                      </TableRow>
+                      <TableRow v-for="item in (openArms[g.key + r.key] ? r.runs : [])" :key="item.path" :clickable="true"
+                                class="text-sm" @click="router.push('/run/' + item.path.replace(/\.json(\.gz)?$/, ''))">
+                        <TableCell class="pl-10 text-muted-foreground/85">{{ item.run_name }} →</TableCell>
+                        <TableCell></TableCell>
+                        <TableCell :right="true">{{ item.solved }}/{{ item.tasks }}</TableCell>
+                        <TableCell :right="true">{{ item.interventions }}</TableCell>
+                        <TableCell :right="true">{{ fmtUsd(item.cost_usd) }}</TableCell>
+                        <TableCell :right="true" class="text-muted-foreground/85">{{ r.arm === 'vanilla' ? '—' : fmtUsd(item.memory_query_usd) }}</TableCell>
+                        <TableCell :right="true">{{ item.memory_query_usd != null || r.arm === 'vanilla' ? fmtUsd(item.cost_usd + (item.memory_query_usd ?? 0)) : '—' }}</TableCell>
+                        <TableCell :right="true" class="text-muted-foreground/85">{{ r.arm === 'vanilla' ? '—' : fmtUsd(item.memory_ingest_usd) }}</TableCell>
+                        <TableCell :right="true">{{ item.wall_s != null ? Math.round(item.wall_s) + 's' : '—' }}</TableCell>
+                      </TableRow>
+                    </template>
+                  </TableBody>
+                </UiTable>
+              </Card>
+              <p class="text-muted-foreground/70 text-xs mb-4">Per task, mean over runs. Memory $: what the Hindsight server's own models (LLM + decision model) spent answering the agent; One-time load $: seeding the bank from the repo's history (each task has its own bank here, a real repo pays it once). "—" when a run predates that measurement. Percentages are vs. no memory.</p>
+            </template>
 
             <!-- Charts (QA datasets only) -->
             <div v-if="local.length && !isCoding(local)" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
@@ -632,3 +693,7 @@ function hasCategoryData(local, split) {
     </div>
   </div>
 </template>
+
+<style scoped>
+.delta { margin-left: 0.35rem; font-size: 0.75rem; font-weight: 500; color: var(--muted-foreground); }
+</style>

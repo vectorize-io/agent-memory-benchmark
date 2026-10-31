@@ -37,6 +37,23 @@ def bank_path(path: str) -> str:
     return quote(bank, safe="") + ("/" + rest if rest else "")
 
 
+# $ per 1M tokens for the models the Hindsight server calls (update when prices change): gemma and
+# Gemini 3.1 Flash Lite at OpenRouter's price (Oct 2026), hs-decide-1-flash at its $0.20/1M list
+# price, Jev at the dev gateway's listed $0.02. A model missing here costs None, never free.
+MEMORY_PRICES = {
+    "gemma-4-26b-a4b": {"input": 0.09, "cached": 0.05, "output": 0.30},
+    "gemini-3.1-flash-lite": {"input": 0.25, "cached": 0.025, "output": 1.50},
+    "hs-decide-1-flash": {"input": 0.20, "cached": 0.20, "output": 0.0},
+    "systemone-jev-latest": {"input": 0.02, "cached": 0.02, "output": 0.0},
+}
+
+
+_NO_PAGES = os.environ.get("SDE_HSCODING_NO_PAGES", "").lower() in ("1", "true")
+# the plugin's five seeded knowledge pages (hindsight-integrations/coding-agents src/core/missions.ts)
+_PAGE_NAMES = ("Component map", "Core concepts", "Conventions and patterns", "Key decisions and rationale",
+               "Initiatives and enhancements")
+
+
 def bank_for(task_id: str) -> str:
     # SDE_HSCODING_BANK_PREFIX: a run of its own banks, so one campaign can never reset or reuse
     # another's — and a bank id a server has wedged can be stepped around.
@@ -86,13 +103,15 @@ class HsCodingProvider(MemoryProvider):
             return
         bank = bank_for(task_id)
         if self._skip and await asyncio.to_thread(self._bank_has_memories, bank):
-            await asyncio.to_thread(self._refresh_pages, bank)
+            await asyncio.to_thread(self._retry_failed, bank)
+            if not _NO_PAGES:
+                await asyncio.to_thread(self._refresh_pages, bank)
             return
         from ..dataset.sdebench import task_json_path
         tj = task_json_path(task_id)
         t = json.loads(tj.read_text())
         build_py = tj.parents[2] / t.get("build", "build.py")
-        base = Path("/tmp/sdebench/omb-backfill") / task_id
+        base = Path("/tmp/sdebench/omb-backfill") / bank  # per bank: two arms may seed one task at once
         src = base / "repo"
         shutil.rmtree(base, ignore_errors=True)
         base.mkdir(parents=True, exist_ok=True)
@@ -111,7 +130,10 @@ class HsCodingProvider(MemoryProvider):
         #    the seed, so an agent starting right after `synced` would read pages built from nothing.
         #    Step 4 refreshes them once, explicitly, instead.
         cfg = base / "coding-agent.json"
-        cfg.write_text(json.dumps({"pageTriggerType": "manual"}))
+        plugin_cfg: dict = {"pageTriggerType": "manual"}
+        if _NO_PAGES:  # a memory arm without knowledge pages: none seeded, none refreshed
+            plugin_cfg["pages"] = {name: False for name in _PAGE_NAMES}
+        cfg.write_text(json.dumps(plugin_cfg))
         cmd = ["node", str(self._plugin_dir / "dist" / "deepen.js"), "--repo", str(src),
                "--bank", bank, "--api-url", self._url, "--git-ingest", "full", "--config", str(cfg)]
         chats = [{"id": d.id, "turns": [{"role": m["role"], "text": m["content"]}
@@ -125,7 +147,7 @@ class HsCodingProvider(MemoryProvider):
         if limit:
             cmd += ["--gitlog-limit", limit]
         p = await asyncio.to_thread(subprocess.run, cmd, capture_output=True, text=True,
-                                    env={**os.environ}, timeout=1800)
+                                    env={**os.environ}, timeout=int(os.environ.get("SDE_DEEPEN_TIMEOUT", "1800")))
         if p.returncode != 0:
             raise RuntimeError(f"deepen failed (rc={p.returncode}) for bank {bank}: "
                                f"{(p.stderr or p.stdout or '')[-300:]}")
@@ -144,12 +166,21 @@ class HsCodingProvider(MemoryProvider):
             sp = await asyncio.to_thread(subprocess.run, st, capture_output=True, text=True,
                                          env={**os.environ}, timeout=120)
             try:
-                synced = json.loads(sp.stdout.strip().splitlines()[-1]).get("synced")
+                st_json = json.loads(sp.stdout.strip().splitlines()[-1])
+                synced = st_json.get("synced")
+                # the plugin's `synced` also requires a page, so a bank seeded without pages never
+                # reaches it: history in and nothing running is the same readiness without them
+                if _NO_PAGES:
+                    synced = st_json.get("gitlogPresent") and not st_json.get("activeOps")
             except Exception:
                 synced = False
             if synced:
+                # a job the server gave up on (a rate-limited extraction) leaves a hole in the bank —
+                # the decision itself, once — so retry it before measuring
+                await asyncio.to_thread(self._retry_failed, bank)
                 # 4. `synced` only means the pages EXIST (they are created before the history lands)
-                await asyncio.to_thread(self._refresh_pages, bank)
+                if not _NO_PAGES:
+                    await asyncio.to_thread(self._refresh_pages, bank)
                 return
             await asyncio.sleep(5)
         raise RuntimeError(f"hscoding ingest never reached synced for bank {bank}")
@@ -212,6 +243,57 @@ class HsCodingProvider(MemoryProvider):
         empty = [m["name"] for m in full if not (m.get("content") or "").strip()]
         if empty:
             raise RuntimeError(f"knowledge pages still empty after refresh on bank {bank}: {empty}")
+
+    def _retry_failed(self, bank: str, rounds: int = 3) -> None:
+        """Retry the bank's failed jobs until none is left, or fail the unit: a bank missing a document
+        measures less memory than the arm has."""
+        import urllib.error
+        for _ in range(rounds):
+            failed = self._api("GET", f"{bank}/operations?status=failed&limit=100")
+            ops = failed.get("operations") or failed.get("items") or []
+            if not ops:
+                return
+            for op in ops:
+                try:
+                    self._api("POST", f"{bank}/operations/{op['id']}/retry")
+                except urllib.error.HTTPError as e:
+                    if e.code != 409:  # 409: already requeued with its parent
+                        raise
+            deadline = time.monotonic() + 1800
+            while self._api("GET", f"{bank}/stats").get("pending_operations") and time.monotonic() < deadline:
+                time.sleep(10)
+        if self._api("GET", f"{bank}/stats").get("failed_operations"):
+            raise RuntimeError(f"bank {bank} still has failed jobs after {rounds} retry rounds")
+
+    def memory_cost(self, bank: str) -> dict:
+        """What the Hindsight server spent on this bank so far, per kind of model call, priced with
+        MEMORY_PRICES, split into `query_usd` (reflect/recall while the agent works) and `ingest_usd`
+        (the one-time seeding: retain, consolidation, page refreshes — paid once per repo, not per
+        task). Embeddings/reranking run locally and cost nothing. A None usd means an unpriced model."""
+        out: dict = self._priced(bank, "")
+        query = [self._priced(bank, f"&operation={op}")["usd"] for op in ("reflect", "recall")]
+        out["query_usd"] = None if None in query or out["usd"] is None else round(sum(query), 4)
+        out["ingest_usd"] = None if out["query_usd"] is None else round(out["usd"] - out["query_usd"], 4)
+        return out
+
+    def _priced(self, bank: str, filters: str) -> dict:
+        out: dict = {"usd": 0.0}
+        for call_type in ("llm", "decision"):
+            stats = self._api("GET", f"{bank}/llm-requests/stats?period=30d&call_type={call_type}{filters}")
+            tok = {k: sum((b.get("tokens") or {}).get(k) or 0 for b in stats.get("buckets") or [])
+                   for k in ("input", "output", "cached", "thoughts")}
+            calls = sum(b.get("total") or 0 for b in stats.get("buckets") or [])
+            if not calls:
+                continue
+            items = self._api("GET", f"{bank}/llm-requests?call_type={call_type}&limit=1").get("items") or []
+            model = (items[0].get("model") if items else None) or "?"
+            p = MEMORY_PRICES.get(model)
+            # cached is a subset of input; reasoning bills as output
+            usd = None if p is None else round(((tok["input"] - tok["cached"]) * p["input"] + tok["cached"] * p["cached"]
+                                                + (tok["output"] + tok["thoughts"]) * p["output"]) / 1e6, 4)
+            out[call_type] = {"model": model, "calls": calls, "tokens": tok, "usd": usd}
+            out["usd"] = None if usd is None or out["usd"] is None else round(out["usd"] + usd, 4)
+        return out
 
     def _bank_has_memories(self, bank: str) -> bool:
         import urllib.request

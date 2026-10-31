@@ -13,7 +13,7 @@ Usage:
 Metrics reported: solved (binary), interventions, turns, wall, tokens, cost (from PRICES;
 claude-code self-reports).
 """
-import argparse, json, os, re, shutil, subprocess, sys, time
+import argparse, json, os, re, shutil, subprocess, sys, tempfile, time
 from pathlib import Path
 
 HARNESS = Path(__file__).resolve().parent
@@ -229,17 +229,17 @@ def inject_context(bug_report: str, commits: list) -> str:
 def capture_git_history(task: dict) -> list:
     """The task repo's engineered git history (commits + diffs) — the 'source documents'
     the full/hindsight arms have access to and the squashed arm does not. Newest first."""
-    src = Path("/tmp/sdebench/hist") / task["repo"]
-    if src.exists():
-        shutil.rmtree(src)
-    sh("python", str(_codebase_dir(task) / task["build"]), str(src))
-    out = []
-    # cap for large real-codebase hosts (the UI view of thousands of commits is useless and slow)
-    for sha in sh("git", "-C", str(src), "rev-list", "HEAD", "-n", "40", cap=True).stdout.split():
-        subject = sh("git", "-C", str(src), "show", "-s", "--format=%s", sha, cap=True).stdout.strip()
-        body = sh("git", "-C", str(src), "show", "-s", "--format=%b", sha, cap=True).stdout.strip()
-        diff = "\n".join(sh("git", "-C", str(src), "show", "--format=", sha, cap=True).stdout.splitlines()[:150])
-        out.append({"sha": sha[:8], "subject": subject, "body": body, "diff": diff})
+    # a fresh dir per call: arms run concurrently on the same task, and a shared path raced
+    with tempfile.TemporaryDirectory(prefix="sdebench-hist-") as tmp:
+        src = Path(tmp) / task["repo"]
+        sh("python", str(_codebase_dir(task) / task["build"]), str(src))
+        out = []
+        # cap for large real-codebase hosts (the UI view of thousands of commits is useless and slow)
+        for sha in sh("git", "-C", str(src), "rev-list", "HEAD", "-n", "40", cap=True).stdout.split():
+            subject = sh("git", "-C", str(src), "show", "-s", "--format=%s", sha, cap=True).stdout.strip()
+            body = sh("git", "-C", str(src), "show", "-s", "--format=%b", sha, cap=True).stdout.strip()
+            diff = "\n".join(sh("git", "-C", str(src), "show", "--format=", sha, cap=True).stdout.splitlines()[:150])
+            out.append({"sha": sha[:8], "subject": subject, "body": body, "diff": diff})
     return out
 
 
@@ -417,6 +417,8 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
         api_url = _container_url(env.get("HINDSIGHT_API_URL", HINDSIGHT_URL))
         hs_cfg = {"serverMode": "self-hosted", "apiUrl": api_url, "bankId": env["HINDSIGHT_BANK_ID"],
                   "retainSessions": False, "autoSeed": False, "codebaseSurvey": False, "autoUpdate": False}
+        if os.environ.get("SDE_REFLECT_TIMEOUT_MS"):  # the session reflect's budget (plugin default 20s)
+            hs_cfg["reflectTimeoutMs"] = int(os.environ["SDE_REFLECT_TIMEOUT_MS"])
         subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
                         "mkdir -p /root/.hindsight && cat > /root/.hindsight/coding-agent.json"],
                        input=json.dumps(hs_cfg), capture_output=True, text=True, check=True)
@@ -427,6 +429,15 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
         # Fail the task, not the measurement: an arm without hooks or tools measures no memory.
         if inst.returncode != 0 or "hooks merged" not in out or "MCP server registered" not in out:
             raise RuntimeError(f"plugin install failed in the agent container (rc={inst.returncode}): {out[-600:]}")
+        if hs_cfg.get("reflectTimeoutMs"):
+            # A longer reflect must fit Claude's hook timeout too (the installer registers 30s), or the
+            # host kills the hook mid-reflect: reflect + the page/recall fallback + margin.
+            hook_s = hs_cfg["reflectTimeoutMs"] // 1000 + 30
+            patch = ("const f='/root/.claude/settings.json',fs=require('fs'),s=JSON.parse(fs.readFileSync(f));"
+                     "for(const ev of ['SessionStart','UserPromptSubmit'])for(const g of s.hooks?.[ev]||[])"
+                     f"for(const h of g.hooks||[])if(/hindsight/.test(h.command))h.timeout={hook_s};"
+                     "fs.writeFileSync(f,JSON.stringify(s,null,2))")
+            subprocess.run(["docker", "exec", cid, "node", "-e", patch], check=True, capture_output=True, text=True)
     if agent == "pi" and env.get("HINDSIGHT_BANK_ID"):
         # Same rule as claude-code: the plugin's own installer (`install pi` registers its extension,
         # native tools included, and the skill); the benchmark only sets config.
