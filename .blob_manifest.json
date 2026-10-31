@@ -179,5 +179,13 @@
   "data/precisionmembench/single-turn/categories.json.gz": "d5ff4a1df28138d90bb430d4713b36ec56d6913d063093ac67909acae9f83c9a",
   "data/precisionmembench/single-turn/documents.json.gz": "a7bb7ed587f1fee494559211313a75a23133170863070c1ef9bb13e95df11b46",
   "data/precisionmembench/single-turn/queries.json.gz": "fdbd66f0bb907215cc21282f7879bdae88fb499b874ede615d3c0acb3c9fbfa3",
-  "data/precisionmembench/single-turn/stats.json.gz": "c5637f8204805421a7a0f495b5ff0c0520ea287624ee44a50a584742bb96b575"
+  "data/precisionmembench/single-turn/stats.json.gz": "c5637f8204805421a7a0f495b5ff0c0520ea287624ee44a50a584742bb96b575",
+  "outputs/locomo-fixed/hindsight-gemma4/agent/locomo10.json.gz": {
+    "sha": "13411dc8b2f98b4aa6dc08d0056e0c2992dea714a312f092c3eecb9f460194bb",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/locomo-fixed/hindsight-gemma4/agent/locomo10.json-2POTQvDERGhjjpg7ldRsTvDsdzLyW4.gz"
+  },
+  "outputs/locomo-fixed/hindsight-gemma4-hs-decide/agent/locomo10.json.gz": {
+    "sha": "ef5793555f91a8f45c3b5954e531474db6a49e2adb6a5bc30e6daed8af996d37",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/locomo-fixed/hindsight-gemma4-hs-decide/agent/locomo10.json-lDAeH1wCHq6MJjziNwhBylqgvm9ddi.gz"
+  }
 }
