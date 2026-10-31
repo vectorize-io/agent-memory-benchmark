@@ -374,6 +374,8 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
             cfg["bankId"] = env["HINDSIGHT_BANK_ID"]
         if env.get("HINDSIGHT_API_URL"):
             cfg["apiUrl"] = _container_url(env["HINDSIGHT_API_URL"])
+        if os.environ.get("SDE_REFLECT_TIMEOUT_MS"):  # the session reflect's budget (plugin default 20s)
+            cfg["reflectTimeoutMs"] = int(os.environ["SDE_REFLECT_TIMEOUT_MS"])
         subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
                         "mkdir -p /root/.hindsight && cat > /root/.hindsight/coding-agent.json"],
                        input=json.dumps(cfg), capture_output=True, text=True)
@@ -395,7 +397,11 @@ def start_agent_container(workdir: Path, env: dict, agent: str = "opencode") -> 
                 {"type": "command", "command": "node /opt/hindsight-coding-agents/dist/codex-hook.js",
                  "timeout": 150}]}]}}
             hs_cfg = {"apiUrl": _container_url(env.get("HINDSIGHT_API_URL", HINDSIGHT_URL)),
-                      "bankId": env["HINDSIGHT_BANK_ID"]}
+                      "bankId": env["HINDSIGHT_BANK_ID"],
+                      # trial isolation, as for claude-code: no session write-back into the reused bank
+                      "retainSessions": False, "autoSeed": False, "codebaseSurvey": False, "autoUpdate": False}
+            if os.environ.get("SDE_REFLECT_TIMEOUT_MS"):  # under the hook's 150s timeout
+                hs_cfg["reflectTimeoutMs"] = int(os.environ["SDE_REFLECT_TIMEOUT_MS"])
             subprocess.run(["docker", "exec", "-i", cid, "sh", "-c",
                             "mkdir -p /root/.codex /root/.hindsight && cat > /root/.codex/hooks.json"],
                            input=json.dumps(hooks), capture_output=True, text=True)
