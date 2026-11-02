@@ -425,15 +425,19 @@ def publish_dataset(
         console.print("[red]BLOB_READ_WRITE_TOKEN not set. Pass --token or add it to .env.[/red]")
         raise typer.Exit(1)
 
-    manifest_path = root / ".blob_manifest.json"
-    manifest: dict[str, str] = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
+    # Blob stores each file under a random suffix, so the server finds it only through the url
+    # recorded here (blob-manifest.json is the copy that ships with the deploy).
+    manifest_paths = [root / ".blob_manifest.json", root / "blob-manifest.json"]
+    manifest_path = next((p for p in manifest_paths if p.exists()), None)
+    manifest: dict = json.loads(manifest_path.read_text()) if manifest_path else {}
 
     files = sorted((abs_data / dataset).rglob("*.json.gz"))
     uploaded = skipped = errors = 0
     for f in files:
         rel = str(f.relative_to(root))
         sha = hashlib.sha256(f.read_bytes()).hexdigest()
-        if not force and manifest.get(rel) == sha:
+        entry = manifest.get(rel)
+        if not force and (entry.get("sha") if isinstance(entry, dict) else entry) == sha:
             skipped += 1
             continue
         url = f"https://blob.vercel-storage.com/{rel}?access=public"
@@ -444,16 +448,16 @@ def publish_dataset(
             "Content-Type": "application/octet-stream",
         })
         try:
-            with urllib.request.urlopen(req):
-                pass
-            manifest[rel] = sha
+            with urllib.request.urlopen(req) as resp:
+                manifest[rel] = {"sha": sha, "url": json.loads(resp.read()).get("url", "")}
             console.print(f"  [green]✓[/green] {rel}")
             uploaded += 1
         except Exception as e:
             console.print(f"  [red]✗[/red] {rel}: {e}")
             errors += 1
 
-    manifest_path.write_text(json.dumps(manifest, indent=2))
+    for p in manifest_paths:
+        p.write_text(json.dumps(manifest, indent=2))
     console.print(f"\n[bold]{uploaded} uploaded, {skipped} unchanged, {errors} errors.[/bold]")
 
 

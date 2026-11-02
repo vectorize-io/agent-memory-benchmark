@@ -259,5 +259,25 @@
   "outputs/sdebench/hindsight-gemma-decide-opencode-3/coding/boltons.json.gz": {
     "sha": "11a70ed4affa512c8696a7acc013bf4898668b053e029066376bd9fa5cd033ff",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-opencode-3/coding/boltons.json-4AQRlrV9jrPrBTIuu964FVLr6QYYwC.gz"
+  },
+  "data/locomo-fixed/info.json.gz": {
+    "sha": "01c8730c73c15bcfd4ccedada6a159ae18634cb02477916a333bd239fe82d510",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/data/locomo-fixed/info.json-mZAdj8dK4anDL2ZXZT65S3ttAwc73p.gz"
+  },
+  "data/locomo-fixed/locomo10/categories.json.gz": {
+    "sha": "7fb64b702e551844a69aa15655b90b9b06f4e3ddeca2e286c358ebd4f4f9f046",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/data/locomo-fixed/locomo10/categories.json-ogISJ9jo2ImTzFlwSo9X0B8lVCf92z.gz"
+  },
+  "data/locomo-fixed/locomo10/documents.json.gz": {
+    "sha": "1a9a9309c231b75500a93291166663921f67fb8aed79083ff2604c8d0e960846",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/data/locomo-fixed/locomo10/documents.json-gxJtQOXD6hugFfsDOa20Uiwh84zHgV.gz"
+  },
+  "data/locomo-fixed/locomo10/queries.json.gz": {
+    "sha": "ef54188261c3d9d8279c3025919acee908177d1adeef37da073e344cd4662d16",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/data/locomo-fixed/locomo10/queries.json-tQEdDA5TQwFr8mxC9qITUMbfNPRXb4.gz"
+  },
+  "data/locomo-fixed/locomo10/stats.json.gz": {
+    "sha": "6d159dd8c43e71638ad4452c0bcf0ad2e77e148383ec1576bd83899eaa66f512",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/data/locomo-fixed/locomo10/stats.json-XVEqFRj75uPtrLpMBkv2MI4pfTTqv3.gz"
   }
 }
