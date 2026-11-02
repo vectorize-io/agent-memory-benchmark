@@ -259,5 +259,10 @@
   "outputs/sdebench/hindsight-gemma-decide-opencode-3/coding/boltons.json.gz": {
     "sha": "11a70ed4affa512c8696a7acc013bf4898668b053e029066376bd9fa5cd033ff",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-opencode-3/coding/boltons.json-4AQRlrV9jrPrBTIuu964FVLr6QYYwC.gz"
-  }
+  },
+  "data/locomo-fixed/info.json.gz": "7a63e0907bbd386da8b12ed3074e79d93a54dc361db9a4d30a6b4801e6b2344a",
+  "data/locomo-fixed/locomo10/categories.json.gz": "5a511b2de13799455777304abeec51ef8b6c9eaebf69c189ce16da2f736bbe41",
+  "data/locomo-fixed/locomo10/documents.json.gz": "25612667f20468b4deda863f94304486952c822c6dc21ff6abcd5be9ba0002e0",
+  "data/locomo-fixed/locomo10/queries.json.gz": "01063fdeafb4d95e5cf36a5e464f56f4db7d96742f8f6414ef6fdefbaab0fc2f",
+  "data/locomo-fixed/locomo10/stats.json.gz": "376377310a35d568cfe9b10997b4877f7a079e94d1f1ba06d2e1763698cf3a85"
 }
