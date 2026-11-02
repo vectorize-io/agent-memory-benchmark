@@ -184,10 +184,6 @@
     "sha": "13411dc8b2f98b4aa6dc08d0056e0c2992dea714a312f092c3eecb9f460194bb",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/locomo-fixed/hindsight-gemma4/agent/locomo10.json-2POTQvDERGhjjpg7ldRsTvDsdzLyW4.gz"
   },
-  "outputs/locomo-fixed/hindsight-gemma4-hs-decide/agent/locomo10.json.gz": {
-    "sha": "ef5793555f91a8f45c3b5954e531474db6a49e2adb6a5bc30e6daed8af996d37",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/locomo-fixed/hindsight-gemma4-hs-decide/agent/locomo10.json-lDAeH1wCHq6MJjziNwhBylqgvm9ddi.gz"
-  },
   "outputs/sdebench/hindsight-gemma-claude-1/coding/boltons.json.gz": {
     "sha": "f6da9760d90ee7536f9eddd292005085ff1a2f662375c0aad3c196075244e626",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-claude-1/coding/boltons.json-TvjE0dEoHbBaiNnwBPtouhzVSUQt6f.gz"
@@ -199,18 +195,6 @@
   "outputs/sdebench/hindsight-gemma-claude-3/coding/boltons.json.gz": {
     "sha": "54aa8c631d77fad81441375a661627ab847461685341ce03c5a6b132b6a074f6",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-claude-3/coding/boltons.json-ltUDniz0fUn29dJKKqLQplJq5Be0Ns.gz"
-  },
-  "outputs/sdebench/hindsight-gemma-decide-claude-1/coding/boltons.json.gz": {
-    "sha": "24cebd85ae911fd01a7b750c271433c68ad34de1dd5fdf5381c5be15c410eea7",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-claude-1/coding/boltons.json-3jwWg9YOhXSMlYFJQMWvqmtzg2ATlg.gz"
-  },
-  "outputs/sdebench/hindsight-gemma-decide-claude-2/coding/boltons.json.gz": {
-    "sha": "694e4be4574056d95b43f6b29f3c8bb91bd7e7753a88eb24d59640cc907e8b3e",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-claude-2/coding/boltons.json-E3YpKqjIQ7aSgsE4vJsnlwDGY81VRq.gz"
-  },
-  "outputs/sdebench/hindsight-gemma-decide-claude-3/coding/boltons.json.gz": {
-    "sha": "2ede66fb740781e47f074bc5b5b731e626466947dc58754191b51f6d304d14a7",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-claude-3/coding/boltons.json-VSxFvCvvWrMZNvCrgmssp7k5XkM9zp.gz"
   },
   "outputs/sdebench/hindsight-gemma-codex-1/coding/boltons.json.gz": {
     "sha": "0e24b31ea719d12d28492a96d0ac0b1652f4fe79ea8fa302121066d31052c77b",
@@ -224,18 +208,6 @@
     "sha": "642259209616bf67f7b71f3a26b323151500f57e0f4a179d6611bcfa0a254ab6",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-codex-3/coding/boltons.json-PM5wgR7zPGwsmgRzYFUYdFM1MRsIRd.gz"
   },
-  "outputs/sdebench/hindsight-gemma-decide-codex-1/coding/boltons.json.gz": {
-    "sha": "9ea986cad13e13af5b18b48293e756d111740f6ddc42acb7b523060f52a1fa34",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-codex-1/coding/boltons.json-Z0sCQIBHTAFf30QpVgz2GzZS8lO0CS.gz"
-  },
-  "outputs/sdebench/hindsight-gemma-decide-codex-2/coding/boltons.json.gz": {
-    "sha": "7ddfdb99c012b00e4006d92f892bc326ffaf9d6110bd144928033d1e818dac46",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-codex-2/coding/boltons.json-t7ZXkeZcAxk71jcXtF4PQcXDsy0wUo.gz"
-  },
-  "outputs/sdebench/hindsight-gemma-decide-codex-3/coding/boltons.json.gz": {
-    "sha": "b360fca0944b22e13ca785e7b6f95bade9552807e7a3c0fcca98bc4b423ca790",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-codex-3/coding/boltons.json-AcGPPy64HTWfqETFre7QvKYZHpYRyS.gz"
-  },
   "outputs/sdebench/hindsight-gemma-opencode-1/coding/boltons.json.gz": {
     "sha": "ab9131a39645c92886e92c560e22b6fa16fdd888412bfcff2283a398048e0295",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-opencode-1/coding/boltons.json-reCyfQEH5F9MKbrwvgdvPAKyC54hqR.gz"
@@ -247,18 +219,6 @@
   "outputs/sdebench/hindsight-gemma-opencode-3/coding/boltons.json.gz": {
     "sha": "ddfe75fcd568273ee119b3f848033e6e717f00945508d7e0192fca8f4b50e0d2",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-opencode-3/coding/boltons.json-8n5sD7noxbpfuA2gaQ4atvZEp0idlB.gz"
-  },
-  "outputs/sdebench/hindsight-gemma-decide-opencode-1/coding/boltons.json.gz": {
-    "sha": "0a9e0cd93882a0db9aa5acaad8b6f53d4a83a85612cb4e78e684ca72ca5bf5e1",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-opencode-1/coding/boltons.json-NtK18Qw4mkyM5tqbEvsG0Yisb1ztgU.gz"
-  },
-  "outputs/sdebench/hindsight-gemma-decide-opencode-2/coding/boltons.json.gz": {
-    "sha": "0f683e0412f5e69a05c413df75098792ff87a566a79a2dd44d368d0005a57814",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-opencode-2/coding/boltons.json-uhUwxOoiI3eICZaZIh4opC0O4Jm7sP.gz"
-  },
-  "outputs/sdebench/hindsight-gemma-decide-opencode-3/coding/boltons.json.gz": {
-    "sha": "3f390d7364c632fac811160a2d388da28ed95b11580c2c461ab338c8b53bfa71",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/sdebench/hindsight-gemma-decide-opencode-3/coding/boltons.json-EnrRMnpTSoNUMw6BOkaB1nZtMaNxMR.gz"
   },
   "data/locomo-fixed/info.json.gz": {
     "sha": "01c8730c73c15bcfd4ccedada6a159ae18634cb02477916a333bd239fe82d510",
