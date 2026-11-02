@@ -38,12 +38,12 @@ def bank_path(path: str) -> str:
 
 
 # $ per 1M tokens for the models the Hindsight server calls (update when prices change): gemma and
-# Gemini 3.1 Flash Lite at OpenRouter's price (Oct 2026), hs-decide-1-flash at its $0.20/1M list
-# price, Jev at the dev gateway's listed $0.02. A model missing here costs None, never free.
+# the decision models at the Hindsight inference price (Nov 2026), Gemini 3.1 Flash Lite at
+# OpenRouter's. A model missing here costs None, never free.
 MEMORY_PRICES = {
-    "gemma-4-26b-a4b": {"input": 0.09, "cached": 0.05, "output": 0.30},
+    "gemma-4-26b-a4b": {"input": 0.024, "cached": 0.024, "output": 0.10},
     "gemini-3.1-flash-lite": {"input": 0.25, "cached": 0.025, "output": 1.50},
-    "hs-decide-1-flash": {"input": 0.20, "cached": 0.20, "output": 0.0},
+    "hs-decide-1-flash": {"input": 0.02, "cached": 0.02, "output": 0.0},
     "systemone-jev-latest": {"input": 0.02, "cached": 0.02, "output": 0.0},
 }
 
