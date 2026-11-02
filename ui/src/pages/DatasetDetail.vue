@@ -136,7 +136,7 @@ function toggleSort(col, sortCol, sortDir) {
 function _chartData(items, key, sortAsc = false) {
   const rows = items.filter(i => i[key] != null).map(item => {
     const info = providerByKey.value[item.memory]
-    return { label: (info?.family ?? item.memory) + (info?.variant ? ' · ' + info.variant : ''), logo: info?.logo ?? null, value: item[key] }
+    return { label: runLabel(item, items), logo: info?.logo ?? null, value: item[key] }
   }).sort((a, b) => sortAsc ? a.value - b.value : b.value - a.value)
   const max = rows.reduce((m, r) => Math.max(m, r.value), 0) || 1
   return { rows, max }
@@ -189,7 +189,7 @@ function categoryCharts(local) {
     const rows = items.map(item => {
       const info = providerByKey.value[item.memory]
       return {
-        label: (info?.family ?? item.memory) + (info?.variant ? ' · ' + info.variant : ''),
+        label: runLabel(item, items),
         logo: info?.logo ?? null,
         value: item.accuracy,
         item,
@@ -200,7 +200,22 @@ function categoryCharts(local) {
   })
 }
 
+// A chart row is the provider; when the same provider has several runs on the chart, it is the run's name.
+function runLabel(item, items) {
+  const shared = items.filter(i => providerLabel(i) === providerLabel(item)).length > 1
+  return shared && item.run_name ? item.run_name : providerLabel(item)
+}
+
+// Agent mode: the provider answers by itself, so the timed call is the whole answer and the
+// "context" is just the answer text. Neither is a recall time or a context size.
+const fmtMs = v => v >= 1000 ? (v / 1000).toFixed(1) + 's' : Math.round(v) + 'ms'
+const allAgent = rows => rows.length > 0 && rows.every(r => r.mode === 'agent')
+
+// Every Hindsight setup (local, http, cloud, coding plugin) is shown as plain "hindsight".
+const familyLabel = memory => memory.startsWith('hindsight') ? 'hindsight' : providerByKey.value[memory]?.family ?? memory
+
 function providerLabel(item) {
+  if (item.memory.startsWith('hindsight')) return 'hindsight'
   const info = providerByKey.value[item.memory]
   return (info?.family ?? item.memory) + (info?.variant ? ' · ' + info.variant : '')
 }
@@ -353,7 +368,7 @@ function categorySections(local, split) {
     const charts = cats.map(cat => {
       const entries = allRows.filter(r => r.categories[cat] != null).map(r => {
         const info = providerByKey.value[r.memory]
-        return { label: (info?.family ?? r.memory) + (info?.variant ? ' · ' + info.variant : ''), logo: info?.logo ?? null, value: r.categories[cat] }
+        return { label: runLabel(r, allRows.filter(x => x.categories[cat] != null)), logo: info?.logo ?? null, value: r.categories[cat] }
       }).sort((a, b) => b.value - a.value)
       const max = entries.reduce((m, r) => Math.max(m, r.value), 0) || 1
       return { cat, rows: entries, max }
@@ -506,21 +521,21 @@ function hasCategoryData(local, split) {
             </template>
 
             <!-- Charts (QA datasets only) -->
-            <div v-if="local.length && !isCoding(local)" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <div v-if="local.length && !isCoding(local)" class="grid grid-cols-1 gap-3 mb-4" :class="allAgent(local) ? 'md:grid-cols-2' : 'md:grid-cols-3'">
               <Card class="p-4">
                 <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-4">Accuracy</p>
-                <BarChart :rows="chartAccuracy(local).rows" :max="1"
+                <BarChart :rows="chartAccuracy(local).rows" :max="1" label-width="w-48"
                           :format="v => (v * 100).toFixed(1) + '%'"
                           variant="accuracy" />
               </Card>
               <Card class="p-4">
-                <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-1">Recall speed</p>
+                <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-1">{{ allAgent(local) ? 'Answer time' : 'Recall speed' }}</p>
                 <p class="text-muted-foreground/70 text-sm mb-4">lower is better</p>
-                <BarChart :rows="chartRecall(local).rows"
-                          :format="v => Math.round(v) + 'ms'"
+                <BarChart :rows="chartRecall(local).rows" label-width="w-48"
+                          :format="fmtMs"
                           variant="recall" :lower-better="true" />
               </Card>
-              <Card class="p-4">
+              <Card v-if="!allAgent(local)" class="p-4">
                 <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-1">Context tokens</p>
                 <p class="text-muted-foreground/70 text-sm mb-4">lower is better</p>
                 <BarChart :rows="chartTokens(local).rows"
@@ -543,8 +558,8 @@ function hasCategoryData(local, split) {
                     <TableHead v-if="hasRetrievalMetrics(local)" :sortable="true" :right="true" @click="toggleLocalSort('mean_recall')">Recall{{ sortIcon('mean_recall', localSortCol, localSortDir) }}</TableHead>
                     <TableHead v-if="hasRetrievalMetrics(local)" :sortable="true" :right="true" @click="toggleLocalSort('active_passes')">Active{{ sortIcon('active_passes', localSortCol, localSortDir) }}</TableHead>
                     <TableHead :sortable="true" :right="true" @click="toggleLocalSort('ingest')">Ingest/doc{{ sortIcon('ingest', localSortCol, localSortDir) }}</TableHead>
-                    <TableHead :sortable="true" :right="true" @click="toggleLocalSort('avg_retrieve_time_ms')">Recall avg{{ sortIcon('avg_retrieve_time_ms', localSortCol, localSortDir) }}</TableHead>
-                    <TableHead :sortable="true" :right="true" @click="toggleLocalSort('avg_context_tokens')">Ctx tokens{{ sortIcon('avg_context_tokens', localSortCol, localSortDir) }}</TableHead>
+                    <TableHead :sortable="true" :right="true" @click="toggleLocalSort('avg_retrieve_time_ms')">{{ allAgent(local) ? 'Answer avg' : 'Recall avg' }}{{ sortIcon('avg_retrieve_time_ms', localSortCol, localSortDir) }}</TableHead>
+                    <TableHead v-if="!allAgent(local)" :sortable="true" :right="true" @click="toggleLocalSort('avg_context_tokens')">Ctx tokens{{ sortIcon('avg_context_tokens', localSortCol, localSortDir) }}</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -555,9 +570,9 @@ function hasCategoryData(local, split) {
                       <div class="flex items-center gap-2">
                         <img v-if="providerByKey[item.memory]?.logo" :src="providerByKey[item.memory].logo"
                              class="w-4 h-4 rounded object-contain shrink-0" @error="$event.target.style.display='none'" />
-                        <span>{{ providerByKey[item.memory]?.family ?? item.memory }}</span>
-                        <Badge v-if="providerByKey[item.memory]?.variant" variant="secondary">{{ providerByKey[item.memory].variant }}</Badge>
+                        <span>{{ familyLabel(item.memory) }}</span>
                         <Badge v-if="item.run_name && item.run_name !== item.memory" variant="default">{{ item.run_name }}</Badge>
+                        <Badge v-else-if="providerByKey[item.memory]?.variant && !item.memory.startsWith('hindsight')" variant="secondary">{{ providerByKey[item.memory].variant }}</Badge>
                       </div>
                     </TableCell>
                     <TableCell>{{ item.mode }}</TableCell>
@@ -570,8 +585,8 @@ function hasCategoryData(local, split) {
                     <TableCell v-if="hasRetrievalMetrics(local)" :right="true">{{ item.mean_recall != null ? item.mean_recall.toFixed(2) : '—' }}</TableCell>
                     <TableCell v-if="hasRetrievalMetrics(local)" :right="true">{{ item.active_passes != null && item.active_total ? item.active_passes + '/' + item.active_total : '—' }}</TableCell>
                     <TableCell :right="true">{{ (item.ingestion_time_ms != null && item.ingested_docs) ? Math.round(item.ingestion_time_ms / item.ingested_docs) + 'ms' : '—' }}</TableCell>
-                    <TableCell :right="true">{{ item.avg_retrieve_time_ms != null ? Math.round(item.avg_retrieve_time_ms) + 'ms' : '—' }}</TableCell>
-                    <TableCell :right="true">{{ item.avg_context_tokens != null ? Math.round(item.avg_context_tokens).toLocaleString() : '—' }}</TableCell>
+                    <TableCell :right="true">{{ item.avg_retrieve_time_ms != null ? fmtMs(item.avg_retrieve_time_ms) : '—' }}</TableCell>
+                    <TableCell v-if="!allAgent(local)" :right="true">{{ item.avg_context_tokens != null ? Math.round(item.avg_context_tokens).toLocaleString() : '—' }}</TableCell>
                     <TableCell :right="true" class="text-muted-foreground/70 text-sm">→</TableCell>
                   </TableRow>
                 </TableBody>
@@ -615,8 +630,8 @@ function hasCategoryData(local, split) {
                           <div class="flex items-center gap-2">
                             <img v-if="providerByKey[row.memory]?.logo" :src="providerByKey[row.memory].logo"
                                  class="w-4 h-4 rounded object-contain shrink-0" @error="$event.target.style.display='none'" />
-                            <span>{{ providerByKey[row.memory]?.family ?? row.memory }}</span>
-                            <Badge v-if="providerByKey[row.memory]?.variant" variant="secondary">{{ providerByKey[row.memory].variant }}</Badge>
+                            <span>{{ familyLabel(row.memory) }}</span>
+                            <Badge v-if="providerByKey[row.memory]?.variant && !row.memory.startsWith('hindsight')" variant="secondary">{{ providerByKey[row.memory].variant }}</Badge>
                             <Badge v-if="row.run_name && row.run_name !== row.memory" variant="default">{{ row.run_name }}</Badge>
                           </div>
                         </TableCell>
@@ -666,8 +681,8 @@ function hasCategoryData(local, split) {
                       <div class="flex items-center gap-2">
                         <img v-if="providerByKey[item.memory]?.logo" :src="providerByKey[item.memory].logo"
                              class="w-4 h-4 rounded object-contain shrink-0" @error="$event.target.style.display='none'" />
-                        <span>{{ providerByKey[item.memory]?.family ?? item.memory }}</span>
-                        <Badge v-if="providerByKey[item.memory]?.variant" variant="secondary">{{ providerByKey[item.memory].variant }}</Badge>
+                        <span>{{ familyLabel(item.memory) }}</span>
+                        <Badge v-if="providerByKey[item.memory]?.variant && !item.memory.startsWith('hindsight')" variant="secondary">{{ providerByKey[item.memory].variant }}</Badge>
                       </div>
                       <div v-if="item.comment" class="text-sm text-muted-foreground/85 mt-0.5">{{ item.comment }}</div>
                     </TableCell>

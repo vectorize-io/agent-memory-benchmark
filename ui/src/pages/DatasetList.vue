@@ -82,7 +82,7 @@ function computeChart(items) {
   items.forEach(item => {
     if (item.accuracy == null) return
     const info = providerByKey.value[item.memory]
-    const label = info?.family ?? item.memory
+    const label = item.memory.startsWith('hindsight') ? 'hindsight' : info?.family ?? item.memory
     if (!best[label] || item.accuracy > best[label].value) {
       best[label] = { label, logo: info?.logo ?? null, value: item.accuracy }
     }
@@ -158,7 +158,8 @@ const comparisonTable = computed(() => {
 
   const getProviderInfo = (memory) => {
     const info = providerByKey.value[memory]
-    const label = (info?.family ?? memory) + (info?.variant ? ' · ' + info.variant : '')
+    // Every Hindsight setup (local, http, cloud, coding plugin) is one provider: the comparison keeps its best score.
+    const label = memory.startsWith('hindsight') ? 'hindsight' : (info?.family ?? memory) + (info?.variant ? ' · ' + info.variant : '')
     return { label, logo: info?.logo ?? null }
   }
 
