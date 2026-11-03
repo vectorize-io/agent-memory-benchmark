@@ -1,4 +1,5 @@
 from .base import MemoryProvider
+from .atmem import AtMemMemoryProvider
 from .bm25 import BM25MemoryProvider
 from .cognee import CogneeMemoryProvider
 from .hindsight import HindsightCloudMemoryProvider, HindsightHTTPMemoryProvider, HindsightMemoryProvider
@@ -14,6 +15,7 @@ from .hscoding import HsCodingProvider
 
 REGISTRY: dict[str, type[MemoryProvider]] = {
     "vanilla": NoMemoryProvider,
+    "atmem": AtMemMemoryProvider,
     "hindsight-coding": HsCodingProvider,
     "bm25": BM25MemoryProvider,
     "cognee": CogneeMemoryProvider,
