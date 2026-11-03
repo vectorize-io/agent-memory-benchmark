@@ -12,7 +12,7 @@ from rich.table import Table
 load_dotenv(dotenv_path=Path(__file__).parents[2] / ".env", override=True)
 
 from .dataset import REGISTRY as DATASET_REGISTRY, get_dataset
-from .llm import REGISTRY as LLM_REGISTRY, get_llm, get_answer_llm
+from .llm import REGISTRY as LLM_REGISTRY, get_answer_llm
 from .memory import REGISTRY as MEMORY_REGISTRY, get_memory_provider
 from .modes import REGISTRY as MODE_REGISTRY, get_mode
 from .runner import EvalRunner
@@ -36,7 +36,7 @@ def run(
     dataset: str = typer.Option("tempo", "--dataset", help=f"Dataset. Available: {', '.join(DATASET_REGISTRY)}"),
     memory: str = typer.Option("bm25", "--memory", "-m", help=f"Memory provider. Available: {', '.join(MEMORY_REGISTRY)}"),
     mode: str = typer.Option("rag", "--mode", help=f"Response mode. Available: {', '.join(MODE_REGISTRY)}"),
-    llm: str = typer.Option("gemini", "--llm", help=f"LLM for answer generation. Available: {', '.join(LLM_REGISTRY)}"),
+    llm: str | None = typer.Option(None, "--llm", help=f"LLM for answer generation. Available: {', '.join(LLM_REGISTRY)}"),
     category: str = typer.Option(None, "--category", "-c", help="Category filter(s), comma-separated (e.g. 'a,b,c'). With --query-limit, runs N queries per category."),
     query_limit: int = typer.Option(None, "--query-limit", "-q", help="Max queries to evaluate. When combined with multiple --category values, applies per category."),
     query_id: str = typer.Option(None, "--query-id", help="Run a single specific query by ID"),
@@ -66,7 +66,7 @@ def run(
         dataset=ds,
         split=split,
         memory=get_memory_provider(memory),
-        mode=get_mode(mode, llm=get_answer_llm()),
+        mode=get_mode(mode, llm=get_answer_llm(llm)),
         category=category,
         query_limit=query_limit,
         query_id=query_id,
