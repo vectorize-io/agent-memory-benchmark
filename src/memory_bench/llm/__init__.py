@@ -18,10 +18,10 @@ def get_llm(name: str = "gemini") -> LLM:
     return REGISTRY[name]()
 
 
-def get_answer_llm() -> LLM:
+def get_answer_llm(provider: str | None = None) -> LLM:
     """Return the LLM to use for RAG answer generation.
-    Configured via OMB_ANSWER_LLM (provider) and OMB_ANSWER_MODEL (optional model override)."""
-    provider = os.environ.get("OMB_ANSWER_LLM", "groq")
+    Configured via provider, OMB_ANSWER_LLM, and OMB_ANSWER_MODEL (optional model override)."""
+    provider = provider or os.environ.get("OMB_ANSWER_LLM", "gemini")
     model = os.environ.get("OMB_ANSWER_MODEL")
     cls = REGISTRY.get(provider)
     if cls is None:
