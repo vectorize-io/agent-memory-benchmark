@@ -1,5 +1,6 @@
 from .base import Dataset
 from .beam import BEAMDataset
+from .codingagent import CodingAgentDataset
 from .lifebench import LifeBenchDataset
 from .locomo import LoComoDataset
 from .locomo_fixed import LoComoFixedDataset
@@ -10,6 +11,7 @@ from .sdebench import SdebenchDataset
 
 REGISTRY: dict[str, type[Dataset]] = {
     "beam":         BEAMDataset,
+    "codingagent":  CodingAgentDataset,
     "lifebench":    LifeBenchDataset,
     "locomo":       LoComoDataset,
     "locomo-fixed": LoComoFixedDataset,

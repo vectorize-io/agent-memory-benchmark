@@ -1,0 +1,98 @@
+[
+  {
+    "id": "worker-id-stability",
+    "category": "ci_failure_recurrence",
+    "documents": [
+      {
+        "id": "session-1",
+        "timestamp": "2026-06-20T09:30:00Z",
+        "content": "Session 1: A container deployment used the hostname as the default worker id. The team saw pending consolidation operations that were not claimed after a restart. The accepted fix direction was to require a stable HINDSIGHT_API_WORKER_ID in container deployments and warn when the process falls back to a container hostname."
+      },
+      {
+        "id": "session-2",
+        "timestamp": "2026-06-21T11:10:00Z",
+        "content": "Session 2: A follow-up noted that the warning must cover both API-embedded workers and standalone worker processes. Explicit --worker-id and HINDSIGHT_API_WORKER_ID should stay quiet; only the default hostname fallback should warn."
+      },
+      {
+        "id": "session-3",
+        "timestamp": "2026-06-22T15:40:00Z",
+        "content": "Session 3: Regression tests should simulate a container hostname and verify three paths: warning on fallback, no warning for an explicit worker id, and no warning outside a container."
+      }
+    ],
+    "queries": [
+      {
+        "id": "q1",
+        "category": "ci_failure_recurrence",
+        "query": "A new standalone worker test fails because it expects no warning when --worker-id is provided. What prior decision should guide the fix?",
+        "gold_document_ids": ["session-2", "session-3"],
+        "gold_answers": [
+          "Explicit worker ids should not warn; only the default hostname fallback inside a container should warn, and the regression tests should cover explicit id, fallback warning, and non-container paths."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "retrieval-limit-wiring",
+    "category": "review_preference",
+    "documents": [
+      {
+        "id": "session-1",
+        "timestamp": "2026-06-18T08:00:00Z",
+        "content": "Session 1: The benchmark runner uses provider retrieval results to build a RAG context. The review preference is to keep benchmark fixes narrow and avoid changing scoring, prompts, or provider APIs unless a bug requires it."
+      },
+      {
+        "id": "session-2",
+        "timestamp": "2026-06-19T13:30:00Z",
+        "content": "Session 2: A bug was found in agentic-rag mode: the configured retrieval limit was parsed but not passed into the memory provider, so a mode using k=3 could still retrieve the provider default. The expected fix is to thread the limit through the existing call rather than add a new retrieval abstraction."
+      },
+      {
+        "id": "session-3",
+        "timestamp": "2026-06-21T10:15:00Z",
+        "content": "Session 3: A maintainer asked for small benchmark PRs that isolate one behavior and include a local command that proves the path still runs."
+      }
+    ],
+    "queries": [
+      {
+        "id": "q1",
+        "category": "review_preference",
+        "query": "When fixing another agentic-rag retrieval-count bug, what implementation style should be preferred?",
+        "gold_document_ids": ["session-1", "session-2", "session-3"],
+        "gold_answers": [
+          "Keep the patch narrow: pass the existing retrieval limit through the current provider call, avoid unrelated scoring or prompt changes, and include a local command proving the path still runs."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "stale-docs-boundary",
+    "category": "release_or_docs_sync",
+    "documents": [
+      {
+        "id": "session-1",
+        "timestamp": "2026-05-07T10:00:00Z",
+        "content": "Session 1: An old Windows setup note said Hindsight v0.6.0 was current and recommended checking /metrics to verify that the API was running."
+      },
+      {
+        "id": "session-2",
+        "timestamp": "2026-06-18T09:36:01Z",
+        "content": "Session 2: Release v0.8.3 became the current Hindsight release. Setup notes that mention v0.6.0 as current should be treated as stale unless they are explicitly historical."
+      },
+      {
+        "id": "session-3",
+        "timestamp": "2026-06-20T08:44:00Z",
+        "content": "Session 3: For Chinese-network Windows installs, users reported that HF_ENDPOINT can help local embedding downloads, but FlashRank may need a direct proxy or manual cache download if the mirror does not contain the model."
+      }
+    ],
+    "queries": [
+      {
+        "id": "q1",
+        "category": "release_or_docs_sync",
+        "query": "A docs reply asks whether v0.6.0 is still the current recommended version for Windows setup. What should the answer do with the old memory?",
+        "gold_document_ids": ["session-1", "session-2"],
+        "gold_answers": [
+          "It should treat the v0.6.0 note as stale because v0.8.3 is current, while preserving any still-useful setup troubleshooting as historical context."
+        ]
+      }
+    ]
+  }
+]
