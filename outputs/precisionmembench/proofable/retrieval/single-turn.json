@@ -3,17 +3,17 @@
   "split": "single-turn",
   "category": null,
   "memory_provider": "proofable",
-  "run_name": "proofable",
+  "run_name": "proofable-k2",
   "mode": "retrieval",
   "oracle": false,
   "total_queries": 77,
-  "correct": 76,
-  "accuracy": 0.987012987012987,
-  "mean_precision": 0.9556,
+  "correct": 77,
+  "accuracy": 1.0,
+  "mean_precision": 0.9773,
   "mean_recall": 1.0,
   "active_passes": 43,
   "active_total": 43,
-  "ingestion_time_ms": 135327.5,
+  "ingestion_time_ms": 232322.3,
   "ingested_docs": 35,
   "description": null,
   "answer_llm": null,
@@ -26,7 +26,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 771.8,
+      "retrieve_time_ms": 14.5,
       "gold_answers": [
         "b-db-decision"
       ],
@@ -93,9 +93,9 @@
       "query": "what's my k8s deploy story?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.",
-      "context_tokens": 94,
-      "retrieve_time_ms": 1760.6,
+      "context": "## Retrieved memories (1)\n\n1. [0xb9c30e137f3fe1ba706a7b66369dc2a6dc0e7dc1e4ddfa397bf3fd1c76551c1e] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.",
+      "context_tokens": 106,
+      "retrieve_time_ms": 1202.2,
       "gold_answers": [
         "b-kubernetes-entity"
       ],
@@ -158,9 +158,9 @@
       "query": "how does kube schedule pods across our CI pipeline nodes?",
       "answer": "2 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (2)\n\n1. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.\n\n2. [0xef3e4b26df979e0a81509d004b994297d746584202423d31be572f8c0402fed7] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.",
-      "context_tokens": 191,
-      "retrieve_time_ms": 1789.3,
+      "context": "## Retrieved memories (2)\n\n1. [0xb9c30e137f3fe1ba706a7b66369dc2a6dc0e7dc1e4ddfa397bf3fd1c76551c1e] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.\n\n2. [0x3a922991324403cb75c69c1bee4b2129b89943f70e4df9a652672f53475b4efa] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.",
+      "context_tokens": 205,
+      "retrieve_time_ms": 3890.4,
       "gold_answers": [
         "b-ci-gha-entity",
         "b-kubernetes-entity"
@@ -223,9 +223,9 @@
       "query": "GHA secrets config",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0xef3e4b26df979e0a81509d004b994297d746584202423d31be572f8c0402fed7] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.",
-      "context_tokens": 103,
-      "retrieve_time_ms": 2204.2,
+      "context": "## Retrieved memories (1)\n\n1. [0x3a922991324403cb75c69c1bee4b2129b89943f70e4df9a652672f53475b4efa] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.",
+      "context_tokens": 105,
+      "retrieve_time_ms": 2341.5,
       "gold_answers": [
         "b-ci-gha-entity"
       ],
@@ -285,9 +285,9 @@
       "query": "ok so I've been thinking about this for a while and I know we've talked about infrastructure before but I'm circling back because the team had some pushback in the last review and honestly I'm not sure what the right call is anymore. Basically the question is how we should handle rolling deploys for the landing page when it lands \u2014 should we do Kubernetes native rolling updates or something more custom, and does it matter that the service holds session state in memory?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.",
-      "context_tokens": 94,
-      "retrieve_time_ms": 845.8,
+      "context": "## Retrieved memories (1)\n\n1. [0xb9c30e137f3fe1ba706a7b66369dc2a6dc0e7dc1e4ddfa397bf3fd1c76551c1e] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.",
+      "context_tokens": 106,
+      "retrieve_time_ms": 2260.0,
       "gold_answers": [
         "b-kubernetes-entity"
       ],
@@ -360,7 +360,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 1.4,
+      "retrieve_time_ms": 0.3,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -408,16 +408,16 @@
     {
       "query_id": "happy-writing-scope",
       "query": "How should I open the next chapter with Mara?",
-      "answer": "2 memories retrieved",
+      "answer": "0 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (2)\n\n1. [0x1529b62fad7dbdb794187a92a1890105c60dfa57745e3e9d60f3b5e271e14385] \u2190 b-protagonist-entity\nmara protagonist Protagonist of the novel. Set in 1970s Lisbon. Does not reconcile with her father; ending is ambiguous. Shapes all plot suggestions \u2014 the father-daughter thread must remain unresolved; prevents any reconciliation arc.\n\n2. [0xffd249f1ce2f4d04ca8d68fc86270a9116160b51946d60f3561dbb660eb4d3da] \u2190 b-pov-shift-entity\npov_shift POV point of view perspective shift viewpoint chapter 7 Chapter 7 uses a deliberate POV shift to an unnamed observer. This is the only chapter that breaks close-third. Shapes editorial feedback \u2014 prevents flagging the chapter 7 POV shift as an error; the break is intentional and structurally load-bearing.",
-      "context_tokens": 218,
-      "retrieve_time_ms": 809.1,
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 1.1,
       "gold_answers": [
         "b-protagonist-entity"
       ],
-      "correct": false,
-      "judge_reason": "unexpected belief in relevantBeliefs: b-pov-shift-entity",
+      "correct": true,
+      "judge_reason": "pass",
       "score": null,
       "meta": {
         "category": "Scope disambiguation",
@@ -442,9 +442,7 @@
         "retrieval_limit": 20,
         "pass_type": "structural",
         "active_pass": false,
-        "relevant_beliefs": [
-          "b-pov-shift-entity"
-        ],
+        "relevant_beliefs": [],
         "pinned_beliefs": [
           "b-narrator-voice",
           "b-prose-style-user-edited",
@@ -453,16 +451,12 @@
         "retrieved_questions": [
           "b-chapter-structure-q"
         ],
-        "retrieval_precision": 0.0,
+        "retrieval_precision": null,
         "retrieval_recall": null,
         "pinned_coverage": 1.0,
-        "failures": [
-          "unexpected belief in relevantBeliefs: b-pov-shift-entity"
-        ],
-        "resolution": {
-          "source_id": 2
-        },
-        "retrieved_count": 2
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
       },
       "raw_response": null,
       "trajectory": null,
@@ -481,9 +475,9 @@
       "query": "What's Redis doing in chapter three?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x9098810a02455c8cda0ba217b25c89793f3610e20d34d2c5aec0aa60528be21c] \u2190 b-redis-writing\nredis_character Redis Redis is a supporting character in the novel \u2014 a jazz pianist Mara meets in Lisbon. Shapes interpretation of 'Redis' in the writing scope \u2014 always the jazz pianist character, not the database technology.",
-      "context_tokens": 99,
-      "retrieve_time_ms": 732.9,
+      "context": "## Retrieved memories (1)\n\n1. [0xafd79eb0f1accec2143e53eb2a2245139091e22b4036bacc6f6ea9fd1b03d11c] \u2190 b-redis-writing\nredis_character Redis Redis is a supporting character in the novel \u2014 a jazz pianist Mara meets in Lisbon. Shapes interpretation of 'Redis' in the writing scope \u2014 always the jazz pianist character, not the database technology.",
+      "context_tokens": 100,
+      "retrieve_time_ms": 1699.4,
       "gold_answers": [
         "b-redis-writing"
       ],
@@ -544,9 +538,9 @@
       "query": "What are we using Redis for?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x525ba873d971cc14d36a1d313014d751389524f975353060068e3ba6dfb78491] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.",
-      "context_tokens": 93,
-      "retrieve_time_ms": 847.3,
+      "context": "## Retrieved memories (1)\n\n1. [0x2b4e8c0824b86ca1ea97648343b1dcf188817dbc3451d44fbf8c310b8b15aa63] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.",
+      "context_tokens": 100,
+      "retrieve_time_ms": 1206.0,
       "gold_answers": [
         "b-redis-code"
       ],
@@ -606,9 +600,9 @@
       "query": "What's Redis doing?",
       "answer": "2 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (2)\n\n1. [0x525ba873d971cc14d36a1d313014d751389524f975353060068e3ba6dfb78491] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.\n\n2. [0x9098810a02455c8cda0ba217b25c89793f3610e20d34d2c5aec0aa60528be21c] \u2190 b-redis-writing\nredis_character Redis Redis is a supporting character in the novel \u2014 a jazz pianist Mara meets in Lisbon. Shapes interpretation of 'Redis' in the writing scope \u2014 always the jazz pianist character, not the database technology.",
-      "context_tokens": 186,
-      "retrieve_time_ms": 924.5,
+      "context": "## Retrieved memories (2)\n\n1. [0x2b4e8c0824b86ca1ea97648343b1dcf188817dbc3451d44fbf8c310b8b15aa63] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.\n\n2. [0xafd79eb0f1accec2143e53eb2a2245139091e22b4036bacc6f6ea9fd1b03d11c] \u2190 b-redis-writing\nredis_character Redis Redis is a supporting character in the novel \u2014 a jazz pianist Mara meets in Lisbon. Shapes interpretation of 'Redis' in the writing scope \u2014 always the jazz pianist character, not the database technology.",
+      "context_tokens": 194,
+      "retrieve_time_ms": 2483.1,
       "gold_answers": [
         "b-redis-code",
         "b-redis-writing"
@@ -678,7 +672,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 3.0,
+      "retrieve_time_ms": 3.6,
       "gold_answers": [
         "b-db-decision"
       ],
@@ -805,9 +799,9 @@
       "query": "fastify?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0xe29a8b250f21eec9a9afa86472e3723a98ab6159b15a9bed429f223534131315] \u2190 b-fastify-pref\nframework_fastify Fastify express Uses Fastify for HTTP services rather than Express. Shapes server-side code examples toward Fastify and prevents suggesting Express as an alternative.",
-      "context_tokens": 84,
-      "retrieve_time_ms": 853.6,
+      "context": "## Retrieved memories (1)\n\n1. [0x474da1f52940ab49a0a252eb9e8d1b355d8c6e7d5ac83b90f3b97bbfaaf5170e] \u2190 b-fastify-pref\nframework_fastify Fastify express Uses Fastify for HTTP services rather than Express. Shapes server-side code examples toward Fastify and prevents suggesting Express as an alternative.",
+      "context_tokens": 93,
+      "retrieve_time_ms": 1081.7,
       "gold_answers": [
         "b-fastify-pref"
       ],
@@ -870,9 +864,9 @@
       "query": "what language do I write in?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.",
-      "context_tokens": 83,
-      "retrieve_time_ms": 631.3,
+      "context": "## Retrieved memories (1)\n\n1. [0xa15bcd6d98145e343e8278e64ed63e711104a54b9371506a680e775002941aa1] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.",
+      "context_tokens": 79,
+      "retrieve_time_ms": 996.8,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -942,7 +936,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 1.6,
+      "retrieve_time_ms": 1.7,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -1003,9 +997,9 @@
       "query": "TS strict mode question about unknown types",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.",
-      "context_tokens": 83,
-      "retrieve_time_ms": 686.7,
+      "context": "## Retrieved memories (1)\n\n1. [0xa15bcd6d98145e343e8278e64ed63e711104a54b9371506a680e775002941aa1] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.",
+      "context_tokens": 79,
+      "retrieve_time_ms": 949.6,
       "gold_answers": [
         "b-ts-pref"
       ],
@@ -1066,11 +1060,11 @@
     {
       "query_id": "alias-mongo-resolves",
       "query": "what's the Mongo pattern we're using for collections?",
-      "answer": "1 memories retrieved",
+      "answer": "2 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.",
-      "context_tokens": 93,
-      "retrieve_time_ms": 843.2,
+      "context": "## Retrieved memories (2)\n\n1. [0x75fb6600161c81a15cec4ca72e4f1c159fb15b1bfbe24e139cf9e77deecf82bc] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.\n\n2. [0x88bd805a7820c33f75ab2a17261095ac20e9af9985250418ff9b3f144e019d5c] \u2190 b-db-decision\ndatabase_mongodb database Decided on MongoDB after evaluating Postgres. Raw driver only. Shapes all data-layer recommendations \u2014 database choice is settled and prevents re-litigating Postgres as an alternative.",
+      "context_tokens": 183,
+      "retrieve_time_ms": 3048.5,
       "gold_answers": [
         "b-mongo-raw-driver"
       ],
@@ -1112,9 +1106,9 @@
         "pinned_coverage": null,
         "failures": [],
         "resolution": {
-          "source_id": 1
+          "source_id": 2
         },
-        "retrieved_count": 1
+        "retrieved_count": 2
       },
       "raw_response": null,
       "trajectory": null,
@@ -1133,9 +1127,9 @@
       "query": "how should I structure my ReactJS components here?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.",
-      "context_tokens": 92,
-      "retrieve_time_ms": 1218.3,
+      "context": "## Retrieved memories (1)\n\n1. [0x96cf0916fcffef60d783c2cc764f1dfd1ba25c1f11d8942d84067580466eddd5] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.",
+      "context_tokens": 90,
+      "retrieve_time_ms": 966.3,
       "gold_answers": [
         "b-react-entity"
       ],
@@ -1195,9 +1189,9 @@
       "query": "what does the protagonist want, and does their viewpoint stay consistent in act two?",
       "answer": "2 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (2)\n\n1. [0x1529b62fad7dbdb794187a92a1890105c60dfa57745e3e9d60f3b5e271e14385] \u2190 b-protagonist-entity\nmara protagonist Protagonist of the novel. Set in 1970s Lisbon. Does not reconcile with her father; ending is ambiguous. Shapes all plot suggestions \u2014 the father-daughter thread must remain unresolved; prevents any reconciliation arc.\n\n2. [0xffd249f1ce2f4d04ca8d68fc86270a9116160b51946d60f3561dbb660eb4d3da] \u2190 b-pov-shift-entity\npov_shift POV point of view perspective shift viewpoint chapter 7 Chapter 7 uses a deliberate POV shift to an unnamed observer. This is the only chapter that breaks close-third. Shapes editorial feedback \u2014 prevents flagging the chapter 7 POV shift as an error; the break is intentional and structurally load-bearing.",
-      "context_tokens": 218,
-      "retrieve_time_ms": 906.1,
+      "context": "## Retrieved memories (2)\n\n1. [0x1781bd0176e222a7a92a9908b5ae201d2f0513156e84e224564d4a3784c1656a] \u2190 b-protagonist-entity\nmara protagonist Protagonist of the novel. Set in 1970s Lisbon. Does not reconcile with her father; ending is ambiguous. Shapes all plot suggestions \u2014 the father-daughter thread must remain unresolved; prevents any reconciliation arc.\n\n2. [0x91b8299a163189e8d0b675b648e474b82a159eeb40000c6fc4b007f614b7cd54] \u2190 b-pov-shift-entity\npov_shift POV point of view perspective shift viewpoint chapter 7 Chapter 7 uses a deliberate POV shift to an unnamed observer. This is the only chapter that breaks close-third. Shapes editorial feedback \u2014 prevents flagging the chapter 7 POV shift as an error; the break is intentional and structurally load-bearing.",
+      "context_tokens": 220,
+      "retrieve_time_ms": 2027.9,
       "gold_answers": [
         "b-pov-shift-entity",
         "b-protagonist-entity"
@@ -1262,11 +1256,11 @@
     {
       "query_id": "canonical-name-match-mara",
       "query": "tell me about Mara's backstory with her father",
-      "answer": "1 memories retrieved",
+      "answer": "0 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x1529b62fad7dbdb794187a92a1890105c60dfa57745e3e9d60f3b5e271e14385] \u2190 b-protagonist-entity\nmara protagonist Protagonist of the novel. Set in 1970s Lisbon. Does not reconcile with her father; ending is ambiguous. Shapes all plot suggestions \u2014 the father-daughter thread must remain unresolved; prevents any reconciliation arc.",
-      "context_tokens": 105,
-      "retrieve_time_ms": 771.1,
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 0.9,
       "gold_answers": [
         "b-protagonist-entity"
       ],
@@ -1306,10 +1300,8 @@
         "retrieval_recall": null,
         "pinned_coverage": 1.0,
         "failures": [],
-        "resolution": {
-          "source_id": 1
-        },
-        "retrieved_count": 1
+        "resolution": {},
+        "retrieved_count": 0
       },
       "raw_response": null,
       "trajectory": null,
@@ -1328,9 +1320,9 @@
       "query": "POV rules for chapter 7",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0xffd249f1ce2f4d04ca8d68fc86270a9116160b51946d60f3561dbb660eb4d3da] \u2190 b-pov-shift-entity\npov_shift POV point of view perspective shift viewpoint chapter 7 Chapter 7 uses a deliberate POV shift to an unnamed observer. This is the only chapter that breaks close-third. Shapes editorial feedback \u2014 prevents flagging the chapter 7 POV shift as an error; the break is intentional and structurally load-bearing.",
+      "context": "## Retrieved memories (1)\n\n1. [0x91b8299a163189e8d0b675b648e474b82a159eeb40000c6fc4b007f614b7cd54] \u2190 b-pov-shift-entity\npov_shift POV point of view perspective shift viewpoint chapter 7 Chapter 7 uses a deliberate POV shift to an unnamed observer. This is the only chapter that breaks close-third. Shapes editorial feedback \u2014 prevents flagging the chapter 7 POV shift as an error; the break is intentional and structurally load-bearing.",
       "context_tokens": 119,
-      "retrieve_time_ms": 794.1,
+      "retrieve_time_ms": 1392.4,
       "gold_answers": [
         "b-pov-shift-entity"
       ],
@@ -1391,9 +1383,9 @@
       "query": "should I use a base class hierarchy for these domain objects?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x22cfe60c8792ed3d46dbe8773711ba30932c9e4cc36ba1b725e8017e795f41b4] \u2190 b-composition-inheritance\ncomposition_over_inheritance inheritance class hierarchies base class factory function Prefers composition over inheritance. Factory functions returning plain objects rather than class hierarchies. Shapes object design suggestions away from class hierarchies toward factory functions returning plain objects.",
-      "context_tokens": 104,
-      "retrieve_time_ms": 773.3,
+      "context": "## Retrieved memories (1)\n\n1. [0xa36c887e7ded278f1fea1d59b1fff9e6368ed26d92817226f137f49b034f5994] \u2190 b-composition-inheritance\ncomposition_over_inheritance inheritance class hierarchies base class factory function Prefers composition over inheritance. Factory functions returning plain objects rather than class hierarchies. Shapes object design suggestions away from class hierarchies toward factory functions returning plain objects.",
+      "context_tokens": 102,
+      "retrieve_time_ms": 1128.7,
       "gold_answers": [
         "b-composition-inheritance"
       ],
@@ -1453,9 +1445,9 @@
       "query": "when should I throw exceptions versus return them?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.",
+      "context": "## Retrieved memories (1)\n\n1. [0x51428d969a3c4768136ea0ee473e045c0820114d3820c24faa5d141f3e76e883] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.",
       "context_tokens": 104,
-      "retrieve_time_ms": 996.3,
+      "retrieve_time_ms": 1010.7,
       "gold_answers": [
         "b-error-handling"
       ],
@@ -1517,7 +1509,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 2.2,
+      "retrieve_time_ms": 3.3,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -1576,7 +1568,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 2.6,
+      "retrieve_time_ms": 2.3,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -1638,7 +1630,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 1.3,
+      "retrieve_time_ms": 0.9,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -1697,9 +1689,9 @@
       "query": "k8s?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.",
-      "context_tokens": 94,
-      "retrieve_time_ms": 598.3,
+      "context": "## Retrieved memories (1)\n\n1. [0xb9c30e137f3fe1ba706a7b66369dc2a6dc0e7dc1e4ddfa397bf3fd1c76551c1e] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.",
+      "context_tokens": 106,
+      "retrieve_time_ms": 1169.3,
       "gold_answers": [
         "b-kubernetes-entity"
       ],
@@ -1821,7 +1813,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 3.7,
+      "retrieve_time_ms": 3.9,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -1875,7 +1867,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 1.9,
+      "retrieve_time_ms": 2.8,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -1991,9 +1983,9 @@
       "query": "composition over inheritance \u2014 what's our pattern?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x22cfe60c8792ed3d46dbe8773711ba30932c9e4cc36ba1b725e8017e795f41b4] \u2190 b-composition-inheritance\ncomposition_over_inheritance inheritance class hierarchies base class factory function Prefers composition over inheritance. Factory functions returning plain objects rather than class hierarchies. Shapes object design suggestions away from class hierarchies toward factory functions returning plain objects.",
-      "context_tokens": 104,
-      "retrieve_time_ms": 699.0,
+      "context": "## Retrieved memories (1)\n\n1. [0xa36c887e7ded278f1fea1d59b1fff9e6368ed26d92817226f137f49b034f5994] \u2190 b-composition-inheritance\ncomposition_over_inheritance inheritance class hierarchies base class factory function Prefers composition over inheritance. Factory functions returning plain objects rather than class hierarchies. Shapes object design suggestions away from class hierarchies toward factory functions returning plain objects.",
+      "context_tokens": 102,
+      "retrieve_time_ms": 1112.0,
       "gold_answers": [
         "b-composition-inheritance"
       ],
@@ -2053,9 +2045,9 @@
       "query": "how do I configure typscript strict mode?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.",
-      "context_tokens": 83,
-      "retrieve_time_ms": 946.3,
+      "context": "## Retrieved memories (1)\n\n1. [0xa15bcd6d98145e343e8278e64ed63e711104a54b9371506a680e775002941aa1] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.",
+      "context_tokens": 79,
+      "retrieve_time_ms": 994.7,
       "gold_answers": [
         "b-ts-pref"
       ],
@@ -2118,9 +2110,9 @@
       "query": "REACTJS component patterns",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.",
-      "context_tokens": 92,
-      "retrieve_time_ms": 1625.0,
+      "context": "## Retrieved memories (1)\n\n1. [0x96cf0916fcffef60d783c2cc764f1dfd1ba25c1f11d8942d84067580466eddd5] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.",
+      "context_tokens": 90,
+      "retrieve_time_ms": 1811.4,
       "gold_answers": [
         "b-react-entity"
       ],
@@ -2180,9 +2172,9 @@
       "query": "ugh so like I was wondering you know about how we should think about error handling in our codebase because honestly it's been bugging me for a while and I'm not really sure what the right approach is here",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.",
+      "context": "## Retrieved memories (1)\n\n1. [0x51428d969a3c4768136ea0ee473e045c0820114d3820c24faa5d141f3e76e883] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.",
       "context_tokens": 104,
-      "retrieve_time_ms": 981.8,
+      "retrieve_time_ms": 692.4,
       "gold_answers": [
         "b-error-handling"
       ],
@@ -2242,9 +2234,9 @@
       "query": "I don't want class hierarchies in this codebase, what should I use instead?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x22cfe60c8792ed3d46dbe8773711ba30932c9e4cc36ba1b725e8017e795f41b4] \u2190 b-composition-inheritance\ncomposition_over_inheritance inheritance class hierarchies base class factory function Prefers composition over inheritance. Factory functions returning plain objects rather than class hierarchies. Shapes object design suggestions away from class hierarchies toward factory functions returning plain objects.",
-      "context_tokens": 104,
-      "retrieve_time_ms": 1031.5,
+      "context": "## Retrieved memories (1)\n\n1. [0xa36c887e7ded278f1fea1d59b1fff9e6368ed26d92817226f137f49b034f5994] \u2190 b-composition-inheritance\ncomposition_over_inheritance inheritance class hierarchies base class factory function Prefers composition over inheritance. Factory functions returning plain objects rather than class hierarchies. Shapes object design suggestions away from class hierarchies toward factory functions returning plain objects.",
+      "context_tokens": 102,
+      "retrieve_time_ms": 837.1,
       "gold_answers": [
         "b-composition-inheritance"
       ],
@@ -2304,9 +2296,9 @@
       "query": "how should ReactJS components handle exceptions from async calls?",
       "answer": "2 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (2)\n\n1. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.\n\n2. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.",
-      "context_tokens": 190,
-      "retrieve_time_ms": 821.2,
+      "context": "## Retrieved memories (2)\n\n1. [0x51428d969a3c4768136ea0ee473e045c0820114d3820c24faa5d141f3e76e883] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.\n\n2. [0x96cf0916fcffef60d783c2cc764f1dfd1ba25c1f11d8942d84067580466eddd5] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.",
+      "context_tokens": 188,
+      "retrieve_time_ms": 1594.4,
       "gold_answers": [
         "b-react-entity",
         "b-error-handling"
@@ -2333,8 +2325,8 @@
         "pass_type": "active",
         "active_pass": true,
         "relevant_beliefs": [
-          "b-react-entity",
-          "b-error-handling"
+          "b-error-handling",
+          "b-react-entity"
         ],
         "pinned_beliefs": [
           "b-db-decision",
@@ -2367,11 +2359,11 @@
     {
       "query_id": "cap-stress-compound-six-entities",
       "query": "When our React frontend catches error handling exceptions, how should the Kubernetes pods running MongoDB TypeScript services report to GitHub Actions?",
-      "answer": "6 memories retrieved",
+      "answer": "7 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (6)\n\n1. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.\n\n2. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.\n\n3. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.\n\n4. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.\n\n5. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.\n\n6. [0xef3e4b26df979e0a81509d004b994297d746584202423d31be572f8c0402fed7] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.",
-      "context_tokens": 539,
-      "retrieve_time_ms": 765.0,
+      "context": "## Retrieved memories (7)\n\n1. [0x96cf0916fcffef60d783c2cc764f1dfd1ba25c1f11d8942d84067580466eddd5] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.\n\n2. [0x51428d969a3c4768136ea0ee473e045c0820114d3820c24faa5d141f3e76e883] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.\n\n3. [0xb9c30e137f3fe1ba706a7b66369dc2a6dc0e7dc1e4ddfa397bf3fd1c76551c1e] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.\n\n4. [0x75fb6600161c81a15cec4ca72e4f1c159fb15b1bfbe24e139cf9e77deecf82bc] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.\n\n5. [0x88bd805a7820c33f75ab2a17261095ac20e9af9985250418ff9b3f144e019d5c] \u2190 b-db-decision\ndatabase_mongodb database Decided on MongoDB after evaluating Postgres. Raw driver only. Shapes all data-layer recommendations \u2014 database choice is settled and prevents re-litigating Postgres as an alternative.\n\n6. [0xa15bcd6d98145e343e8278e64ed63e711104a54b9371506a680e775002941aa1] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.\n\n7. [0x3a922991324403cb75c69c1bee4b2129b89943f70e4df9a652672f53475b4efa] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.",
+      "context_tokens": 637,
+      "retrieve_time_ms": 2326.1,
       "gold_answers": [
         "b-react-entity",
         "b-error-handling",
@@ -2425,9 +2417,9 @@
         "pinned_coverage": null,
         "failures": [],
         "resolution": {
-          "source_id": 6
+          "source_id": 7
         },
-        "retrieved_count": 6
+        "retrieved_count": 7
       },
       "raw_response": null,
       "trajectory": null,
@@ -2444,11 +2436,11 @@
     {
       "query_id": "cap-stress-kitchen-sink-exceeds-twelve",
       "query": "Set up our React components to use composition pattern with explicit error handling, wire GitHub Actions CI to deploy Kubernetes pods serving the MongoDB TypeScript API with functional pipeline transforms",
-      "answer": "7 memories retrieved",
+      "answer": "8 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (7)\n\n1. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.\n\n2. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.\n\n3. [0xef3e4b26df979e0a81509d004b994297d746584202423d31be572f8c0402fed7] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.\n\n4. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.\n\n5. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.\n\n6. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.\n\n7. [0x3fbe9aa21eaa0cd02f25dcffb5acdfb97fc365dfb1225db15bee8ae4b3225d95] \u2190 b-functional-pipeline\nfunctional_pipeline pipe compose fp Uses functional composition patterns with pipe() to chain data transformations instead of imperative loops. Shapes data-processing code suggestions toward functional pipe composition and away from imperative loops or nested map/filter chains.",
-      "context_tokens": 628,
-      "retrieve_time_ms": 1069.9,
+      "context": "## Retrieved memories (8)\n\n1. [0x96cf0916fcffef60d783c2cc764f1dfd1ba25c1f11d8942d84067580466eddd5] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.\n\n2. [0x51428d969a3c4768136ea0ee473e045c0820114d3820c24faa5d141f3e76e883] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.\n\n3. [0x3a922991324403cb75c69c1bee4b2129b89943f70e4df9a652672f53475b4efa] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.\n\n4. [0xb9c30e137f3fe1ba706a7b66369dc2a6dc0e7dc1e4ddfa397bf3fd1c76551c1e] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.\n\n5. [0x75fb6600161c81a15cec4ca72e4f1c159fb15b1bfbe24e139cf9e77deecf82bc] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.\n\n6. [0x88bd805a7820c33f75ab2a17261095ac20e9af9985250418ff9b3f144e019d5c] \u2190 b-db-decision\ndatabase_mongodb database Decided on MongoDB after evaluating Postgres. Raw driver only. Shapes all data-layer recommendations \u2014 database choice is settled and prevents re-litigating Postgres as an alternative.\n\n7. [0xa15bcd6d98145e343e8278e64ed63e711104a54b9371506a680e775002941aa1] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.\n\n8. [0x050f1e25b632f0054c0b1eec60f93a79ea976d539b9b4d9a7aef3e96fcdb642f] \u2190 b-functional-pipeline\nfunctional_pipeline pipe compose fp Uses functional composition patterns with pipe() to chain data transformations instead of imperative loops. Shapes data-processing code suggestions toward functional pipe composition and away from imperative loops or nested map/filter chains.",
+      "context_tokens": 731,
+      "retrieve_time_ms": 5459.6,
       "gold_answers": [
         "b-react-entity",
         "b-error-handling",
@@ -2505,9 +2497,9 @@
         "pinned_coverage": null,
         "failures": [],
         "resolution": {
-          "source_id": 7
+          "source_id": 8
         },
-        "retrieved_count": 7
+        "retrieved_count": 8
       },
       "raw_response": null,
       "trajectory": null,
@@ -2524,11 +2516,11 @@
     {
       "query_id": "cap-stress-late-position-entity-at-risk",
       "query": "Given our React frontend, the GitHub Actions CI pipeline, the Kubernetes deployment, and the MongoDB TypeScript backend, how should we approach exceptions in the data layer?",
-      "answer": "6 memories retrieved",
+      "answer": "7 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (6)\n\n1. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.\n\n2. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.\n\n3. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.\n\n4. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.\n\n5. [0xef3e4b26df979e0a81509d004b994297d746584202423d31be572f8c0402fed7] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.\n\n6. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.",
-      "context_tokens": 539,
-      "retrieve_time_ms": 833.3,
+      "context": "## Retrieved memories (7)\n\n1. [0x51428d969a3c4768136ea0ee473e045c0820114d3820c24faa5d141f3e76e883] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.\n\n2. [0x75fb6600161c81a15cec4ca72e4f1c159fb15b1bfbe24e139cf9e77deecf82bc] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.\n\n3. [0xa15bcd6d98145e343e8278e64ed63e711104a54b9371506a680e775002941aa1] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.\n\n4. [0x88bd805a7820c33f75ab2a17261095ac20e9af9985250418ff9b3f144e019d5c] \u2190 b-db-decision\ndatabase_mongodb database Decided on MongoDB after evaluating Postgres. Raw driver only. Shapes all data-layer recommendations \u2014 database choice is settled and prevents re-litigating Postgres as an alternative.\n\n5. [0x96cf0916fcffef60d783c2cc764f1dfd1ba25c1f11d8942d84067580466eddd5] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.\n\n6. [0x3a922991324403cb75c69c1bee4b2129b89943f70e4df9a652672f53475b4efa] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.\n\n7. [0xb9c30e137f3fe1ba706a7b66369dc2a6dc0e7dc1e4ddfa397bf3fd1c76551c1e] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.",
+      "context_tokens": 637,
+      "retrieve_time_ms": 2350.3,
       "gold_answers": [
         "b-ci-gha-entity",
         "b-react-entity",
@@ -2582,9 +2574,9 @@
         "pinned_coverage": null,
         "failures": [],
         "resolution": {
-          "source_id": 6
+          "source_id": 7
         },
-        "retrieved_count": 6
+        "retrieved_count": 7
       },
       "raw_response": null,
       "trajectory": null,
@@ -2603,9 +2595,9 @@
       "query": "eror handling patterns",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.",
+      "context": "## Retrieved memories (1)\n\n1. [0x51428d969a3c4768136ea0ee473e045c0820114d3820c24faa5d141f3e76e883] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.",
       "context_tokens": 104,
-      "retrieve_time_ms": 837.6,
+      "retrieve_time_ms": 1065.3,
       "gold_answers": [
         "b-error-handling"
       ],
@@ -2665,9 +2657,9 @@
       "query": "Reedis cache eviction strategy",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x525ba873d971cc14d36a1d313014d751389524f975353060068e3ba6dfb78491] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.",
-      "context_tokens": 93,
-      "retrieve_time_ms": 1088.9,
+      "context": "## Retrieved memories (1)\n\n1. [0x2b4e8c0824b86ca1ea97648343b1dcf188817dbc3451d44fbf8c310b8b15aa63] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.",
+      "context_tokens": 100,
+      "retrieve_time_ms": 1483.6,
       "gold_answers": [
         "b-redis-code"
       ],
@@ -2729,7 +2721,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 2.1,
+      "retrieve_time_ms": 2.4,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -2783,7 +2775,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 0.6,
+      "retrieve_time_ms": 0.7,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -2838,9 +2830,9 @@
       "query": "typsecript compilation config",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.",
-      "context_tokens": 83,
-      "retrieve_time_ms": 1018.7,
+      "context": "## Retrieved memories (1)\n\n1. [0xa15bcd6d98145e343e8278e64ed63e711104a54b9371506a680e775002941aa1] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.",
+      "context_tokens": 79,
+      "retrieve_time_ms": 1018.5,
       "gold_answers": [
         "b-ts-pref"
       ],
@@ -2901,11 +2893,11 @@
     {
       "query_id": "fuzzy-single-term-only-signal",
       "query": "mongod",
-      "answer": "1 memories retrieved",
+      "answer": "2 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.",
-      "context_tokens": 93,
-      "retrieve_time_ms": 1337.8,
+      "context": "## Retrieved memories (2)\n\n1. [0x75fb6600161c81a15cec4ca72e4f1c159fb15b1bfbe24e139cf9e77deecf82bc] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.\n\n2. [0x88bd805a7820c33f75ab2a17261095ac20e9af9985250418ff9b3f144e019d5c] \u2190 b-db-decision\ndatabase_mongodb database Decided on MongoDB after evaluating Postgres. Raw driver only. Shapes all data-layer recommendations \u2014 database choice is settled and prevents re-litigating Postgres as an alternative.",
+      "context_tokens": 183,
+      "retrieve_time_ms": 2017.7,
       "gold_answers": [
         "b-mongo-raw-driver"
       ],
@@ -2947,9 +2939,9 @@
         "pinned_coverage": null,
         "failures": [],
         "resolution": {
-          "source_id": 1
+          "source_id": 2
         },
-        "retrieved_count": 1
+        "retrieved_count": 2
       },
       "raw_response": null,
       "trajectory": null,
@@ -2970,7 +2962,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 0.2,
+      "retrieve_time_ms": 0.3,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -3026,7 +3018,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 2.1,
+      "retrieve_time_ms": 2.9,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -3090,7 +3082,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 2.0,
+      "retrieve_time_ms": 2.7,
       "gold_answers": [
         "b-linting-current"
       ],
@@ -3149,9 +3141,9 @@
       "query": "What are we using Redis for?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x525ba873d971cc14d36a1d313014d751389524f975353060068e3ba6dfb78491] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.",
-      "context_tokens": 93,
-      "retrieve_time_ms": 982.9,
+      "context": "## Retrieved memories (1)\n\n1. [0x2b4e8c0824b86ca1ea97648343b1dcf188817dbc3451d44fbf8c310b8b15aa63] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.",
+      "context_tokens": 100,
+      "retrieve_time_ms": 929.2,
       "gold_answers": [
         "b-redis-code"
       ],
@@ -3212,9 +3204,9 @@
       "query": "explicit error returns in pipe transforms",
       "answer": "2 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (2)\n\n1. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.\n\n2. [0x3fbe9aa21eaa0cd02f25dcffb5acdfb97fc365dfb1225db15bee8ae4b3225d95] \u2190 b-functional-pipeline\nfunctional_pipeline pipe compose fp Uses functional composition patterns with pipe() to chain data transformations instead of imperative loops. Shapes data-processing code suggestions toward functional pipe composition and away from imperative loops or nested map/filter chains.",
-      "context_tokens": 193,
-      "retrieve_time_ms": 1104.6,
+      "context": "## Retrieved memories (2)\n\n1. [0x51428d969a3c4768136ea0ee473e045c0820114d3820c24faa5d141f3e76e883] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.\n\n2. [0x050f1e25b632f0054c0b1eec60f93a79ea976d539b9b4d9a7aef3e96fcdb642f] \u2190 b-functional-pipeline\nfunctional_pipeline pipe compose fp Uses functional composition patterns with pipe() to chain data transformations instead of imperative loops. Shapes data-processing code suggestions toward functional pipe composition and away from imperative loops or nested map/filter chains.",
+      "context_tokens": 198,
+      "retrieve_time_ms": 1613.6,
       "gold_answers": [
         "b-functional-pipeline",
         "b-error-handling"
@@ -3279,7 +3271,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 725.2,
+      "retrieve_time_ms": 692.6,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -3405,7 +3397,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 1.5,
+      "retrieve_time_ms": 2.7,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -3467,7 +3459,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 1.7,
+      "retrieve_time_ms": 1.9,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -3517,11 +3509,11 @@
     {
       "query_id": "budget-ceiling-evicts-relevant-beliefs",
       "query": "How should I handle errors in my repository layer?",
-      "answer": "1 memories retrieved",
+      "answer": "0 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.",
-      "context_tokens": 104,
-      "retrieve_time_ms": 846.0,
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 3.5,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -3558,10 +3550,8 @@
         "retrieval_recall": null,
         "pinned_coverage": null,
         "failures": [],
-        "resolution": {
-          "source_id": 1
-        },
-        "retrieved_count": 1
+        "resolution": {},
+        "retrieved_count": 0
       },
       "raw_response": null,
       "trajectory": null,
@@ -3580,9 +3570,9 @@
       "query": "suggest a good Mongoose schema for my user model",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.",
-      "context_tokens": 93,
-      "retrieve_time_ms": 1067.3,
+      "context": "## Retrieved memories (1)\n\n1. [0x75fb6600161c81a15cec4ca72e4f1c159fb15b1bfbe24e139cf9e77deecf82bc] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.",
+      "context_tokens": 95,
+      "retrieve_time_ms": 7509.8,
       "gold_answers": [
         "b-mongo-raw-driver"
       ],
@@ -3699,9 +3689,9 @@
       "query": "how does our CI pipeline handle secrets?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0xef3e4b26df979e0a81509d004b994297d746584202423d31be572f8c0402fed7] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.",
-      "context_tokens": 103,
-      "retrieve_time_ms": 4272.6,
+      "context": "## Retrieved memories (1)\n\n1. [0x3a922991324403cb75c69c1bee4b2129b89943f70e4df9a652672f53475b4efa] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.",
+      "context_tokens": 105,
+      "retrieve_time_ms": 1018.5,
       "gold_answers": [
         "b-ci-gha-entity"
       ],
@@ -3765,7 +3755,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 1.2,
+      "retrieve_time_ms": 1.6,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -3825,9 +3815,9 @@
       "query": "what happens to dead letter messages that fail replay?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x62336dd9e4e6db33a6698e582065e2eeac9625038bfe7a69de15b8fa1c9bd576] \u2190 b-dead-letter-queue\ndead_letter_queue dead letter DLQ failed messages Failed messages route to a MongoDB-backed dead letter queue with manual replay via admin CLI. Shapes error recovery and messaging answers to assume a DLQ exists rather than suggesting one from scratch.",
-      "context_tokens": 103,
-      "retrieve_time_ms": 1108.4,
+      "context": "## Retrieved memories (1)\n\n1. [0xc19dd61a618223aa624c53acf9ada2dc4783fa0e6a23308e4e7937c9206fc328] \u2190 b-dead-letter-queue\ndead_letter_queue dead letter DLQ failed messages Failed messages route to a MongoDB-backed dead letter queue with manual replay via admin CLI. Shapes error recovery and messaging answers to assume a DLQ exists rather than suggesting one from scratch.",
+      "context_tokens": 99,
+      "retrieve_time_ms": 994.3,
       "gold_answers": [
         "b-dead-letter-queue"
       ],
@@ -3887,9 +3877,9 @@
       "query": "how do we replay items from the DLQ?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x62336dd9e4e6db33a6698e582065e2eeac9625038bfe7a69de15b8fa1c9bd576] \u2190 b-dead-letter-queue\ndead_letter_queue dead letter DLQ failed messages Failed messages route to a MongoDB-backed dead letter queue with manual replay via admin CLI. Shapes error recovery and messaging answers to assume a DLQ exists rather than suggesting one from scratch.",
-      "context_tokens": 103,
-      "retrieve_time_ms": 685.4,
+      "context": "## Retrieved memories (1)\n\n1. [0xc19dd61a618223aa624c53acf9ada2dc4783fa0e6a23308e4e7937c9206fc328] \u2190 b-dead-letter-queue\ndead_letter_queue dead letter DLQ failed messages Failed messages route to a MongoDB-backed dead letter queue with manual replay via admin CLI. Shapes error recovery and messaging answers to assume a DLQ exists rather than suggesting one from scratch.",
+      "context_tokens": 99,
+      "retrieve_time_ms": 1312.6,
       "gold_answers": [
         "b-dead-letter-queue"
       ],
@@ -3949,9 +3939,9 @@
       "query": "should I configure Jest for this project?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x261a9b023801c8cdbf32ddd6228bebcfba1fe4e4db3b626c22f0be36b6450a77] \u2190 b-vitest-pref\ntesting_vitest Vitest vitest jest Uses Vitest for all testing. Replaced Jest. Shapes all testing examples toward Vitest and prevents suggesting Jest, Mocha, or Jasmine.",
-      "context_tokens": 94,
-      "retrieve_time_ms": 870.7,
+      "context": "## Retrieved memories (1)\n\n1. [0x39980e81bcf0ec3bf21d08f9b74c0d74831572f49a7551df701059bd74dab5ac] \u2190 b-vitest-pref\ntesting_vitest Vitest vitest jest Uses Vitest for all testing. Replaced Jest. Shapes all testing examples toward Vitest and prevents suggesting Jest, Mocha, or Jasmine.",
+      "context_tokens": 93,
+      "retrieve_time_ms": 1778.3,
       "gold_answers": [
         "b-vitest-pref"
       ],
@@ -4011,9 +4001,9 @@
       "query": "what are the auth service dependencies and failure modes?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x2cf5d74c2bcb42b6fa97897f27f2aa7e02f2816ca620f23954bf6a12c3c12ff1] \u2190 b-auth-depends-redis\nauth_service_depends_on_redis auth redis session backend auth Auth service depends on Redis for session storage. If Redis is down, auth fails open (denies all). Shapes failure-mode analysis \u2014 auth and Redis are coupled; cannot discuss auth resilience without addressing Redis availability.",
-      "context_tokens": 115,
-      "retrieve_time_ms": 929.9,
+      "context": "## Retrieved memories (1)\n\n1. [0x8c9e5eef6c5a7f159ad9219d6937974a01a8d89f2441547271c8875c6e735054] \u2190 b-auth-depends-redis\nauth_service_depends_on_redis auth redis session backend auth Auth service depends on Redis for session storage. If Redis is down, auth fails open (denies all). Shapes failure-mode analysis \u2014 auth and Redis are coupled; cannot discuss auth resilience without addressing Redis availability.",
+      "context_tokens": 114,
+      "retrieve_time_ms": 1542.1,
       "gold_answers": [
         "b-auth-depends-redis",
         "b-redis-code"
@@ -4081,9 +4071,9 @@
       "query": "session backend dependency graph",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x2cf5d74c2bcb42b6fa97897f27f2aa7e02f2816ca620f23954bf6a12c3c12ff1] \u2190 b-auth-depends-redis\nauth_service_depends_on_redis auth redis session backend auth Auth service depends on Redis for session storage. If Redis is down, auth fails open (denies all). Shapes failure-mode analysis \u2014 auth and Redis are coupled; cannot discuss auth resilience without addressing Redis availability.",
-      "context_tokens": 115,
-      "retrieve_time_ms": 1882.2,
+      "context": "## Retrieved memories (1)\n\n1. [0x8c9e5eef6c5a7f159ad9219d6937974a01a8d89f2441547271c8875c6e735054] \u2190 b-auth-depends-redis\nauth_service_depends_on_redis auth redis session backend auth Auth service depends on Redis for session storage. If Redis is down, auth fails open (denies all). Shapes failure-mode analysis \u2014 auth and Redis are coupled; cannot discuss auth resilience without addressing Redis availability.",
+      "context_tokens": 114,
+      "retrieve_time_ms": 1283.5,
       "gold_answers": [
         "b-auth-depends-redis",
         "b-redis-code"
@@ -4154,11 +4144,11 @@
     {
       "query_id": "relation-expansion-respects-scope-filter",
       "query": "auth redis failure modes",
-      "answer": "2 memories retrieved",
+      "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (2)\n\n1. [0x2cf5d74c2bcb42b6fa97897f27f2aa7e02f2816ca620f23954bf6a12c3c12ff1] \u2190 b-auth-depends-redis\nauth_service_depends_on_redis auth redis session backend auth Auth service depends on Redis for session storage. If Redis is down, auth fails open (denies all). Shapes failure-mode analysis \u2014 auth and Redis are coupled; cannot discuss auth resilience without addressing Redis availability.\n\n2. [0x525ba873d971cc14d36a1d313014d751389524f975353060068e3ba6dfb78491] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.",
-      "context_tokens": 202,
-      "retrieve_time_ms": 1045.5,
+      "context": "## Retrieved memories (1)\n\n1. [0x8c9e5eef6c5a7f159ad9219d6937974a01a8d89f2441547271c8875c6e735054] \u2190 b-auth-depends-redis\nauth_service_depends_on_redis auth redis session backend auth Auth service depends on Redis for session storage. If Redis is down, auth fails open (denies all). Shapes failure-mode analysis \u2014 auth and Redis are coupled; cannot discuss auth resilience without addressing Redis availability.",
+      "context_tokens": 114,
+      "retrieve_time_ms": 2630.8,
       "gold_answers": [
         "b-auth-depends-redis",
         "b-redis-code"
@@ -4203,9 +4193,9 @@
         "pinned_coverage": null,
         "failures": [],
         "resolution": {
-          "source_id": 2
+          "source_id": 1
         },
-        "retrieved_count": 2
+        "retrieved_count": 1
       },
       "raw_response": null,
       "trajectory": null,
@@ -4224,9 +4214,9 @@
       "query": "what's my react depth \u2014 should you explain hooks to me?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.",
-      "context_tokens": 92,
-      "retrieve_time_ms": 897.7,
+      "context": "## Retrieved memories (1)\n\n1. [0x96cf0916fcffef60d783c2cc764f1dfd1ba25c1f11d8942d84067580466eddd5] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.",
+      "context_tokens": 90,
+      "retrieve_time_ms": 1019.2,
       "gold_answers": [
         "b-react-entity"
       ],
@@ -4288,7 +4278,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 1.5,
+      "retrieve_time_ms": 2.0,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -4350,9 +4340,9 @@
       "query": "how is our Turborepo monorepo structured?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x9ef4469966dc12740565324e2de7034ce585624582f1a78c74f694e109c5df51] \u2190 b-zero-reinforcement-fresh\nturborepo_monorepo Turborepo turbo monorepo Monorepo managed by Turborepo. Apps and packages in /apps and /packages directories. Shapes all build and workspace structure answers to assume Turborepo monorepo layout.",
-      "context_tokens": 108,
-      "retrieve_time_ms": 835.0,
+      "context": "## Retrieved memories (1)\n\n1. [0xf0cefa7162055d4a81a3794c63f1d04ed8398b18f681311c9b0657e8fcada382] \u2190 b-zero-reinforcement-fresh\nturborepo_monorepo Turborepo turbo monorepo Monorepo managed by Turborepo. Apps and packages in /apps and /packages directories. Shapes all build and workspace structure answers to assume Turborepo monorepo layout.",
+      "context_tokens": 112,
+      "retrieve_time_ms": 1084.8,
       "gold_answers": [
         "b-zero-reinforcement-fresh"
       ],
@@ -4414,7 +4404,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 1.0,
+      "retrieve_time_ms": 0.9,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -4468,9 +4458,9 @@
       "query": "MongoDB collection typing patterns",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.",
-      "context_tokens": 93,
-      "retrieve_time_ms": 728.8,
+      "context": "## Retrieved memories (1)\n\n1. [0x75fb6600161c81a15cec4ca72e4f1c159fb15b1bfbe24e139cf9e77deecf82bc] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.",
+      "context_tokens": 95,
+      "retrieve_time_ms": 2036.1,
       "gold_answers": [
         "b-db-decision"
       ],
@@ -4534,7 +4524,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 1.2,
+      "retrieve_time_ms": 1.4,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -4593,7 +4583,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 1.8,
+      "retrieve_time_ms": 2.3,
       "gold_answers": [],
       "correct": true,
       "judge_reason": "pass",
@@ -4703,9 +4693,9 @@
       "query": "I do NOT want to use Express, what should I use instead?",
       "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (1)\n\n1. [0xe29a8b250f21eec9a9afa86472e3723a98ab6159b15a9bed429f223534131315] \u2190 b-fastify-pref\nframework_fastify Fastify express Uses Fastify for HTTP services rather than Express. Shapes server-side code examples toward Fastify and prevents suggesting Express as an alternative.",
-      "context_tokens": 84,
-      "retrieve_time_ms": 942.8,
+      "context": "## Retrieved memories (1)\n\n1. [0x474da1f52940ab49a0a252eb9e8d1b355d8c6e7d5ac83b90f3b97bbfaaf5170e] \u2190 b-fastify-pref\nframework_fastify Fastify express Uses Fastify for HTTP services rather than Express. Shapes server-side code examples toward Fastify and prevents suggesting Express as an alternative.",
+      "context_tokens": 93,
+      "retrieve_time_ms": 989.1,
       "gold_answers": [
         "b-fastify-pref"
       ],
@@ -4767,7 +4757,7 @@
       "reasoning": "",
       "context": "## Retrieved memories (0)",
       "context_tokens": 6,
-      "retrieve_time_ms": 7.0,
+      "retrieve_time_ms": 2.5,
       "gold_answers": [
         "b-linting-current"
       ],
@@ -4824,11 +4814,11 @@
     {
       "query_id": "relation-does-not-appear-as-entity",
       "query": "Redis session backend dependency graph",
-      "answer": "2 memories retrieved",
+      "answer": "1 memories retrieved",
       "reasoning": "",
-      "context": "## Retrieved memories (2)\n\n1. [0x2cf5d74c2bcb42b6fa97897f27f2aa7e02f2816ca620f23954bf6a12c3c12ff1] \u2190 b-auth-depends-redis\nauth_service_depends_on_redis auth redis session backend auth Auth service depends on Redis for session storage. If Redis is down, auth fails open (denies all). Shapes failure-mode analysis \u2014 auth and Redis are coupled; cannot discuss auth resilience without addressing Redis availability.\n\n2. [0x525ba873d971cc14d36a1d313014d751389524f975353060068e3ba6dfb78491] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.",
-      "context_tokens": 202,
-      "retrieve_time_ms": 859.3,
+      "context": "## Retrieved memories (1)\n\n1. [0x8c9e5eef6c5a7f159ad9219d6937974a01a8d89f2441547271c8875c6e735054] \u2190 b-auth-depends-redis\nauth_service_depends_on_redis auth redis session backend auth Auth service depends on Redis for session storage. If Redis is down, auth fails open (denies all). Shapes failure-mode analysis \u2014 auth and Redis are coupled; cannot discuss auth resilience without addressing Redis availability.",
+      "context_tokens": 114,
+      "retrieve_time_ms": 1546.7,
       "gold_answers": [
         "b-auth-depends-redis",
         "b-redis-code"
@@ -4875,9 +4865,9 @@
         "pinned_coverage": null,
         "failures": [],
         "resolution": {
-          "source_id": 2
+          "source_id": 1
         },
-        "retrieved_count": 2
+        "retrieved_count": 1
       },
       "raw_response": null,
       "trajectory": null,
@@ -4892,6 +4882,6 @@
       }
     }
   ],
-  "avg_retrieve_time_ms": 683.7,
-  "avg_context_tokens": 92.0
+  "avg_retrieve_time_ms": 1034.6,
+  "avg_context_tokens": 91.6
 }

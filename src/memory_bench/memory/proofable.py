@@ -105,6 +105,20 @@ def _similar(a: str, b: str, threshold: float = 0.45) -> bool:
     return len(ta & tb) / len(ta | tb) >= threshold
 
 
+def _same_name(candidate: str, stored: str) -> bool:
+    """Fuzzy name lookup: trigram similarity, except that a number in a name is exact.
+
+    A number picks out one instance ("chapter 7", "step 3"), so a stored name carrying a
+    number resolves only from a candidate carrying the same number. Without this, "chapter"
+    scored 0.80 against "chapter 7" and "chapter with" 0.53, and any query that said
+    "chapter" retrieved the chapter-7 belief. Spelling slips and fragments of word-only
+    names ("typsecript", "error" for "error handling") resolve as before."""
+    numbers = {w for w in stored.split() if w.isdigit()}
+    if numbers and not numbers <= set(candidate.split()):
+        return False
+    return _similar(candidate, stored)
+
+
 def _safe_tag(value: str, limit: int = 80) -> str:
     text = re.sub(r"\s+", " ", str(value or "")).strip()
     return text[:limit]
@@ -706,7 +720,7 @@ class ProofableMemoryProvider(MemoryProvider):
         none:       no listed tag
         narrow:     one of the listed tags
         narrow_any: alternative narrowings, OR-ed; each lists candidate tags and resolves
-                    them exactly, or fuzzily by trigram similarity against the stored tags
+                    them exactly, or fuzzily by trigram similarity against the stored tags (a number in a name must match exactly)
         """
 
         def tags_of(record: _Record) -> set[str]:
@@ -742,7 +756,7 @@ class ProofableMemoryProvider(MemoryProvider):
                     if spec.get("resolve") == "fuzzy":
                         prefix = wanted[0].split(":", 1)[0] + ":" if wanted and ":" in wanted[0] else ""
                         stored_forms = [t.split(":", 1)[1] for t in stored if prefix and t.startswith(prefix)]
-                        hit = any(_similar(w.split(":", 1)[1], s) for w in wanted for s in stored_forms)
+                        hit = any(_same_name(w.split(":", 1)[1], s) for w in wanted for s in stored_forms)
                     else:
                         hit = bool(stored & set(wanted))
                     if hit:
