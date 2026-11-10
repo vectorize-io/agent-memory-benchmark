@@ -1,0 +1,4897 @@
+{
+  "dataset": "precisionmembench",
+  "split": "single-turn",
+  "category": null,
+  "memory_provider": "proofable",
+  "run_name": "proofable",
+  "mode": "retrieval",
+  "oracle": false,
+  "total_queries": 77,
+  "correct": 76,
+  "accuracy": 0.987012987012987,
+  "mean_precision": 0.9556,
+  "mean_recall": 1.0,
+  "active_passes": 43,
+  "active_total": 43,
+  "ingestion_time_ms": 135327.5,
+  "ingested_docs": 35,
+  "description": null,
+  "answer_llm": null,
+  "judge_llm": null,
+  "results": [
+    {
+      "query_id": "happy-stack-repository-layer",
+      "query": "How should I structure my repository layer?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 771.8,
+      "gold_answers": [
+        "b-db-decision"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Type routing and open questions",
+        "description": "Repository layer query: pinned DB decision surfaces; scoped open question surfaces; relevant beliefs depend on query token overlap",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "personaPrelude": {
+            "nonEmpty": true
+          },
+          "pinnedFacts": {
+            "mustInclude": [
+              "b-db-decision"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          },
+          "openQuestions": {
+            "mustInclude": [
+              "b-auth-open-q"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": 1.0,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Type routing and open questions"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "happy-alias-match-kubernetes",
+      "query": "what's my k8s deploy story?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.",
+      "context_tokens": 94,
+      "retrieve_time_ms": 1760.6,
+      "gold_answers": [
+        "b-kubernetes-entity"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Alias 'k8s' resolves to Kubernetes entity",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": []
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-kubernetes-entity"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-kubernetes-entity"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "alias-kube-resolves",
+      "query": "how does kube schedule pods across our CI pipeline nodes?",
+      "answer": "2 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (2)\n\n1. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.\n\n2. [0xef3e4b26df979e0a81509d004b994297d746584202423d31be572f8c0402fed7] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.",
+      "context_tokens": 191,
+      "retrieve_time_ms": 1789.3,
+      "gold_answers": [
+        "b-ci-gha-entity",
+        "b-kubernetes-entity"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Alias 'kube' drives text search retrieval",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-ci-gha-entity",
+              "b-kubernetes-entity"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-kubernetes-entity",
+          "b-ci-gha-entity"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 2
+        },
+        "retrieved_count": 2
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "alias-gha-resolves",
+      "query": "GHA secrets config",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0xef3e4b26df979e0a81509d004b994297d746584202423d31be572f8c0402fed7] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.",
+      "context_tokens": 103,
+      "retrieve_time_ms": 2204.2,
+      "gold_answers": [
+        "b-ci-gha-entity"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Alias 'GHA' (short form) drives text-search retrieval of b-ci-gha-entity",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-ci-gha-entity"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-ci-gha-entity"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "long-query-rambling-kubernetes",
+      "query": "ok so I've been thinking about this for a while and I know we've talked about infrastructure before but I'm circling back because the team had some pushback in the last review and honestly I'm not sure what the right call is anymore. Basically the question is how we should handle rolling deploys for the landing page when it lands \u2014 should we do Kubernetes native rolling updates or something more custom, and does it matter that the service holds session state in memory?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.",
+      "context_tokens": 94,
+      "retrieve_time_ms": 845.8,
+      "gold_answers": [
+        "b-kubernetes-entity"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Verbose 400+ char query.",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "personaPrelude": {
+            "nonEmpty": true
+          },
+          "pinnedFacts": {
+            "mustInclude": []
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-kubernetes-entity"
+            ]
+          },
+          "openQuestions": {
+            "mustInclude": [
+              "b-auth-open-q"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-kubernetes-entity"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "out-of-scope-coin-collecting",
+      "query": "what's a good way to grade a 1909-S VDB penny without sending it to PCGS?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 1.4,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Scope disambiguation",
+        "description": "Query in a domain the user has no beliefs about: personaPrelude only, no scope/relevant leakage",
+        "scope": [
+          "domain:hobby"
+        ],
+        "budget": {},
+        "expect": {
+          "personaPrelude": {
+            "nonEmpty": true
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [],
+        "retrieved_questions": [],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Scope disambiguation"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "happy-writing-scope",
+      "query": "How should I open the next chapter with Mara?",
+      "answer": "2 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (2)\n\n1. [0x1529b62fad7dbdb794187a92a1890105c60dfa57745e3e9d60f3b5e271e14385] \u2190 b-protagonist-entity\nmara protagonist Protagonist of the novel. Set in 1970s Lisbon. Does not reconcile with her father; ending is ambiguous. Shapes all plot suggestions \u2014 the father-daughter thread must remain unresolved; prevents any reconciliation arc.\n\n2. [0xffd249f1ce2f4d04ca8d68fc86270a9116160b51946d60f3561dbb660eb4d3da] \u2190 b-pov-shift-entity\npov_shift POV point of view perspective shift viewpoint chapter 7 Chapter 7 uses a deliberate POV shift to an unnamed observer. This is the only chapter that breaks close-third. Shapes editorial feedback \u2014 prevents flagging the chapter 7 POV shift as an error; the break is intentional and structurally load-bearing.",
+      "context_tokens": 218,
+      "retrieve_time_ms": 809.1,
+      "gold_answers": [
+        "b-protagonist-entity"
+      ],
+      "correct": false,
+      "judge_reason": "unexpected belief in relevantBeliefs: b-pov-shift-entity",
+      "score": null,
+      "meta": {
+        "category": "Scope disambiguation",
+        "description": "Writing query surfaces writing beliefs only; no code leakage",
+        "scope": [
+          "domain:writing"
+        ],
+        "budget": {},
+        "expect": {
+          "personaPrelude": {
+            "nonEmpty": true
+          },
+          "pinnedFacts": {
+            "mustInclude": [
+              "b-protagonist-entity"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [
+          "b-pov-shift-entity"
+        ],
+        "pinned_beliefs": [
+          "b-narrator-voice",
+          "b-prose-style-user-edited",
+          "b-protagonist-entity"
+        ],
+        "retrieved_questions": [
+          "b-chapter-structure-q"
+        ],
+        "retrieval_precision": 0.0,
+        "retrieval_recall": null,
+        "pinned_coverage": 1.0,
+        "failures": [
+          "unexpected belief in relevantBeliefs: b-pov-shift-entity"
+        ],
+        "resolution": {
+          "source_id": 2
+        },
+        "retrieved_count": 2
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Scope disambiguation"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "conflict-scope-disambiguation-redis-writing",
+      "query": "What's Redis doing in chapter three?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x9098810a02455c8cda0ba217b25c89793f3610e20d34d2c5aec0aa60528be21c] \u2190 b-redis-writing\nredis_character Redis Redis is a supporting character in the novel \u2014 a jazz pianist Mara meets in Lisbon. Shapes interpretation of 'Redis' in the writing scope \u2014 always the jazz pianist character, not the database technology.",
+      "context_tokens": 99,
+      "retrieve_time_ms": 732.9,
+      "gold_answers": [
+        "b-redis-writing"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Scope disambiguation",
+        "description": "'Redis' in writing scope returns character, not datastore",
+        "scope": [
+          "domain:writing"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-redis-writing"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-redis-writing"
+        ],
+        "pinned_beliefs": [
+          "b-narrator-voice",
+          "b-prose-style-user-edited",
+          "b-protagonist-entity"
+        ],
+        "retrieved_questions": [
+          "b-chapter-structure-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Scope disambiguation"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "conflict-scope-disambiguation-redis-code",
+      "query": "What are we using Redis for?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x525ba873d971cc14d36a1d313014d751389524f975353060068e3ba6dfb78491] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.",
+      "context_tokens": 93,
+      "retrieve_time_ms": 847.3,
+      "gold_answers": [
+        "b-redis-code"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Scope disambiguation",
+        "description": "'Redis' in code scope returns datastore, not character",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-redis-code"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-redis-code"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Scope disambiguation"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "multi-scope-redis-both-surfaces",
+      "query": "What's Redis doing?",
+      "answer": "2 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (2)\n\n1. [0x525ba873d971cc14d36a1d313014d751389524f975353060068e3ba6dfb78491] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.\n\n2. [0x9098810a02455c8cda0ba217b25c89793f3610e20d34d2c5aec0aa60528be21c] \u2190 b-redis-writing\nredis_character Redis Redis is a supporting character in the novel \u2014 a jazz pianist Mara meets in Lisbon. Shapes interpretation of 'Redis' in the writing scope \u2014 always the jazz pianist character, not the database technology.",
+      "context_tokens": 186,
+      "retrieve_time_ms": 924.5,
+      "gold_answers": [
+        "b-redis-code",
+        "b-redis-writing"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Scope disambiguation",
+        "description": "With scope=['code','writing'], both Redis beliefs should surface \u2014 one per scope",
+        "scope": [
+          "domain:code",
+          "domain:writing"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-redis-code",
+              "b-redis-writing"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-redis-code",
+          "b-redis-writing"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current",
+          "b-narrator-voice",
+          "b-prose-style-user-edited",
+          "b-protagonist-entity"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q",
+          "b-chapter-structure-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 2
+        },
+        "retrieved_count": 2
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Scope disambiguation"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "conflict-mongodb-supersedes-sqlalchemy",
+      "query": "how's our SQLAlchemy setup these days?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 3.0,
+      "gold_answers": [
+        "b-db-decision"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Supersession chain exclusion",
+        "description": "Superseded SQLAlchemy belief never surfaces",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": [
+              "b-db-decision"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": 1.0,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Supersession chain exclusion"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "edge-empty-query",
+      "query": "",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 0.0,
+      "gold_answers": [
+        "b-db-decision"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Design boundary cases",
+        "description": "Empty query: persona + scope prelude + pinned facts injected, no relevant beliefs",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "personaPrelude": {
+            "nonEmpty": true
+          },
+          "pinnedFacts": {
+            "mustInclude": [
+              "b-db-decision"
+            ],
+            "mustExclude": [
+              "b-auth-open-q",
+              "b-comm-response-length"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": 1.0,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Design boundary cases"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "edge-short-query-raw-passthrough",
+      "query": "fastify?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0xe29a8b250f21eec9a9afa86472e3723a98ab6159b15a9bed429f223534131315] \u2190 b-fastify-pref\nframework_fastify Fastify express Uses Fastify for HTTP services rather than Express. Shapes server-side code examples toward Fastify and prevents suggesting Express as an alternative.",
+      "context_tokens": 84,
+      "retrieve_time_ms": 853.6,
+      "gold_answers": [
+        "b-fastify-pref"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Short query 'fastify?' passes raw to text search. Belief is pinned so verified in pinnedFacts.",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": []
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-fastify-pref"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-fastify-pref"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "isolation-user-scoping",
+      "query": "what language do I write in?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.",
+      "context_tokens": 83,
+      "retrieve_time_ms": 631.3,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Cross-user isolation",
+        "description": "Other-user beliefs never leak",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "mustExclude": [
+              "b-other-user-leak-check"
+            ]
+          },
+          "pinnedFacts": {
+            "mustExclude": [
+              "b-other-user-leak-check"
+            ]
+          },
+          "personaPrelude": {
+            "mustNotContain": [
+              "Haskell"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [
+          "b-ts-pref"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 0.0,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Cross-user isolation"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "questions-pinned-active-only",
+      "query": "any open questions?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 1.6,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Type routing and open questions",
+        "description": "listPinnedOpenQuestions returns only pinned+active questions for the given scope",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          },
+          "openQuestions": {
+            "mustInclude": [
+              "b-auth-open-q"
+            ],
+            "mustExclude": [
+              "b-chapter-structure-q",
+              "b-hosting-resolved"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Type routing and open questions"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "alias-ts-resolves",
+      "query": "TS strict mode question about unknown types",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.",
+      "context_tokens": 83,
+      "retrieve_time_ms": 686.7,
+      "gold_answers": [
+        "b-ts-pref"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Alias 'TS' drives text-search retrieval.",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": []
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-ts-pref"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-ts-pref"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "alias-mongo-resolves",
+      "query": "what's the Mongo pattern we're using for collections?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.",
+      "context_tokens": 93,
+      "retrieve_time_ms": 843.2,
+      "gold_answers": [
+        "b-mongo-raw-driver"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Alias 'Mongo' drives text-search retrieval.",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": []
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-mongo-raw-driver"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-mongo-raw-driver"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "alias-reactjs-resolves",
+      "query": "how should I structure my ReactJS components here?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.",
+      "context_tokens": 92,
+      "retrieve_time_ms": 1218.3,
+      "gold_answers": [
+        "b-react-entity"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Alias 'ReactJS' resolves to b-react-entity via text search \u2014 genuine retrieval proof",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-react-entity"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-react-entity"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "alias-protagonist-resolves",
+      "query": "what does the protagonist want, and does their viewpoint stay consistent in act two?",
+      "answer": "2 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (2)\n\n1. [0x1529b62fad7dbdb794187a92a1890105c60dfa57745e3e9d60f3b5e271e14385] \u2190 b-protagonist-entity\nmara protagonist Protagonist of the novel. Set in 1970s Lisbon. Does not reconcile with her father; ending is ambiguous. Shapes all plot suggestions \u2014 the father-daughter thread must remain unresolved; prevents any reconciliation arc.\n\n2. [0xffd249f1ce2f4d04ca8d68fc86270a9116160b51946d60f3561dbb660eb4d3da] \u2190 b-pov-shift-entity\npov_shift POV point of view perspective shift viewpoint chapter 7 Chapter 7 uses a deliberate POV shift to an unnamed observer. This is the only chapter that breaks close-third. Shapes editorial feedback \u2014 prevents flagging the chapter 7 POV shift as an error; the break is intentional and structurally load-bearing.",
+      "context_tokens": 218,
+      "retrieve_time_ms": 906.1,
+      "gold_answers": [
+        "b-pov-shift-entity",
+        "b-protagonist-entity"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Alias 'protagonist' retrieves b-protagonist-entity (pinned). b-pov-shift-entity (non-pinned) proves text search fired.",
+        "scope": [
+          "domain:writing"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": [
+              "b-protagonist-entity"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-pov-shift-entity"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-pov-shift-entity"
+        ],
+        "pinned_beliefs": [
+          "b-narrator-voice",
+          "b-prose-style-user-edited",
+          "b-protagonist-entity"
+        ],
+        "retrieved_questions": [
+          "b-chapter-structure-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": 1.0,
+        "failures": [],
+        "resolution": {
+          "source_id": 2
+        },
+        "retrieved_count": 2
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "canonical-name-match-mara",
+      "query": "tell me about Mara's backstory with her father",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x1529b62fad7dbdb794187a92a1890105c60dfa57745e3e9d60f3b5e271e14385] \u2190 b-protagonist-entity\nmara protagonist Protagonist of the novel. Set in 1970s Lisbon. Does not reconcile with her father; ending is ambiguous. Shapes all plot suggestions \u2014 the father-daughter thread must remain unresolved; prevents any reconciliation arc.",
+      "context_tokens": 105,
+      "retrieve_time_ms": 771.1,
+      "gold_answers": [
+        "b-protagonist-entity"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Direct canonical_name 'Mara' retrieves protagonist. b-protagonist-entity is pinned.",
+        "scope": [
+          "domain:writing"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": [
+              "b-protagonist-entity"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-narrator-voice",
+          "b-prose-style-user-edited",
+          "b-protagonist-entity"
+        ],
+        "retrieved_questions": [
+          "b-chapter-structure-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": 1.0,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "alias-pov-shift-resolves",
+      "query": "POV rules for chapter 7",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0xffd249f1ce2f4d04ca8d68fc86270a9116160b51946d60f3561dbb660eb4d3da] \u2190 b-pov-shift-entity\npov_shift POV point of view perspective shift viewpoint chapter 7 Chapter 7 uses a deliberate POV shift to an unnamed observer. This is the only chapter that breaks close-third. Shapes editorial feedback \u2014 prevents flagging the chapter 7 POV shift as an error; the break is intentional and structurally load-bearing.",
+      "context_tokens": 119,
+      "retrieve_time_ms": 794.1,
+      "gold_answers": [
+        "b-pov-shift-entity"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Alias 'POV' drives text-search retrieval of b-pov-shift-entity (non-pinned, writing scope)",
+        "scope": [
+          "domain:writing"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-pov-shift-entity"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-pov-shift-entity"
+        ],
+        "pinned_beliefs": [
+          "b-narrator-voice",
+          "b-prose-style-user-edited",
+          "b-protagonist-entity"
+        ],
+        "retrieved_questions": [
+          "b-chapter-structure-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "alias-base-class-retrieves-composition",
+      "query": "should I use a base class hierarchy for these domain objects?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x22cfe60c8792ed3d46dbe8773711ba30932c9e4cc36ba1b725e8017e795f41b4] \u2190 b-composition-inheritance\ncomposition_over_inheritance inheritance class hierarchies base class factory function Prefers composition over inheritance. Factory functions returning plain objects rather than class hierarchies. Shapes object design suggestions away from class hierarchies toward factory functions returning plain objects.",
+      "context_tokens": 104,
+      "retrieve_time_ms": 773.3,
+      "gold_answers": [
+        "b-composition-inheritance"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Natural-language proxy 'base class' retrieves b-composition-inheritance (non-pinned) via alias",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-composition-inheritance"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-composition-inheritance"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "alias-exceptions-retrieves-error-handling",
+      "query": "when should I throw exceptions versus return them?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.",
+      "context_tokens": 104,
+      "retrieve_time_ms": 996.3,
+      "gold_answers": [
+        "b-error-handling"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Natural-language proxy 'exceptions' retrieves b-error-handling (non-pinned) via alias",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-error-handling"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-error-handling"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "filter-resolved-at-excluded",
+      "query": "should we self-host the landing page or go with Fly.io?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 2.2,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Type routing and open questions",
+        "description": "b-hosting-resolved has resolved_at set \u2014 query matching its aliases must not surface it",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          },
+          "openQuestions": {
+            "mustExclude": [
+              "b-hosting-resolved"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Type routing and open questions"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "scope-bleed-questions-code-excludes-writing",
+      "query": "any unresolved decisions on this sprint?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 2.6,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Scope disambiguation",
+        "description": "Code-scope query must not surface writing-scope open questions",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          },
+          "openQuestions": {
+            "mustInclude": [
+              "b-auth-open-q"
+            ],
+            "mustExclude": [
+              "b-chapter-structure-q"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Scope disambiguation"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "persona-prelude-content-present",
+      "query": "what's our stack?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 1.3,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Persona prelude content",
+        "description": "Persona prelude contains substantive content tokens derived from universal preferences",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "personaPrelude": {
+            "nonEmpty": true,
+            "contains": [
+              "direct",
+              "preamble"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Persona prelude content"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "edge-short-query-score-clears",
+      "query": "k8s?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.",
+      "context_tokens": 94,
+      "retrieve_time_ms": 598.3,
+      "gold_answers": [
+        "b-kubernetes-entity"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Short query 'k8s'",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": []
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-kubernetes-entity"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-kubernetes-entity"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "edge-whitespace-query",
+      "query": "   ",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 0.0,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Design boundary cases",
+        "description": "Whitespace-only query is treated as empty by queryExpander \u2014 no relevant beliefs",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "personaPrelude": {
+            "nonEmpty": true
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Design boundary cases"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "score-boundary-weak-match-filtered",
+      "query": "thinking about observability and monitoring dashboards",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 3.7,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Design boundary cases",
+        "description": "Weakly-related in-scope query does not surface tangential beliefs below minScore",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "trivially-empty",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Design boundary cases"
+        ],
+        "Pass type": [
+          "trivially-empty"
+        ]
+      }
+    },
+    {
+      "query_id": "user-edited-cross-scope-surfaces",
+      "query": "summarize what you know about my preferences",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 1.9,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Scope disambiguation",
+        "description": "user_edited belief scoped to domain:writing does NOT surface in domain:code \u2014 scope isolation takes precedence over user_edited flag",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustExclude": [
+              "b-prose-style-user-edited"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Scope disambiguation"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "user-edited-absent-without-flag",
+      "query": "what are my writing preferences?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 1.6,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Scope disambiguation",
+        "description": "Non-user-edited writing belief does NOT cross into code scope pinnedFacts",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustExclude": [
+              "b-narrator-voice"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Scope disambiguation"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "ranking-canonical-name-over-content",
+      "query": "composition over inheritance \u2014 what's our pattern?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x22cfe60c8792ed3d46dbe8773711ba30932c9e4cc36ba1b725e8017e795f41b4] \u2190 b-composition-inheritance\ncomposition_over_inheritance inheritance class hierarchies base class factory function Prefers composition over inheritance. Factory functions returning plain objects rather than class hierarchies. Shapes object design suggestions away from class hierarchies toward factory functions returning plain objects.",
+      "context_tokens": 104,
+      "retrieve_time_ms": 699.0,
+      "gold_answers": [
+        "b-composition-inheritance"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Ranking stability",
+        "description": "canonical_name match (weight 10) outranks content-only match (weight 1) in relevantBeliefs ordering",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-composition-inheritance"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-composition-inheritance"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Ranking stability"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "messy-typo-blind-spot",
+      "query": "how do I configure typscript strict mode?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.",
+      "context_tokens": 83,
+      "retrieve_time_ms": 946.3,
+      "gold_answers": [
+        "b-ts-pref"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Fuzzy matching and prefix guards",
+        "description": "Typo 'typscript' does NOT match 'TypeScript' \u2014 documents text search limitation",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": []
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-ts-pref"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-ts-pref"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Fuzzy matching and prefix guards"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "messy-all-caps-case-insensitive",
+      "query": "REACTJS component patterns",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.",
+      "context_tokens": 92,
+      "retrieve_time_ms": 1625.0,
+      "gold_answers": [
+        "b-react-entity"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "ALL-CAPS 'REACTJS' still resolves via case-insensitive text index",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-react-entity"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-react-entity"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "messy-filler-heavy-extraction",
+      "query": "ugh so like I was wondering you know about how we should think about error handling in our codebase because honestly it's been bugging me for a while and I'm not really sure what the right approach is here",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.",
+      "context_tokens": 104,
+      "retrieve_time_ms": 981.8,
+      "gold_answers": [
+        "b-error-handling"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Filler-heavy query \u2014 NLP extraction must cut through noise to find 'error handling'",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-error-handling"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-error-handling"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "messy-negation-surfaces-topic",
+      "query": "I don't want class hierarchies in this codebase, what should I use instead?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x22cfe60c8792ed3d46dbe8773711ba30932c9e4cc36ba1b725e8017e795f41b4] \u2190 b-composition-inheritance\ncomposition_over_inheritance inheritance class hierarchies base class factory function Prefers composition over inheritance. Factory functions returning plain objects rather than class hierarchies. Shapes object design suggestions away from class hierarchies toward factory functions returning plain objects.",
+      "context_tokens": 104,
+      "retrieve_time_ms": 1031.5,
+      "gold_answers": [
+        "b-composition-inheritance"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Negation 'I don't want class hierarchies' still surfaces the composition belief \u2014 text search has no semantic negation",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-composition-inheritance"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-composition-inheritance"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "messy-compound-surfaces-two-beliefs",
+      "query": "how should ReactJS components handle exceptions from async calls?",
+      "answer": "2 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (2)\n\n1. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.\n\n2. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.",
+      "context_tokens": 190,
+      "retrieve_time_ms": 821.2,
+      "gold_answers": [
+        "b-react-entity",
+        "b-error-handling"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Single query spanning two topics surfaces both non-pinned beliefs",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-react-entity",
+              "b-error-handling"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-react-entity",
+          "b-error-handling"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 2
+        },
+        "retrieved_count": 2
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "cap-stress-compound-six-entities",
+      "query": "When our React frontend catches error handling exceptions, how should the Kubernetes pods running MongoDB TypeScript services report to GitHub Actions?",
+      "answer": "6 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (6)\n\n1. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.\n\n2. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.\n\n3. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.\n\n4. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.\n\n5. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.\n\n6. [0xef3e4b26df979e0a81509d004b994297d746584202423d31be572f8c0402fed7] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.",
+      "context_tokens": 539,
+      "retrieve_time_ms": 765.0,
+      "gold_answers": [
+        "b-react-entity",
+        "b-error-handling",
+        "b-ci-gha-entity",
+        "b-kubernetes-entity",
+        "b-mongo-raw-driver",
+        "b-ts-pref"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Compound query mentions 6 entities \u2014 tests whether 12-token cap in buildSearchQuery drops non-pinned targets",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-react-entity",
+              "b-error-handling",
+              "b-ci-gha-entity",
+              "b-kubernetes-entity",
+              "b-mongo-raw-driver",
+              "b-ts-pref"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-react-entity",
+          "b-error-handling",
+          "b-kubernetes-entity",
+          "b-mongo-raw-driver",
+          "b-ts-pref",
+          "b-ci-gha-entity"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 6
+        },
+        "retrieved_count": 6
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "cap-stress-kitchen-sink-exceeds-twelve",
+      "query": "Set up our React components to use composition pattern with explicit error handling, wire GitHub Actions CI to deploy Kubernetes pods serving the MongoDB TypeScript API with functional pipeline transforms",
+      "answer": "7 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (7)\n\n1. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.\n\n2. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.\n\n3. [0xef3e4b26df979e0a81509d004b994297d746584202423d31be572f8c0402fed7] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.\n\n4. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.\n\n5. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.\n\n6. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.\n\n7. [0x3fbe9aa21eaa0cd02f25dcffb5acdfb97fc365dfb1225db15bee8ae4b3225d95] \u2190 b-functional-pipeline\nfunctional_pipeline pipe compose fp Uses functional composition patterns with pipe() to chain data transformations instead of imperative loops. Shapes data-processing code suggestions toward functional pipe composition and away from imperative loops or nested map/filter chains.",
+      "context_tokens": 628,
+      "retrieve_time_ms": 1069.9,
+      "gold_answers": [
+        "b-react-entity",
+        "b-error-handling",
+        "b-ci-gha-entity",
+        "b-kubernetes-entity",
+        "b-mongo-raw-driver",
+        "b-ts-pref",
+        "b-functional-pipeline"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Dense 8+ entity query that deliberately exceeds the 12-token cap \u2014 tests which non-pinned beliefs survive extraction truncation",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-react-entity",
+              "b-error-handling",
+              "b-ci-gha-entity",
+              "b-kubernetes-entity",
+              "b-mongo-raw-driver",
+              "b-ts-pref",
+              "b-functional-pipeline"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-react-entity",
+          "b-error-handling",
+          "b-ci-gha-entity",
+          "b-kubernetes-entity",
+          "b-mongo-raw-driver",
+          "b-ts-pref",
+          "b-functional-pipeline"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 7
+        },
+        "retrieved_count": 7
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "cap-stress-late-position-entity-at-risk",
+      "query": "Given our React frontend, the GitHub Actions CI pipeline, the Kubernetes deployment, and the MongoDB TypeScript backend, how should we approach exceptions in the data layer?",
+      "answer": "6 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (6)\n\n1. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.\n\n2. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.\n\n3. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.\n\n4. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.\n\n5. [0xef3e4b26df979e0a81509d004b994297d746584202423d31be572f8c0402fed7] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.\n\n6. [0x8b423110349abf4525823acc55cad0093a274258fc603d083ca8cbfdc70fc771] \u2190 b-kubernetes-entity\nkubernetes k8s kube Deploys services to a Kubernetes cluster on EKS. Uses Helm charts checked into the monorepo. Shapes all deployment and infrastructure answers to assume Kubernetes on EKS rather than bare EC2 or Lambda.",
+      "context_tokens": 539,
+      "retrieve_time_ms": 833.3,
+      "gold_answers": [
+        "b-ci-gha-entity",
+        "b-react-entity",
+        "b-kubernetes-entity",
+        "b-mongo-raw-driver",
+        "b-ts-pref",
+        "b-error-handling"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Critical alias 'exceptions' appears after 6+ proper nouns \u2014 tests whether extraction order causes late-position tokens to fall past the 12-token cap",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-ci-gha-entity",
+              "b-react-entity",
+              "b-kubernetes-entity",
+              "b-mongo-raw-driver",
+              "b-ts-pref",
+              "b-error-handling"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-error-handling",
+          "b-mongo-raw-driver",
+          "b-ts-pref",
+          "b-react-entity",
+          "b-ci-gha-entity",
+          "b-kubernetes-entity"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 6
+        },
+        "retrieved_count": 6
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "fuzzy-single-edit-fires-non-pinned",
+      "query": "eror handling patterns",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.",
+      "context_tokens": 104,
+      "retrieve_time_ms": 837.6,
+      "gold_answers": [
+        "b-error-handling"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Fuzzy matching and prefix guards",
+        "description": "1-edit deletion 'eror' fuzzy-matches alias 'error' \u2014 prefix 'er' passes",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-error-handling"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-error-handling"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Fuzzy matching and prefix guards"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "fuzzy-scope-filter-discriminates-after-fuzzy-fires",
+      "query": "Reedis cache eviction strategy",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x525ba873d971cc14d36a1d313014d751389524f975353060068e3ba6dfb78491] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.",
+      "context_tokens": 93,
+      "retrieve_time_ms": 1088.9,
+      "gold_answers": [
+        "b-redis-code"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Fuzzy matching and prefix guards",
+        "description": "Typo 'Reedis' fuzzy-matches alias 'Redis' in both scopes \u2014 scope filter returns only code belief",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-redis-code"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-redis-code"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Fuzzy matching and prefix guards"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "fuzzy-prefix-blocks-transitive-match",
+      "query": "mango connection pooling",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 2.1,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Fuzzy matching and prefix guards",
+        "description": "1-edit distance but prefix guard blocks \u2014 'mango' shares edit distance 1 with 'mongo' but 'ma' \u2260 'mo'",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "trivially-empty",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Fuzzy matching and prefix guards"
+        ],
+        "Pass type": [
+          "trivially-empty"
+        ]
+      }
+    },
+    {
+      "query_id": "fuzzy-abbreviation-prefix-blind-spot",
+      "query": "k9s pod scheduling",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 0.6,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Fuzzy matching and prefix guards",
+        "description": "Alias 'k8s' \u2014 typo 'k9s' fails because prefix 'k9' \u2260 'k8' \u2014 single-char substitution in short aliases hits prefix guard",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": []
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "trivially-empty",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Fuzzy matching and prefix guards"
+        ],
+        "Pass type": [
+          "trivially-empty"
+        ]
+      }
+    },
+    {
+      "query_id": "fuzzy-two-edit-transposition-blocked",
+      "query": "typsecript compilation config",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x6eb9a0ee748768f77356a1631f368805e7c5d1b6624caa19576df05411d500c5] \u2190 b-ts-pref\nlanguage_typescript TypeScript TS Writes TypeScript with strict mode and no implicit any. Shapes all code examples toward TypeScript with strict mode and no implicit any.",
+      "context_tokens": 83,
+      "retrieve_time_ms": 1018.7,
+      "gold_answers": [
+        "b-ts-pref"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Fuzzy matching and prefix guards",
+        "description": "Transposition 'typsecript' IS matched by Atlas (Damerau-Levenshtein, 1 edit)",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": []
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-ts-pref"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-ts-pref"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Fuzzy matching and prefix guards"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "fuzzy-single-term-only-signal",
+      "query": "mongod",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.",
+      "context_tokens": 93,
+      "retrieve_time_ms": 1337.8,
+      "gold_answers": [
+        "b-mongo-raw-driver"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Fuzzy matching and prefix guards",
+        "description": "Query is a single misspelled term \u2014 'mongod' is the only token, 1 edit from alias 'Mongo', prefix 'mo' passes",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": []
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-mongo-raw-driver"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-mongo-raw-driver"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Fuzzy matching and prefix guards"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "universal-scope-belief-content-in-persona-prelude",
+      "query": "what's a good way to grade a 1909-S VDB penny without sending it to PCGS?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 0.2,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Persona prelude content",
+        "description": "user:universal belief content appears in personaPrelude for a domain with no per-scope description",
+        "scope": [
+          "domain:hobby"
+        ],
+        "budget": {},
+        "expect": {
+          "personaPrelude": {
+            "nonEmpty": true,
+            "contains": [
+              "direct",
+              "preamble"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [],
+        "retrieved_questions": [],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Persona prelude content"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "type-isolation-open-question-not-in-relevant",
+      "query": "JWT authentication token strategy",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 2.1,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Type routing and open questions",
+        "description": "open_question belief with directly matched aliases must appear in openQuestions only \u2014 not in pinnedFacts or relevantBeliefs",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustExclude": [
+              "b-auth-open-q"
+            ]
+          },
+          "openQuestions": {
+            "mustInclude": [
+              "b-auth-open-q"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Type routing and open questions"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "multi-hop-supersession-chain-all-excluded",
+      "query": "ESLint rules and TSLint configuration",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 2.0,
+      "gold_answers": [
+        "b-linting-current"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Supersession chain exclusion",
+        "description": "Three-hop chain: TSLint (b-linting-v0) \u2192 ESLint (b-linting-v1) \u2192 Biome (b-linting-current). Query terms matching both superseded hops must surface neither; only the active terminal belief surfaces via pinnedFacts",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": [
+              "b-linting-current"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": 1.0,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Supersession chain exclusion"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "cross-scope-one-empty-domain-does-not-degrade",
+      "query": "What are we using Redis for?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x525ba873d971cc14d36a1d313014d751389524f975353060068e3ba6dfb78491] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.",
+      "context_tokens": 93,
+      "retrieve_time_ms": 982.9,
+      "gold_answers": [
+        "b-redis-code"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Scope disambiguation",
+        "description": "Multi-scope query where one scope (domain:hobby) has zero beliefs \u2014 code-scope retrieval must be unaffected and no empty-scope error must occur",
+        "scope": [
+          "domain:code",
+          "domain:hobby"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-redis-code"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-redis-code"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Scope disambiguation"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "ranking-orderedbefore-alias-beats-content",
+      "query": "explicit error returns in pipe transforms",
+      "answer": "2 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (2)\n\n1. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.\n\n2. [0x3fbe9aa21eaa0cd02f25dcffb5acdfb97fc365dfb1225db15bee8ae4b3225d95] \u2190 b-functional-pipeline\nfunctional_pipeline pipe compose fp Uses functional composition patterns with pipe() to chain data transformations instead of imperative loops. Shapes data-processing code suggestions toward functional pipe composition and away from imperative loops or nested map/filter chains.",
+      "context_tokens": 193,
+      "retrieve_time_ms": 1104.6,
+      "gold_answers": [
+        "b-functional-pipeline",
+        "b-error-handling"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Ranking stability",
+        "description": "Rare alias 'pipe' (high IDF, short field) outranks common alias 'error' \u2014 documents Atlas Search BM25 IDF weighting behavior",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-functional-pipeline",
+              "b-error-handling"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-error-handling",
+          "b-functional-pipeline"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 2
+        },
+        "retrieved_count": 2
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Ranking stability"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "cold-start-user-no-beliefs",
+      "query": "how should I structure my repository layer?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 725.2,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Cold start behavior",
+        "description": "User with zero seeded beliefs returns fully empty context at every output tier without error",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "personaPrelude": {
+            "isNull": true
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [],
+        "retrieved_questions": [],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Cold start behavior"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "narrator-voice-pinned-in-own-scope",
+      "query": "",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 0.0,
+      "gold_answers": [
+        "b-narrator-voice",
+        "b-protagonist-entity",
+        "b-prose-style-user-edited"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Persona prelude content",
+        "description": "Empty query against domain:writing surfaces all three pinned writing-scope beliefs in pinnedFacts and the writing open question in openQuestions",
+        "scope": [
+          "domain:writing"
+        ],
+        "budget": {},
+        "expect": {
+          "personaPrelude": {
+            "nonEmpty": true
+          },
+          "pinnedFacts": {
+            "mustInclude": [
+              "b-narrator-voice",
+              "b-protagonist-entity",
+              "b-prose-style-user-edited"
+            ]
+          },
+          "openQuestions": {
+            "mustInclude": [
+              "b-chapter-structure-q"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-narrator-voice",
+          "b-prose-style-user-edited",
+          "b-protagonist-entity"
+        ],
+        "retrieved_questions": [
+          "b-chapter-structure-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": 1.0,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Persona prelude content"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "multi-scope-prelude-uses-primary-scope-only",
+      "query": "give me an overview of what I'm working on",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 1.5,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Persona prelude content",
+        "description": "With scope=['code','writing'], personaPrelude is universal only \u2014 documents that scope-specific content is not injected",
+        "scope": [
+          "domain:code",
+          "domain:writing"
+        ],
+        "budget": {},
+        "expect": {
+          "personaPrelude": {
+            "nonEmpty": true
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current",
+          "b-narrator-voice",
+          "b-prose-style-user-edited",
+          "b-protagonist-entity"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q",
+          "b-chapter-structure-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Persona prelude content"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "why-it-matters-not-indexed-blind-spot",
+      "query": "Vue component architecture",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 1.7,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Design boundary cases",
+        "description": "'Vue' appears only in b-react-entity.why_it_matters \u2014 not in canonical_name, aliases, or content. The query must not surface the belief.",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "trivially-empty",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Design boundary cases"
+        ],
+        "Pass type": [
+          "trivially-empty"
+        ]
+      }
+    },
+    {
+      "query_id": "budget-ceiling-evicts-relevant-beliefs",
+      "query": "How should I handle errors in my repository layer?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x8ff7422fce9cc8f887ef2ef1090aa48937581255c905b390f4485c5d3fcedd9a] \u2190 b-error-handling\nerror_handling_explicit error handling exceptions try-catch Result type error Go-style explicit error returns. Error tuples or Result<T> types rather than thrown exceptions. Shapes error handling patterns toward explicit return values and away from thrown exceptions or try/catch wrappers.",
+      "context_tokens": 104,
+      "retrieve_time_ms": 846.0,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Budget eviction and capacity",
+        "description": "maxBeliefs set to exact pinned count \u2014 no slots remain for relevantBeliefs",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {
+          "maxBeliefs": 2
+        },
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": []
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 2,
+        "pass_type": "trivially-empty",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Budget eviction and capacity"
+        ],
+        "Pass type": [
+          "trivially-empty"
+        ]
+      }
+    },
+    {
+      "query_id": "negative-guidance-mongoose",
+      "query": "suggest a good Mongoose schema for my user model",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.",
+      "context_tokens": 93,
+      "retrieve_time_ms": 1067.3,
+      "gold_answers": [
+        "b-mongo-raw-driver"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Counter-signal retrieval",
+        "description": "Query for Mongoose schema surfaces b-mongo-raw-driver \u2014 the raw-driver preference is the counter-signal",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": []
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-mongo-raw-driver"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-mongo-raw-driver"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Counter-signal retrieval"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "recency-tiebreak-reinforcement",
+      "query": "",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 0.0,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Ranking stability",
+        "description": "Among equally-scored pinned beliefs, higher last_reinforced_at sorts first in pinnedFacts",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "trivially-empty",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Ranking stability"
+        ],
+        "Pass type": [
+          "trivially-empty"
+        ]
+      }
+    },
+    {
+      "query_id": "preference-flood-relevant-entity-survives",
+      "query": "how does our CI pipeline handle secrets?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0xef3e4b26df979e0a81509d004b994297d746584202423d31be572f8c0402fed7] \u2190 b-ci-gha-entity\ngithub_actions GHA CI pipeline github actions CI/CD runs on GitHub Actions. Merge to main triggers a deploy to staging; promotion to prod is manual. Shapes all CI/CD and pipeline answers to assume GitHub Actions rather than Jenkins or CircleCI.",
+      "context_tokens": 103,
+      "retrieve_time_ms": 4272.6,
+      "gold_answers": [
+        "b-ci-gha-entity"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Budget eviction and capacity",
+        "description": "Query about a specific entity is not drowned out by high-reinforcement preferences at budget ceiling",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {
+          "maxBeliefs": 8
+        },
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-ci-gha-entity"
+            ]
+          }
+        },
+        "retrieval_limit": 8,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-ci-gha-entity"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Budget eviction and capacity"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "cross-scope-non-user-edited-blocked",
+      "query": "tell me about Mara",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 1.2,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Scope disambiguation",
+        "description": "Writing-scope entity with strong name match does not surface in code-scope query",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "mustExclude": [
+              "b-protagonist-entity"
+            ],
+            "shouldOnlyInclude": []
+          },
+          "pinnedFacts": {
+            "mustExclude": [
+              "b-protagonist-entity"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Scope disambiguation"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "alias-two-word-shingle-dead-letter",
+      "query": "what happens to dead letter messages that fail replay?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x62336dd9e4e6db33a6698e582065e2eeac9625038bfe7a69de15b8fa1c9bd576] \u2190 b-dead-letter-queue\ndead_letter_queue dead letter DLQ failed messages Failed messages route to a MongoDB-backed dead letter queue with manual replay via admin CLI. Shapes error recovery and messaging answers to assume a DLQ exists rather than suggesting one from scratch.",
+      "context_tokens": 103,
+      "retrieve_time_ms": 1108.4,
+      "gold_answers": [
+        "b-dead-letter-queue"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Two-word alias 'dead letter' fires via the shingle analyzer path on aliases.shingle multi-field",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-dead-letter-queue"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-dead-letter-queue"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "alias-dlq-abbreviation-resolves",
+      "query": "how do we replay items from the DLQ?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x62336dd9e4e6db33a6698e582065e2eeac9625038bfe7a69de15b8fa1c9bd576] \u2190 b-dead-letter-queue\ndead_letter_queue dead letter DLQ failed messages Failed messages route to a MongoDB-backed dead letter queue with manual replay via admin CLI. Shapes error recovery and messaging answers to assume a DLQ exists rather than suggesting one from scratch.",
+      "context_tokens": 103,
+      "retrieve_time_ms": 685.4,
+      "gold_answers": [
+        "b-dead-letter-queue"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Alias resolution",
+        "description": "Alias 'DLQ' (abbreviation) drives text-search retrieval",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-dead-letter-queue"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-dead-letter-queue"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Alias resolution"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "counter-signal-jest-surfaces-vitest",
+      "query": "should I configure Jest for this project?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x261a9b023801c8cdbf32ddd6228bebcfba1fe4e4db3b626c22f0be36b6450a77] \u2190 b-vitest-pref\ntesting_vitest Vitest vitest jest Uses Vitest for all testing. Replaced Jest. Shapes all testing examples toward Vitest and prevents suggesting Jest, Mocha, or Jasmine.",
+      "context_tokens": 94,
+      "retrieve_time_ms": 870.7,
+      "gold_answers": [
+        "b-vitest-pref"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Counter-signal retrieval",
+        "description": "Counter-signal alias 'jest' on b-vitest-pref surfaces when user queries about Jest",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-vitest-pref"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-vitest-pref"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Counter-signal retrieval"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "relation-type-expands-participants",
+      "query": "what are the auth service dependencies and failure modes?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x2cf5d74c2bcb42b6fa97897f27f2aa7e02f2816ca620f23954bf6a12c3c12ff1] \u2190 b-auth-depends-redis\nauth_service_depends_on_redis auth redis session backend auth Auth service depends on Redis for session storage. If Redis is down, auth fails open (denies all). Shapes failure-mode analysis \u2014 auth and Redis are coupled; cannot discuss auth resilience without addressing Redis availability.",
+      "context_tokens": 115,
+      "retrieve_time_ms": 929.9,
+      "gold_answers": [
+        "b-auth-depends-redis",
+        "b-redis-code"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Relation expansion",
+        "description": "Relation belief 'auth depends on redis' surfaces via alias match AND pulls its participants (b-redis-code) into relevantBeliefs via one-hop join. b-auth-open-q goes to openQuestions since it's an open_question type.",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-auth-depends-redis",
+              "b-redis-code"
+            ]
+          },
+          "openQuestions": {
+            "mustInclude": [
+              "b-auth-open-q"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-auth-depends-redis",
+          "b-redis-code"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Relation expansion"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "relation-participant-open-question-routes-correctly",
+      "query": "session backend dependency graph",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x2cf5d74c2bcb42b6fa97897f27f2aa7e02f2816ca620f23954bf6a12c3c12ff1] \u2190 b-auth-depends-redis\nauth_service_depends_on_redis auth redis session backend auth Auth service depends on Redis for session storage. If Redis is down, auth fails open (denies all). Shapes failure-mode analysis \u2014 auth and Redis are coupled; cannot discuss auth resilience without addressing Redis availability.",
+      "context_tokens": 115,
+      "retrieve_time_ms": 1882.2,
+      "gold_answers": [
+        "b-auth-depends-redis",
+        "b-redis-code"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Relation expansion",
+        "description": "Participant b-auth-open-q is type=open_question and pinned. Even though it's pulled in via relation expansion, it must appear in openQuestions, not relevantBeliefs.",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-auth-depends-redis",
+              "b-redis-code"
+            ]
+          },
+          "openQuestions": {
+            "mustInclude": [
+              "b-auth-open-q"
+            ]
+          },
+          "pinnedFacts": {
+            "mustExclude": [
+              "b-auth-open-q"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-auth-depends-redis",
+          "b-redis-code"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Relation expansion"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "relation-expansion-respects-scope-filter",
+      "query": "auth redis failure modes",
+      "answer": "2 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (2)\n\n1. [0x2cf5d74c2bcb42b6fa97897f27f2aa7e02f2816ca620f23954bf6a12c3c12ff1] \u2190 b-auth-depends-redis\nauth_service_depends_on_redis auth redis session backend auth Auth service depends on Redis for session storage. If Redis is down, auth fails open (denies all). Shapes failure-mode analysis \u2014 auth and Redis are coupled; cannot discuss auth resilience without addressing Redis availability.\n\n2. [0x525ba873d971cc14d36a1d313014d751389524f975353060068e3ba6dfb78491] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.",
+      "context_tokens": 202,
+      "retrieve_time_ms": 1045.5,
+      "gold_answers": [
+        "b-auth-depends-redis",
+        "b-redis-code"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Relation expansion",
+        "description": "If a relation's participant is out of scope, it must NOT be pulled in by expansion. Hypothetical: b-auth-depends-redis has participant b-redis-writing (wrong scope). Scope filter in expandRelationParticipants blocks it.",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-auth-depends-redis",
+              "b-redis-code"
+            ],
+            "mustExclude": [
+              "b-redis-writing"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-auth-depends-redis",
+          "b-redis-code"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 2
+        },
+        "retrieved_count": 2
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Relation expansion"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "subtype-expertise-retrieval",
+      "query": "what's my react depth \u2014 should you explain hooks to me?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x2632884379e79dee2e090ff02e713a81a6989606f9c22b5e5d965a3acc46ef7d] \u2190 b-react-entity\nreact ReactJS react.js Frontend is React 18 with TanStack Query and Tailwind. Shapes all frontend code answers to assume React 18 with hooks rather than Vue or Svelte.",
+      "context_tokens": 92,
+      "retrieve_time_ms": 897.7,
+      "gold_answers": [
+        "b-react-entity"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Type routing and open questions",
+        "description": "Subtype 'expertise' belief surfaces on a query about React skill calibration",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-react-entity"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-react-entity"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Type routing and open questions"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "pinned-plus-resolved-excluded-from-questions",
+      "query": "API versioning strategy for v2 migration",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 1.5,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Type routing and open questions",
+        "description": "A belief that is both pinned AND has resolved_at set must NOT appear in openQuestions or pinnedFacts",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustExclude": [
+              "b-pinned-resolved-interaction"
+            ]
+          },
+          "openQuestions": {
+            "mustExclude": [
+              "b-pinned-resolved-interaction"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Type routing and open questions"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "zero-reinforcement-fresh-belief-surfaces",
+      "query": "how is our Turborepo monorepo structured?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x9ef4469966dc12740565324e2de7034ce585624582f1a78c74f694e109c5df51] \u2190 b-zero-reinforcement-fresh\nturborepo_monorepo Turborepo turbo monorepo Monorepo managed by Turborepo. Apps and packages in /apps and /packages directories. Shapes all build and workspace structure answers to assume Turborepo monorepo layout.",
+      "context_tokens": 108,
+      "retrieve_time_ms": 835.0,
+      "gold_answers": [
+        "b-zero-reinforcement-fresh"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Budget eviction and capacity",
+        "description": "Brand new belief with reinforcement_count: 0 still surfaces via alias match \u2014 recency/reinforcement must not suppress it",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-zero-reinforcement-fresh"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-zero-reinforcement-fresh"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Budget eviction and capacity"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "budget-zero-graceful-empty",
+      "query": "what's our stack?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 1.0,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Budget eviction and capacity",
+        "description": "maxBeliefs: 0 returns empty arrays without throwing",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {
+          "maxBeliefs": 0
+        },
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": []
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 0,
+        "pass_type": "trivially-empty",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Budget eviction and capacity"
+        ],
+        "Pass type": [
+          "trivially-empty"
+        ]
+      }
+    },
+    {
+      "query_id": "budget-one-pinned-wins-over-relevant",
+      "query": "MongoDB collection typing patterns",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0x70b89853f39575269dff0fd9706416825267f864d7a7e08cdfd3f50ff1f888f4] \u2190 b-mongo-raw-driver\nmongodb_raw_driver MongoDB Mongo moongoose Uses the MongoDB raw driver with explicit Collection types. Shapes all database code toward raw MongoDB driver calls and prevents ORM suggestions such as Mongoose or Prisma.",
+      "context_tokens": 93,
+      "retrieve_time_ms": 728.8,
+      "gold_answers": [
+        "b-db-decision"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Budget eviction and capacity",
+        "description": "maxBeliefs: 1 with a query matching both a pinned belief and a non-pinned belief \u2014 pinned belief gets the slot",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {
+          "maxBeliefs": 1
+        },
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": [
+              "b-db-decision"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 1,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": 1.0,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Budget eviction and capacity"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "multi-scope-code-writing-dedup-no-double-surface",
+      "query": "what tools do we use?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 1.2,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Scope disambiguation",
+        "description": "With scope=['domain:code','domain:writing'], a belief scoped to both does not appear twice",
+        "scope": [
+          "domain:code",
+          "domain:writing"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "trivially-empty",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current",
+          "b-narrator-voice",
+          "b-prose-style-user-edited",
+          "b-protagonist-entity"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q",
+          "b-chapter-structure-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Scope disambiguation"
+        ],
+        "Pass type": [
+          "trivially-empty"
+        ]
+      }
+    },
+    {
+      "query_id": "empty-alias-belief-content-path-only",
+      "query": "should you give me one recommendation or a list of options?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 1.8,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Design boundary cases",
+        "description": "b-comm-recommendation has aliases: [] \u2014 can only be retrieved via content path. Since content is not a scored search path, it should NOT surface.",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "trivially-empty",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Design boundary cases"
+        ],
+        "Pass type": [
+          "trivially-empty"
+        ]
+      }
+    },
+    {
+      "query_id": "universal-scope-explicit-query-no-relevant",
+      "query": "how do I want you to respond to me?",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 0.4,
+      "gold_answers": [],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Scope disambiguation",
+        "description": "Query scoped explicitly to user:universal \u2014 universal beliefs appear in personaPrelude only, not in relevantBeliefs",
+        "scope": [
+          "user:universal"
+        ],
+        "budget": {},
+        "expect": {
+          "personaPrelude": {
+            "nonEmpty": true,
+            "contains": [
+              "direct"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-comm-pushback",
+          "b-comm-response-length"
+        ],
+        "retrieved_questions": [],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Scope disambiguation"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "negation-query-still-surfaces-rejected-tool",
+      "query": "I do NOT want to use Express, what should I use instead?",
+      "answer": "1 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (1)\n\n1. [0xe29a8b250f21eec9a9afa86472e3723a98ab6159b15a9bed429f223534131315] \u2190 b-fastify-pref\nframework_fastify Fastify express Uses Fastify for HTTP services rather than Express. Shapes server-side code examples toward Fastify and prevents suggesting Express as an alternative.",
+      "context_tokens": 84,
+      "retrieve_time_ms": 942.8,
+      "gold_answers": [
+        "b-fastify-pref"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Design boundary cases",
+        "description": "Query 'I do NOT want to use Express' still surfaces b-fastify-pref because text search has no negation awareness",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-fastify-pref"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-fastify-pref"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 1
+        },
+        "retrieved_count": 1
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Design boundary cases"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    },
+    {
+      "query_id": "superseded-chain-query-terminal-only",
+      "query": "TSLint migration path",
+      "answer": "0 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (0)",
+      "context_tokens": 6,
+      "retrieve_time_ms": 7.0,
+      "gold_answers": [
+        "b-linting-current"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Supersession chain exclusion",
+        "description": "Query 'TSLint' matches b-linting-v0 (superseded by v1, which is superseded by b-linting-current). Only terminal active belief surfaces.",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "pinnedFacts": {
+            "mustInclude": [
+              "b-linting-current"
+            ]
+          },
+          "relevantBeliefs": {
+            "shouldOnlyInclude": []
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "structural",
+        "active_pass": false,
+        "relevant_beliefs": [],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": null,
+        "retrieval_recall": null,
+        "pinned_coverage": 1.0,
+        "failures": [],
+        "resolution": {},
+        "retrieved_count": 0
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Supersession chain exclusion"
+        ],
+        "Pass type": [
+          "structural"
+        ]
+      }
+    },
+    {
+      "query_id": "relation-does-not-appear-as-entity",
+      "query": "Redis session backend dependency graph",
+      "answer": "2 memories retrieved",
+      "reasoning": "",
+      "context": "## Retrieved memories (2)\n\n1. [0x2cf5d74c2bcb42b6fa97897f27f2aa7e02f2816ca620f23954bf6a12c3c12ff1] \u2190 b-auth-depends-redis\nauth_service_depends_on_redis auth redis session backend auth Auth service depends on Redis for session storage. If Redis is down, auth fails open (denies all). Shapes failure-mode analysis \u2014 auth and Redis are coupled; cannot discuss auth resilience without addressing Redis availability.\n\n2. [0x525ba873d971cc14d36a1d313014d751389524f975353060068e3ba6dfb78491] \u2190 b-redis-code\nredis_cache Redis Redis is used as a cache and rate-limiter in the backend. Single-node, not clustered. Shapes interpretation of 'Redis' in the code scope \u2014 always the caching datastore, not the fictional character.",
+      "context_tokens": 202,
+      "retrieve_time_ms": 859.3,
+      "gold_answers": [
+        "b-auth-depends-redis",
+        "b-redis-code"
+      ],
+      "correct": true,
+      "judge_reason": "pass",
+      "score": null,
+      "meta": {
+        "category": "Relation expansion",
+        "description": "Relation-type belief does not bleed into pinnedFacts despite alias overlap with pinned beliefs",
+        "scope": [
+          "domain:code"
+        ],
+        "budget": {},
+        "expect": {
+          "relevantBeliefs": {
+            "shouldOnlyInclude": [
+              "b-auth-depends-redis",
+              "b-redis-code"
+            ]
+          },
+          "openQuestions": {
+            "mustInclude": [
+              "b-auth-open-q"
+            ]
+          }
+        },
+        "retrieval_limit": 20,
+        "pass_type": "active",
+        "active_pass": true,
+        "relevant_beliefs": [
+          "b-auth-depends-redis",
+          "b-redis-code"
+        ],
+        "pinned_beliefs": [
+          "b-db-decision",
+          "b-linting-current"
+        ],
+        "retrieved_questions": [
+          "b-auth-open-q"
+        ],
+        "retrieval_precision": 1.0,
+        "retrieval_recall": 1.0,
+        "pinned_coverage": null,
+        "failures": [],
+        "resolution": {
+          "source_id": 2
+        },
+        "retrieved_count": 2
+      },
+      "raw_response": null,
+      "trajectory": null,
+      "git_history": null,
+      "category_axes": {
+        "Category": [
+          "Relation expansion"
+        ],
+        "Pass type": [
+          "active"
+        ]
+      }
+    }
+  ],
+  "avg_retrieve_time_ms": 683.7,
+  "avg_context_tokens": 92.0
+}
