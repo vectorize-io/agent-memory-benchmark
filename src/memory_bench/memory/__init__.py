@@ -8,6 +8,7 @@ from .mem0 import Mem0MemoryProvider
 from .mem0_cloud import Mem0CloudMemoryProvider
 from .hybrid_search import HybridSearchMemoryProvider
 from .ogham import OghamMemoryProvider
+from .proofable import ProofableMemoryProvider
 from .supermemory import SupermemoryMemoryProvider
 from .none import NoMemoryProvider
 from .hscoding import HsCodingProvider
@@ -26,6 +27,7 @@ REGISTRY: dict[str, type[MemoryProvider]] = {
     "mem0": Mem0MemoryProvider,
     "mem0-cloud": Mem0CloudMemoryProvider,
     "ogham": OghamMemoryProvider,
+    "proofable": ProofableMemoryProvider,
     "qdrant": HybridSearchMemoryProvider,
     "supermemory": SupermemoryMemoryProvider,
 }
