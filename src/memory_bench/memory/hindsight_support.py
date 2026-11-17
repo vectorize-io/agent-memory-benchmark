@@ -233,7 +233,8 @@ class _SupportProvider(MemoryProvider):
         context = f"{s['agent_context']} The customer is {s['users'][user_id]['name']}."
         if query_timestamp:
             context += f" The question is being asked on {query_timestamp}."
-        body = {"query": query, "context": context, "tags": [user_tag(user_id)], "tags_match": "any"}
+        body = {"query": query, "context": context, "tags": [user_tag(user_id)], "tags_match": "any",
+                "include": {"tool_calls": {}}}
         started = time.perf_counter()
         response = await self._api().call("POST", f"{self._memory_bank}/reflect", json=body)
         usage = response.get("usage") or {}
@@ -245,13 +246,43 @@ class _SupportProvider(MemoryProvider):
             "ingest_usd": self._ingest.get("ingest_usd"),
             "ingest_s": self._ingest.get("ingest_s"),
         }
-        return answer, answer, {"meta": meta}
+        evidence, sources = read_evidence(response.get("trace") or {})
+        meta["evidence_sources"] = sources
+        return answer, evidence, {"meta": meta}
 
     def direct_answer(self, query: str, user_id: str | None = None, query_timestamp: str | None = None) -> tuple[str, str, dict | None]:
         return asyncio.run(self.async_direct_answer(query, user_id, query_timestamp))
 
     def retrieve(self, query: str, k: int = 10, user_id: str | None = None, query_timestamp: str | None = None) -> tuple[list[Document], dict | None]:
         raise NotImplementedError(f"{self.name} answers with reflect: run it with --mode agent")
+
+
+def read_evidence(trace: dict) -> tuple[str, list[str]]:
+    """What reflect read, as text for the viewer's context pane, and the ids of the documents it came
+    from (manual, chat or exception) so a failure can be told apart: the evidence never reached the
+    model, or it did and the answer is still wrong."""
+    lines: list[str] = []
+    sources: set[str] = set()
+    for call in trace.get("tool_calls") or []:
+        out = call.get("output")
+        lines.append(f"## {call.get('tool')}({json.dumps(call.get('input'), ensure_ascii=False)[:200]})")
+        if not isinstance(out, dict):
+            lines.append(str(out)[:500])
+            continue
+        for doc in out.get("documents") or []:
+            sources.add(doc.get("document_id") or "")
+            page = f" p.{doc['page']}" if doc.get("page") else ""
+            lines.append(f"[doc {doc.get('document_id')}{page}] {(doc.get('text') or '')[:800]}")
+        for mem in out.get("memories") or []:
+            lines.append(f"[memory] {mem.get('text', '')}")
+        for obs in out.get("observations") or []:
+            lines.append(f"[observation] {obs.get('text', obs) if isinstance(obs, dict) else obs}")
+        for key, chunk in (out.get("chunks") or {}).items():
+            # chunk ids are <bank>_<document id>_<n>
+            doc_id = key.split("_", 1)[-1].rsplit("_", 1)[0]
+            sources.add(doc_id)
+            lines.append(f"[chunk {doc_id}] {(chunk.get('chunk_text') or '')[:800]}")
+    return "\n".join(lines), sorted(s for s in sources if s)
 
 
 class HindsightSupportMemoryProvider(_SupportProvider):
