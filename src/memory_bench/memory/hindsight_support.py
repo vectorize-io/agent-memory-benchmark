@@ -27,7 +27,7 @@ Cost and time, in each row's meta:
   reranking are not LLM calls and are not counted.
 - ``ingest_usd``: the server's LLM spend on the memory bank once ingestion settled (retain, file
   parsing with a vision model if the server has one, consolidation). The knowledge bank makes no
-  LLM call.
+  LLM call. None on a server that does not record its LLM requests (``llm_trace`` off, as on dev).
 - ``ingest_s``: wall time of the whole ingestion, both banks.
 
 Configuration:
@@ -172,7 +172,15 @@ class _SupportProvider(MemoryProvider):
             if self._knowledge_bank:
                 await kb.aclose()
                 await api.call("PATCH", f"{self._memory_bank}/config", json={"updates": {"knowledge_banks": [self._knowledge_bank]}})
-            cost = await asyncio.to_thread(priced_usage, self._get, self._memory_bank)
+            try:
+                cost = await asyncio.to_thread(priced_usage, self._get, self._memory_bank)
+            except httpx.HTTPStatusError as exc:
+                # A server that does not record its LLM requests (llm_trace off) has no such route:
+                # the ingest cost is unknown there, not zero.
+                if exc.response.status_code != 404:
+                    raise
+                _log.warning("%s: the server does not report LLM usage; ingest cost unknown", self._memory_bank)
+                cost = {"usd": None}
             return {"memory_docs": len(memory), "knowledge_docs": len(knowledge), "knowledge": results[1] if len(results) > 1 else None,
                     "ingest_usd": cost["usd"], "ingest_cost": cost}
         finally:

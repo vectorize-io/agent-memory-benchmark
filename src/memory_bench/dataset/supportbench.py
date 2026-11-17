@@ -186,6 +186,7 @@ class SupportBenchDataset(Dataset):
             "avg_answer_s": round(sum(r.retrieve_time_ms for r in results) / len(results) / 1000, 2),
             "avg_query_usd": None if None in usd else round(sum(usd) / len(usd), 5),
             "ingest_usd": metas[0].get("ingest_usd"),
+            "ingest_s": metas[0].get("ingest_s"),
         }
         for cat in CATEGORIES:
             rows = [r for r in results if r.meta.get("category") == cat]

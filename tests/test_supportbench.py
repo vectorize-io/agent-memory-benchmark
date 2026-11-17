@@ -75,7 +75,7 @@ def test_query_usd_prices_cached_and_reasoning():
 def _row(qid: str, category: str, correct: bool, reason: str, usd: float | None) -> QueryResult:
     return QueryResult(query_id=qid, query="", answer="", reasoning="", context="", context_tokens=0,
                        retrieve_time_ms=2000.0, gold_answers=[], correct=correct, judge_reason=reason,
-                       meta={"category": category, "query_usd": usd, "ingest_usd": 1.5})
+                       meta={"category": category, "query_usd": usd, "ingest_usd": 1.5, "ingest_s": 300.0})
 
 
 def test_summary_counts_traps_and_cost(dataset):
@@ -84,7 +84,7 @@ def test_summary_counts_traps_and_cost(dataset):
     m = dataset.summary_metrics(rows)
     assert m["trap_rate"] == pytest.approx(1 / 3, abs=1e-3)
     assert m["accuracy_conflict"] == 0.5 and m["accuracy_docs_only"] == 1.0
-    assert m["avg_query_usd"] == pytest.approx(0.002) and m["ingest_usd"] == 1.5 and m["avg_answer_s"] == 2.0
+    assert m["avg_query_usd"] == pytest.approx(0.002) and m["ingest_usd"] == 1.5 and m["ingest_s"] == 300.0 and m["avg_answer_s"] == 2.0
 
 
 def test_judge_prompt_carries_the_trap(dataset):
