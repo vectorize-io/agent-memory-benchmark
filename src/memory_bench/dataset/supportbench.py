@@ -97,8 +97,9 @@ def manual_paths() -> list[Path]:
     return paths
 
 
-def _render_chat(turns: list[list[str]]) -> str:
-    return "\n".join(f"{'Customer' if role == 'customer' else 'Support agent'}: {text}" for role, text in turns)
+def _messages(turns: list[list[str]]) -> list[dict[str, str]]:
+    """A chat as chat messages: the customer is the user, the support agent the assistant."""
+    return [{"role": "user" if role == "customer" else "assistant", "content": text} for role, text in turns]
 
 
 class SupportBenchDataset(Dataset):
@@ -155,8 +156,9 @@ class SupportBenchDataset(Dataset):
         for uid, user in s["users"].items():
             for chat in user["chats"]:
                 docs.append(Document(
-                    id=chat["id"], content=_render_chat(chat["turns"]), user_id=uid, timestamp=chat["at"],
-                    messages=[{"role": "user" if r == "customer" else "assistant", "content": t} for r, t in chat["turns"]],
+                    # Stored as the JSON list of messages, in both kinds of bank.
+                    id=chat["id"], content=json.dumps(_messages(chat["turns"]), ensure_ascii=False), user_id=uid,
+                    timestamp=chat["at"], messages=_messages(chat["turns"]),
                     context=f"support chat with the customer {user['name']} [{chat['id']}]",
                 ))
         for exc in s["exceptions"]:
