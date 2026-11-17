@@ -11,6 +11,9 @@ class Document:
     context: str | None = None           # optional hint about document provenance (passed to Hindsight)
     source_ids: list[str] | None = None  # on retrieval: IDs of the ingested documents this memory came from
     tags: list[str] | None = None        # on ingest: dataset-supplied labels a provider may index and filter on
+    path: str | None = None              # on ingest: a file to upload as this document (PDF, image, video) instead of content
+    filename: str | None = None          # on ingest: the name the document is stored under (knowledge banks read it as the title)
+    page: int | None = None              # on retrieval: the 1-based page of a multi-page document the hit came from
 
 
 @dataclass
@@ -72,6 +75,7 @@ class EvalSummary:
     accuracy: float
     ingestion_time_ms: float  # wall time for memory.ingest()
     ingested_docs: int
+    score_type: str = "accuracy"      # what `accuracy` holds: "accuracy", or a ranked metric such as "ndcg@10"
     description: str | None = None    # optional free-text annotation for this run
     answer_llm: str | None = None     # e.g. "gemini:gemini-2.5-flash-lite"
     judge_llm: str | None = None      # e.g. "gemini:gemini-2.5-flash-lite"

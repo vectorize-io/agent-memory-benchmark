@@ -650,5 +650,303 @@
         "source_label": "PrecisionMemBench baselines (tenurehq) \u2014 unverified"
       }
     ]
+  },
+  "vidore-v3-markdown": {
+    "average": [
+      {
+        "memory": "Mixedbread",
+        "accuracy": 0.6225,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals/vidore-v3-text",
+        "source_label": "Mixedbread ViDoRe V3 text evals",
+        "comment": "Mean over the 8 tasks, each scored on queries in the task's own language (the setting of Mixedbread's table). Cross-language average over all 6 query languages: 60.14."
+      },
+      {
+        "memory": "Mixedbread + reranker",
+        "accuracy": 0.6991,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals/vidore-v3-text",
+        "source_label": "Mixedbread ViDoRe V3 text evals",
+        "comment": "Mean over the 8 tasks, each scored on queries in the task's own language (the setting of Mixedbread's table). With Mixedbread's reranker. Over all 6 query languages: 69.26."
+      },
+      {
+        "memory": "Voyage 4 Large",
+        "accuracy": 0.6064,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals/vidore-v3-text",
+        "source_label": "Mixedbread ViDoRe V3 text evals",
+        "comment": "Mean over the 8 tasks, each scored on queries in the task's own language (the setting of Mixedbread's table). Over all 6 query languages: 58.75."
+      },
+      {
+        "memory": "Gemini Embedding 2",
+        "accuracy": 0.587,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals/vidore-v3-text",
+        "source_label": "Mixedbread ViDoRe V3 text evals",
+        "comment": "Mean over the 8 tasks, each scored on queries in the task's own language (the setting of Mixedbread's table)."
+      },
+      {
+        "memory": "Cohere Embed 4",
+        "accuracy": 0.5663,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals/vidore-v3-text",
+        "source_label": "Mixedbread ViDoRe V3 text evals",
+        "comment": "Mean over the 8 tasks, each scored on queries in the task's own language (the setting of Mixedbread's table)."
+      },
+      {
+        "memory": "Qwen3 Embedding 8B",
+        "accuracy": 0.5424,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals/vidore-v3-text",
+        "source_label": "Mixedbread ViDoRe V3 text evals",
+        "comment": "Mean over the 8 tasks, each scored on queries in the task's own language (the setting of Mixedbread's table)."
+      },
+      {
+        "memory": "OpenAI text-embedding-3-large",
+        "accuracy": 0.5123,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals/vidore-v3-text",
+        "source_label": "Mixedbread ViDoRe V3 text evals",
+        "comment": "Mean over the 8 tasks, each scored on queries in the task's own language (the setting of Mixedbread's table)."
+      },
+      {
+        "memory": "BM25",
+        "accuracy": 0.4998,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals/vidore-v3-text",
+        "source_label": "Mixedbread ViDoRe V3 text evals",
+        "comment": "Mean over the 8 tasks, each scored on queries in the task's own language (the setting of Mixedbread's table)."
+      },
+      {
+        "memory": "Mixedbread (all 6 query languages)",
+        "accuracy": 0.6014,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals/vidore-v3-text",
+        "source_label": "Mixedbread ViDoRe V3 text evals",
+        "comment": "Mean over the 8 tasks over every query language, the setting AMB's run scores. Per-query files: https://github.com/mixedbread-ai/quality-evals"
+      },
+      {
+        "memory": "Voyage 4 Large (all 6 query languages)",
+        "accuracy": 0.5875,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals/vidore-v3-text",
+        "source_label": "Mixedbread ViDoRe V3 text evals",
+        "comment": "Mean over the 8 tasks over every query language, the setting AMB's run scores."
+      }
+    ]
+  },
+  "miracl-vision": {
+    "average": [
+      {
+        "memory": "Mixedbread",
+        "accuracy": 0.8522,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals.md",
+        "source_label": "Mixedbread evals",
+        "comment": "Mean over the 18 languages. Image resolution not stated."
+      },
+      {
+        "memory": "Gemini Embedding 2",
+        "accuracy": 0.7611,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals.md",
+        "source_label": "Mixedbread evals",
+        "comment": "Mean over the 18 languages."
+      }
+    ]
+  },
+  "video-retrieval": {
+    "average": [
+      {
+        "memory": "Mixedbread",
+        "accuracy": 0.6697,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals.md",
+        "source_label": "Mixedbread evals",
+        "comment": "Mean over MSR-VTT, DiDeMo and YouCook2; per-set numbers and caption handling not published."
+      },
+      {
+        "memory": "Gemini Embedding 2",
+        "accuracy": 0.6274,
+        "score_type": "ndcg@10",
+        "source_url": "https://www.mixedbread.com/evals.md",
+        "source_label": "Mixedbread evals",
+        "comment": "Mean over MSR-VTT, DiDeMo and YouCook2."
+      }
+    ]
+  },
+  "browsecomp-plus": {
+    "evidence": [
+      {
+        "memory": "Qwen3-Embedding-8B",
+        "accuracy": 0.2026,
+        "score_type": "ndcg@10",
+        "source_url": "https://huggingface.co/spaces/Tevatron/BrowseComp-Plus",
+        "source_label": "BrowseComp-Plus leaderboard (retriever table)",
+        "comment": "Evidence R@100 47.73.",
+        "metrics": {
+          "recall@100": 0.4773
+        }
+      },
+      {
+        "memory": "ReasonIR-8B",
+        "accuracy": 0.1681,
+        "score_type": "ndcg@10",
+        "source_url": "https://huggingface.co/spaces/Tevatron/BrowseComp-Plus",
+        "source_label": "BrowseComp-Plus leaderboard (retriever table)",
+        "comment": "Evidence R@100 43.55.",
+        "metrics": {
+          "recall@100": 0.4355
+        }
+      },
+      {
+        "memory": "Qwen3-Embedding-4B",
+        "accuracy": 0.1405,
+        "score_type": "ndcg@10",
+        "source_url": "https://huggingface.co/spaces/Tevatron/BrowseComp-Plus",
+        "source_label": "BrowseComp-Plus leaderboard (retriever table)",
+        "comment": "Evidence R@100 40.19.",
+        "metrics": {
+          "recall@100": 0.4019
+        }
+      },
+      {
+        "memory": "Qwen3-Embedding-0.6B",
+        "accuracy": 0.0801,
+        "score_type": "ndcg@10",
+        "source_url": "https://huggingface.co/spaces/Tevatron/BrowseComp-Plus",
+        "source_label": "BrowseComp-Plus leaderboard (retriever table)",
+        "comment": "Evidence R@100 26.51.",
+        "metrics": {
+          "recall@100": 0.2651
+        }
+      },
+      {
+        "memory": "JinaColBERT-v2",
+        "accuracy": 0.079,
+        "score_type": "ndcg@10",
+        "source_url": "https://huggingface.co/spaces/Tevatron/BrowseComp-Plus",
+        "source_label": "BrowseComp-Plus leaderboard (retriever table)",
+        "comment": "Evidence R@100 18.10.",
+        "metrics": {
+          "recall@100": 0.181
+        }
+      },
+      {
+        "memory": "BM25",
+        "accuracy": 0.0163,
+        "score_type": "ndcg@10",
+        "source_url": "https://huggingface.co/spaces/Tevatron/BrowseComp-Plus",
+        "source_label": "BrowseComp-Plus leaderboard (retriever table)",
+        "comment": "Evidence R@100 4.66.",
+        "metrics": {
+          "recall@100": 0.0466
+        }
+      }
+    ],
+    "gold": [
+      {
+        "memory": "Qwen3-Embedding-8B",
+        "accuracy": 0.1946,
+        "score_type": "ndcg@10",
+        "source_url": "https://huggingface.co/spaces/Tevatron/BrowseComp-Plus",
+        "source_label": "BrowseComp-Plus leaderboard (retriever table)"
+      },
+      {
+        "memory": "ReasonIR-8B",
+        "accuracy": 0.1546,
+        "score_type": "ndcg@10",
+        "source_url": "https://huggingface.co/spaces/Tevatron/BrowseComp-Plus",
+        "source_label": "BrowseComp-Plus leaderboard (retriever table)"
+      },
+      {
+        "memory": "Qwen3-Embedding-4B",
+        "accuracy": 0.1363,
+        "score_type": "ndcg@10",
+        "source_url": "https://huggingface.co/spaces/Tevatron/BrowseComp-Plus",
+        "source_label": "BrowseComp-Plus leaderboard (retriever table)"
+      },
+      {
+        "memory": "Qwen3-Embedding-0.6B",
+        "accuracy": 0.074,
+        "score_type": "ndcg@10",
+        "source_url": "https://huggingface.co/spaces/Tevatron/BrowseComp-Plus",
+        "source_label": "BrowseComp-Plus leaderboard (retriever table)"
+      },
+      {
+        "memory": "JinaColBERT-v2",
+        "accuracy": 0.068,
+        "score_type": "ndcg@10",
+        "source_url": "https://huggingface.co/spaces/Tevatron/BrowseComp-Plus",
+        "source_label": "BrowseComp-Plus leaderboard (retriever table)"
+      },
+      {
+        "memory": "BM25",
+        "accuracy": 0.0166,
+        "score_type": "ndcg@10",
+        "source_url": "https://huggingface.co/spaces/Tevatron/BrowseComp-Plus",
+        "source_label": "BrowseComp-Plus leaderboard (retriever table)"
+      }
+    ]
+  },
+  "atm-bench-retrieval": {
+    "atm-bench": [
+      {
+        "memory": "Memexa v2",
+        "accuracy": 0.9232,
+        "score_type": "recall@10",
+        "source_url": "https://atmbench.github.io/leaderboard.html",
+        "source_label": "ATM-Bench leaderboard",
+        "comment": "BGE-M3 + bge-reranker-v2-m3; memory built with DeepSeek (an LLM). R@10 counts the items passed to the answer model."
+      },
+      {
+        "memory": "RE-call",
+        "accuracy": 0.901,
+        "score_type": "recall@10",
+        "source_url": "https://atmbench.github.io/leaderboard.html",
+        "source_label": "ATM-Bench leaderboard",
+        "comment": "Voyage-4-large + Voyage rerank-2.5."
+      },
+      {
+        "memory": "Graphon V1",
+        "accuracy": 0.8997,
+        "score_type": "recall@10",
+        "source_url": "https://atmbench.github.io/leaderboard.html",
+        "source_label": "ATM-Bench leaderboard",
+        "comment": "Memory built with an LLM."
+      },
+      {
+        "memory": "Memexa",
+        "accuracy": 0.7909,
+        "score_type": "recall@10",
+        "source_url": "https://atmbench.github.io/leaderboard.html",
+        "source_label": "ATM-Bench leaderboard",
+        "comment": "BGE-M3 + bge-reranker-v2-m3."
+      },
+      {
+        "memory": "MediaFind",
+        "accuracy": 0.7785,
+        "score_type": "recall@10",
+        "source_url": "https://atmbench.github.io/leaderboard.html",
+        "source_label": "ATM-Bench leaderboard",
+        "comment": "MiniLM-L6 + BM25."
+      },
+      {
+        "memory": "MemPalace",
+        "accuracy": 0.764,
+        "score_type": "recall@10",
+        "source_url": "https://atmbench.github.io/leaderboard.html",
+        "source_label": "ATM-Bench leaderboard",
+        "comment": "MiniLM-L6."
+      },
+      {
+        "memory": "ATM-RAG (paper baseline)",
+        "accuracy": 0.687,
+        "score_type": "recall@10",
+        "source_url": "https://atmbench.github.io/leaderboard.html",
+        "source_label": "ATM-Bench leaderboard",
+        "comment": "MiniLM-L6."
+      }
+    ]
   }
 }

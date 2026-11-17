@@ -41,6 +41,13 @@ class Dataset(ABC):
     isolation_unit: str | None = None
     links: list[dict] = []
     published: bool = False
+    score_type: str = "accuracy"
+    """What the headline number (`accuracy` in a result file) is. "accuracy" for judged and
+    MCQ datasets; ranked-retrieval datasets name their metric, e.g. "ndcg@10" or "recall@10",
+    and the viewer labels every number with it instead of calling it accuracy."""
+    redact_query_text: bool = False
+    """Leave the query text out of result files (BrowseComp-Plus asks that its decrypted
+    questions never be published)."""
     """Named links for the dataset, e.g. [{"label": "Paper", "url": "https://arxiv.org/..."}]."""
     """Semantic name of the storage isolation unit, e.g. 'episode' or 'session'.
     When set, memory providers may create separate storage per unit (e.g. one bank

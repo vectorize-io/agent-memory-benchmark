@@ -1,5 +1,6 @@
 from .base import Dataset
 from .beam import BEAMDataset
+from .knowledge import KNOWLEDGE_DATASETS
 from .lifebench import LifeBenchDataset
 from .locomo import LoComoDataset
 from .locomo_fixed import LoComoFixedDataset
@@ -16,6 +17,8 @@ REGISTRY: dict[str, type[Dataset]] = {
     "longmemeval":  LongMemEvalDataset,    "personamem":   PersonaMemDataset,
     "precisionmembench": PrecisionMemBenchDataset,
     "sdebench":     SdebenchDataset,
+    # Knowledge-bank retrieval (search only, ranked scores): see dataset/knowledge.py
+    **{cls.name: cls for cls in KNOWLEDGE_DATASETS},
 }
 
 

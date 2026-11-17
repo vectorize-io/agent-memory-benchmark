@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import { fetchManifest, fetchSplitStats, fetchExternalResults, fetchDatasetInfo, fetchSplitCategoryBreakdown } from '../api.js'
 import { fmtTokens } from '../utils.js'
+import { scoreLabel, fmtScore, isKnowledge, withAverageSplit } from '../score.js'
 import Card from '@/components/ui/card.vue'
 import Badge from '@/components/ui/badge.vue'
 import BarChart from '@/components/ui/bar-chart.vue'
@@ -43,6 +44,19 @@ const splitViewMode       = ref({}) // { [split]: 'overall' | 'category' }
 const splitCatBreakdown   = ref({}) // { [split]: breakdown[] } — per-result category breakdowns
 const splitCatLoading     = ref({}) // { [split]: bool }
 
+// What this dataset's headline number is (Accuracy, NDCG@10, Recall@10) and whether it is a
+// knowledge-bank retrieval dataset (search only: no answer model, no judge, no context tokens).
+const catDs     = computed(() => catalog.value?.datasets?.[dataset.value])
+const scoreType = computed(() => catDs.value?.score_type ?? 'accuracy')
+const knowledge = computed(() => isKnowledge(catDs.value))
+const sLabel    = computed(() => scoreLabel(scoreType.value))
+const fmtS      = (v, type) => fmtScore(v, type ?? scoreType.value)
+// The cross-split average (where a leaderboard publishes one) comes first.
+const splitOrder = cat => {
+  const d = cat?.datasets?.[dataset.value]
+  return [d?.average_split, ...(d?.splits ?? [])].filter(Boolean)
+}
+
 const providerByKey = computed(() => {
   const map = {}
   for (const [family, p] of Object.entries(catalog.value.providers ?? {})) {
@@ -68,7 +82,7 @@ async function load() {
       fetchDatasetInfo(dataset.value),
       fetch('/api/catalog').then(r => r.json()),
     ])
-    manifest.value = all.filter(m => m.dataset === dataset.value)
+    manifest.value = withAverageSplit(all.filter(m => m.dataset === dataset.value), cat?.datasets?.[dataset.value])
     externalResults.value = extAll[dataset.value] ?? {}
     datasetLinks.value = info.links ?? []
     catalog.value = cat
@@ -76,7 +90,7 @@ async function load() {
       error.value = `No results found for dataset "${dataset.value}"`
       return
     }
-    const canonicalSplits = cat?.datasets?.[dataset.value]?.splits ?? []
+    const canonicalSplits = splitOrder(cat)
     const allSplitKeys = [...new Set([...manifest.value.map(m => m.split), ...Object.keys(extAll[dataset.value] ?? {})])]
     const splits = [...canonicalSplits.filter(s => allSplitKeys.includes(s)), ...allSplitKeys.filter(s => !canonicalSplits.includes(s))]
     if (!activeSplit.value || !splits.includes(activeSplit.value)) activeSplit.value = splits[0] ?? null
@@ -102,7 +116,7 @@ const bySplit = computed(() => {
     if (!map[sp]) map[sp] = { local: [], external: [] }
     map[sp].external.push(...items)
   })
-  const canonicalOrder = catalog.value?.datasets?.[dataset.value]?.splits ?? []
+  const canonicalOrder = splitOrder(catalog.value)
   const allSplits = [...canonicalOrder.filter(sp => map[sp]), ...Object.keys(map).filter(sp => !canonicalOrder.includes(sp))]
   return allSplits.map(sp => [sp, map[sp]])
 })
@@ -225,7 +239,12 @@ const sortLocal = items => sortItems(items, localSortCol.value, localSortDir.val
 const sortExt   = items => sortItems(items, extSortCol.value, extSortDir.value)
 const toggleLocalSort = col => toggleSort(col, localSortCol, localSortDir)
 const toggleExtSort   = col => toggleSort(col, extSortCol, extSortDir)
-const chartAccuracy = local => _chartData(local, 'accuracy')
+// Knowledge datasets chart the published numbers next to ours, starred as on the home page.
+const chartAccuracy = (local, external = []) => {
+  const { rows } = _chartData(local, 'accuracy')
+  const ext = external.filter(e => e.accuracy != null).map(e => ({ label: e.memory + ' *', logo: null, value: e.accuracy }))
+  return { rows: [...rows, ...ext].sort((a, b) => b.value - a.value) }
+}
 const chartRecall   = local => _chartData(local, 'avg_retrieve_time_ms', true)
 const chartTokens   = local => _chartData(local, 'avg_context_tokens', true)
 // coding datasets (sdebench) report agent metrics (interventions/cost/turns/tokens), not QA metrics
@@ -392,7 +411,8 @@ function hasCategoryData(local, split) {
       <div class="mb-10">
         <div class="flex items-center gap-3 flex-wrap mb-2">
           <h1 class="font-display text-2xl font-bold text-foreground tracking-tight">{{ dataset }}</h1>
-          <Badge v-if="catalog.datasets?.[dataset]?.task"
+          <Badge v-if="knowledge" variant="success">Search only · {{ sLabel }}</Badge>
+          <Badge v-else-if="catalog.datasets?.[dataset]?.task"
                  :variant="catalog.datasets[dataset].task === 'MCQ' ? 'mcq' : 'open'">
             {{ catalog.datasets[dataset].task === 'MCQ' ? 'Multiple Choice' : 'Open-ended' }}
           </Badge>
@@ -428,7 +448,8 @@ function hasCategoryData(local, split) {
           <!-- Split header -->
           <div class="flex items-center justify-between mb-6">
             <div>
-              <p class="text-muted-foreground/85 text-sm">{{ fmtSplitStats(splitStats[split]) }}</p>
+              <p v-if="split === catDs?.average_split" class="text-muted-foreground/85 text-sm">Mean {{ sLabel }} over the {{ catDs.splits.length }} splits, for runs that cover all of them</p>
+              <p v-else-if="!knowledge || splitStats[split]" class="text-muted-foreground/85 text-sm">{{ fmtSplitStats(splitStats[split]) }}</p>
             </div>
             <div class="flex items-center gap-4">
               <!-- View mode toggle — always show if split has any category data (lazy-detected) -->
@@ -440,7 +461,7 @@ function hasCategoryData(local, split) {
                         :class="getViewMode(split) === 'category' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'"
                         class="px-3 py-1.5 transition-colors border-l border-border">By Category</button>
               </div>
-              <button @click="router.push(`/dataset/${encodeURIComponent(dataset)}/${encodeURIComponent(split)}`)"
+              <button v-if="split !== catDs?.average_split && (!knowledge || splitStats[split])" @click="router.push(`/dataset/${encodeURIComponent(dataset)}/${encodeURIComponent(split)}`)"
                       class="text-primary hover:text-primary/80 text-sm transition-colors">Browse →</button>
             </div>
           </div>
@@ -521,21 +542,22 @@ function hasCategoryData(local, split) {
             </template>
 
             <!-- Charts (QA datasets only) -->
-            <div v-if="local.length && !isCoding(local)" class="grid grid-cols-1 gap-3 mb-4" :class="allAgent(local) ? 'md:grid-cols-2' : 'md:grid-cols-3'">
+            <div v-if="(local.length || (knowledge && external.length)) && !isCoding(local)" class="grid grid-cols-1 gap-3 mb-4" :class="allAgent(local) || knowledge ? 'md:grid-cols-2' : 'md:grid-cols-3'">
               <Card class="p-4">
-                <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-4">Accuracy</p>
-                <BarChart :rows="chartAccuracy(local).rows" :max="1" label-width="w-48"
-                          :format="v => (v * 100).toFixed(1) + '%'"
+                <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-4">{{ sLabel }}</p>
+                <BarChart :rows="chartAccuracy(local, knowledge ? external : []).rows" :max="1" label-width="w-48"
+                          :format="v => fmtS(v)"
                           variant="accuracy" />
+                <p v-if="knowledge && external.length" class="text-muted-foreground/70 text-xs mt-3">* published by the system or the leaderboard, not reproduced here</p>
               </Card>
-              <Card class="p-4">
-                <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-1">{{ allAgent(local) ? 'Answer time' : 'Recall speed' }}</p>
+              <Card v-if="local.length" class="p-4">
+                <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-1">{{ allAgent(local) ? 'Answer time' : knowledge ? 'Search time' : 'Recall speed' }}</p>
                 <p class="text-muted-foreground/70 text-sm mb-4">lower is better</p>
                 <BarChart :rows="chartRecall(local).rows" label-width="w-48"
                           :format="fmtMs"
                           variant="recall" :lower-better="true" />
               </Card>
-              <Card v-if="!allAgent(local)" class="p-4">
+              <Card v-if="local.length && !allAgent(local) && !knowledge" class="p-4">
                 <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-1">Context tokens</p>
                 <p class="text-muted-foreground/70 text-sm mb-4">lower is better</p>
                 <BarChart :rows="chartTokens(local).rows"
@@ -552,20 +574,20 @@ function hasCategoryData(local, split) {
                     <TableHead :sortable="true" @click="toggleLocalSort('memory')">Memory{{ sortIcon('memory', localSortCol, localSortDir) }}</TableHead>
                     <TableHead :sortable="true" @click="toggleLocalSort('mode')">Mode{{ sortIcon('mode', localSortCol, localSortDir) }}</TableHead>
                     <TableHead :sortable="true" :right="true" @click="toggleLocalSort('total_queries')">Queries{{ sortIcon('total_queries', localSortCol, localSortDir) }}</TableHead>
-                    <TableHead :sortable="true" :right="true" @click="toggleLocalSort('correct')">Correct{{ sortIcon('correct', localSortCol, localSortDir) }}</TableHead>
-                    <TableHead :sortable="true" :right="true" @click="toggleLocalSort('accuracy')">Accuracy{{ sortIcon('accuracy', localSortCol, localSortDir) }}</TableHead>
+                    <TableHead :sortable="true" :right="true" @click="toggleLocalSort('correct')" :title="knowledge ? 'Queries with a relevant document in the top 10' : undefined">{{ knowledge ? 'Hit@10' : 'Correct' }}{{ sortIcon('correct', localSortCol, localSortDir) }}</TableHead>
+                    <TableHead :sortable="true" :right="true" @click="toggleLocalSort('accuracy')">{{ sLabel }}{{ sortIcon('accuracy', localSortCol, localSortDir) }}</TableHead>
                     <TableHead v-if="hasRetrievalMetrics(local)" :sortable="true" :right="true" @click="toggleLocalSort('mean_precision')">Precision{{ sortIcon('mean_precision', localSortCol, localSortDir) }}</TableHead>
                     <TableHead v-if="hasRetrievalMetrics(local)" :sortable="true" :right="true" @click="toggleLocalSort('mean_recall')">Recall{{ sortIcon('mean_recall', localSortCol, localSortDir) }}</TableHead>
                     <TableHead v-if="hasRetrievalMetrics(local)" :sortable="true" :right="true" @click="toggleLocalSort('active_passes')">Active{{ sortIcon('active_passes', localSortCol, localSortDir) }}</TableHead>
                     <TableHead :sortable="true" :right="true" @click="toggleLocalSort('ingest')">Ingest/doc{{ sortIcon('ingest', localSortCol, localSortDir) }}</TableHead>
-                    <TableHead :sortable="true" :right="true" @click="toggleLocalSort('avg_retrieve_time_ms')">{{ allAgent(local) ? 'Answer avg' : 'Recall avg' }}{{ sortIcon('avg_retrieve_time_ms', localSortCol, localSortDir) }}</TableHead>
-                    <TableHead v-if="!allAgent(local)" :sortable="true" :right="true" @click="toggleLocalSort('avg_context_tokens')">Ctx tokens{{ sortIcon('avg_context_tokens', localSortCol, localSortDir) }}</TableHead>
+                    <TableHead :sortable="true" :right="true" @click="toggleLocalSort('avg_retrieve_time_ms')">{{ allAgent(local) ? 'Answer avg' : knowledge ? 'Search avg' : 'Recall avg' }}{{ sortIcon('avg_retrieve_time_ms', localSortCol, localSortDir) }}</TableHead>
+                    <TableHead v-if="!allAgent(local) && !knowledge" :sortable="true" :right="true" @click="toggleLocalSort('avg_context_tokens')">Ctx tokens{{ sortIcon('avg_context_tokens', localSortCol, localSortDir) }}</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow v-for="item in sortLocal(local)" :key="item.path" :clickable="true"
-                            @click="router.push('/run/' + item.path.replace(/\.json(\.gz)?$/, ''))">
+                  <TableRow v-for="item in sortLocal(local)" :key="item.path ?? item.run_name + '||' + item.mode" :clickable="!!item.path"
+                            @click="item.path && router.push('/run/' + item.path.replace(/\.json(\.gz)?$/, ''))">
                     <TableCell :primary="true">
                       <div class="flex items-center gap-2">
                         <img v-if="providerByKey[item.memory]?.logo" :src="providerByKey[item.memory].logo"
@@ -573,21 +595,22 @@ function hasCategoryData(local, split) {
                         <span>{{ familyLabel(item.memory) }}</span>
                         <Badge v-if="item.run_name && item.run_name !== item.memory" variant="default">{{ item.run_name }}</Badge>
                         <Badge v-else-if="providerByKey[item.memory]?.variant && !item.memory.startsWith('hindsight')" variant="secondary">{{ providerByKey[item.memory].variant }}</Badge>
+                        <Badge v-if="item.average_of" variant="secondary">mean of {{ item.average_of }} splits</Badge>
                       </div>
                     </TableCell>
                     <TableCell>{{ item.mode }}</TableCell>
                     <TableCell :right="true">{{ item.total_queries ?? '—' }}</TableCell>
                     <TableCell :right="true">{{ item.correct ?? '—' }}</TableCell>
                     <TableCell :right="true" class="font-semibold">
-                      {{ item.accuracy != null ? (item.accuracy * 100).toFixed(1) + '%' : '—' }}
+                      {{ fmtS(item.accuracy, item.score_type) }}
                     </TableCell>
                     <TableCell v-if="hasRetrievalMetrics(local)" :right="true">{{ item.mean_precision != null ? item.mean_precision.toFixed(2) : '—' }}</TableCell>
                     <TableCell v-if="hasRetrievalMetrics(local)" :right="true">{{ item.mean_recall != null ? item.mean_recall.toFixed(2) : '—' }}</TableCell>
                     <TableCell v-if="hasRetrievalMetrics(local)" :right="true">{{ item.active_passes != null && item.active_total ? item.active_passes + '/' + item.active_total : '—' }}</TableCell>
                     <TableCell :right="true">{{ (item.ingestion_time_ms != null && item.ingested_docs) ? Math.round(item.ingestion_time_ms / item.ingested_docs) + 'ms' : '—' }}</TableCell>
                     <TableCell :right="true">{{ item.avg_retrieve_time_ms != null ? fmtMs(item.avg_retrieve_time_ms) : '—' }}</TableCell>
-                    <TableCell v-if="!allAgent(local)" :right="true">{{ item.avg_context_tokens != null ? Math.round(item.avg_context_tokens).toLocaleString() : '—' }}</TableCell>
-                    <TableCell :right="true" class="text-muted-foreground/70 text-sm">→</TableCell>
+                    <TableCell v-if="!allAgent(local) && !knowledge" :right="true">{{ item.avg_context_tokens != null ? Math.round(item.avg_context_tokens).toLocaleString() : '—' }}</TableCell>
+                    <TableCell :right="true" class="text-muted-foreground/70 text-sm">{{ item.path ? '→' : '' }}</TableCell>
                   </TableRow>
                 </TableBody>
               </UiTable>
@@ -602,14 +625,14 @@ function hasCategoryData(local, split) {
             <template v-else>
 
               <div v-for="section in categorySections(local, split)" :key="section.type" class="mb-10">
-                <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-4">{{ section.label }}</p>
+                <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-4">{{ section.label }}<span v-if="knowledge" class="normal-case tracking-normal font-normal"> · {{ sLabel }}</span></p>
 
                 <!-- Per-category bar charts -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
                   <Card v-for="{ cat, rows } in section.charts" :key="cat" class="p-4">
                     <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-3">{{ cat }}</p>
                     <BarChart :rows="rows" :max="1"
-                              :format="v => (v * 100).toFixed(1) + '%'"
+                              :format="v => fmtS(v)"
                               variant="accuracy" />
                   </Card>
                 </div>
@@ -638,7 +661,7 @@ function hasCategoryData(local, split) {
                         <TableCell>{{ row.mode }}</TableCell>
                         <TableCell v-for="cat in section.cats" :key="cat" :right="true"
                                    class="font-semibold tabular-nums">
-                          {{ row.cats[cat] != null ? (row.cats[cat] * 100).toFixed(1) + '%' : '—' }}
+                          {{ fmtS(row.cats[cat]) }}
                         </TableCell>
                       </TableRow>
                     </TableBody>
@@ -659,14 +682,15 @@ function hasCategoryData(local, split) {
           <template v-if="external.length">
             <div class="mb-3 mt-8">
               <p class="font-display text-sm font-semibold uppercase tracking-wider text-ca mb-1">Unverified</p>
-              <p class="text-sm text-muted-foreground max-w-2xl leading-relaxed">Sourced from external papers or leaderboards — not independently reproduced here. Scores are <strong class="text-foreground">not directly comparable</strong>. Click a row to view the source.</p>
+              <p v-if="knowledge" class="text-sm text-muted-foreground max-w-2xl leading-relaxed">Published {{ sLabel }} from the systems' own evals or the dataset's leaderboard — not reproduced here. Same data, labels and metric; the setup notes on each row say where it differs. Click a row to view the source.</p>
+              <p v-else class="text-sm text-muted-foreground max-w-2xl leading-relaxed">Sourced from external papers or leaderboards — not independently reproduced here. Scores are <strong class="text-foreground">not directly comparable</strong>. Click a row to view the source.</p>
             </div>
             <Card class="overflow-hidden border-ca/15">
               <UiTable>
                 <TableHeader>
                   <TableRow>
                     <TableHead :sortable="true" @click="toggleExtSort('memory')">Memory{{ sortIcon('memory', extSortCol, extSortDir) }}</TableHead>
-                    <TableHead :sortable="true" :right="true" @click="toggleExtSort('accuracy')">Accuracy{{ sortIcon('accuracy', extSortCol, extSortDir) }}</TableHead>
+                    <TableHead :sortable="true" :right="true" @click="toggleExtSort('accuracy')">{{ sLabel }}{{ sortIcon('accuracy', extSortCol, extSortDir) }}</TableHead>
                     <TableHead v-if="hasRetrievalMetrics(external)" :sortable="true" :right="true" @click="toggleExtSort('mean_precision')">Precision{{ sortIcon('mean_precision', extSortCol, extSortDir) }}</TableHead>
                     <TableHead v-if="hasRetrievalMetrics(external)" :sortable="true" :right="true" @click="toggleExtSort('mean_recall')">Recall{{ sortIcon('mean_recall', extSortCol, extSortDir) }}</TableHead>
                     <TableHead v-if="hasRetrievalMetrics(external)" :sortable="true" :right="true" @click="toggleExtSort('active_passes')">Active{{ sortIcon('active_passes', extSortCol, extSortDir) }}</TableHead>
@@ -687,7 +711,7 @@ function hasCategoryData(local, split) {
                       <div v-if="item.comment" class="text-sm text-muted-foreground/85 mt-0.5">{{ item.comment }}</div>
                     </TableCell>
                     <TableCell :right="true" class="font-semibold">
-                      {{ item.accuracy != null ? (item.accuracy * 100).toFixed(1) + '%' : '—' }}
+                      {{ fmtS(item.accuracy, item.score_type) }}
                     </TableCell>
                     <TableCell v-if="hasRetrievalMetrics(external)" :right="true">{{ item.mean_precision != null ? item.mean_precision.toFixed(2) : '—' }}</TableCell>
                     <TableCell v-if="hasRetrievalMetrics(external)" :right="true">{{ item.mean_recall != null ? item.mean_recall.toFixed(2) : '—' }}</TableCell>
