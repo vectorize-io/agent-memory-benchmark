@@ -3,7 +3,7 @@
 #
 #   scripts/supportbench.sh                       # local server (http://localhost:8888), 3 runs per arm
 #   TARGET=dev scripts/supportbench.sh            # Hindsight dev (key in ~/.hindsight/dev-api-key)
-#   ARMS="linked" RUNS=1 scripts/supportbench.sh  # one arm, once
+#   ARMS="linked" RUNS=1 scripts/supportbench.sh  # one arm, once (START=2 RUNS=3: runs 2 and 3)
 #
 # The judge (and AMB's unused answer model) is gemma-4-26b-a4b on Hindsight Inference dev, keyed by
 # ~/.hindsight/dev-inference-key. JUDGE_BASE_URL / JUDGE_API_KEY / OMB_JUDGE_* judge elsewhere.
@@ -28,7 +28,7 @@ export OPENAI_API_KEY="${JUDGE_API_KEY:-$(cat ~/.hindsight/dev-inference-key)}"
 
 mkdir -p logs
 for arm in ${ARMS:-memory knowledge linked}; do
-  for i in $(seq 1 "${RUNS:-3}"); do
+  for i in $(seq "${START:-1}" "${RUNS:-3}"); do
     name="support-$arm-${TARGET:-local}-$i"
     echo "== $name"
     uv run amb run --dataset supportbench --split nextcloud --mode agent \
