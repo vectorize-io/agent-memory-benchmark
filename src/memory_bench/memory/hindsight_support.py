@@ -237,7 +237,8 @@ class _SupportProvider(MemoryProvider):
             stats = await api.call("GET", f"{self._memory_bank}/stats")
             if stats.get("failed_operations"):
                 raise RuntimeError(f"{self._memory_bank}: {stats['failed_operations']} retain operation(s) failed")
-            if not stats.get("pending_operations"):
+            # With observations on, the bank is only ready once consolidation has caught up too.
+            if not stats.get("pending_operations") and not stats.get("pending_consolidation"):
                 return
             if time.perf_counter() > deadline:
                 raise TimeoutError(f"{self._memory_bank}: retain still pending after {INGEST_TIMEOUT:.0f}s")

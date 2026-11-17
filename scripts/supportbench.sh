@@ -26,6 +26,10 @@ export OMB_ANSWER_LLM="${OMB_ANSWER_LLM:-openai}" OMB_ANSWER_MODEL="${OMB_ANSWER
 export OPENAI_BASE_URL="${JUDGE_BASE_URL:-https://inference.dev.hindsight.vectorize.io/v1}"
 export OPENAI_API_KEY="${JUDGE_API_KEY:-$(cat ~/.hindsight/dev-inference-key)}"
 
+# Observations on, as a real memory bank runs (AMB turns them off by default): they merge related
+# facts, documentation and conversation alike. OBSERVATIONS=0 turns them off.
+export AMB_ENABLE_OBSERVATIONS="${OBSERVATIONS:-1}"
+
 mkdir -p logs
 for arm in ${ARMS:-memory knowledge linked}; do
   for i in $(seq "${START:-1}" "${RUNS:-3}"); do
