@@ -80,6 +80,32 @@ def is_chat(doc: Document) -> bool:
     return doc.messages is not None
 
 
+def source_of(doc: Document) -> str:
+    """Where a document comes from, stored as its ``metadata.source``: every fact retained from it
+    carries that into reflect, which ranks the sources by SOURCE_MISSION."""
+    return "documentation" if is_manual(doc) else "conversation" if is_chat(doc) else "approved_exception"
+
+
+#: The memory bank's reflect mission: what each ``metadata.source`` is worth. Extraction turns "a
+#: past support agent said deleted users can be restored for 30 days" into the flat fact "deleted
+#: users can be restored for 30 days"; only the source tells it apart from a documented rule.
+SOURCE_MISSION = """You are the support agent of a managed Nextcloud hosting service. You answer customers \
+from what you remember about them and from the product documentation.
+
+## Source authority
+Each memory's `metadata.source` records the document it came from:
+1. `documentation` — the official product manuals. They state how the product behaves.
+2. `approved_exception` — a change approved for one customer's account. For that customer it overrides \
+the documented default it names; it never applies to anyone else.
+3. `conversation` — what was said in past support chats, by the customer, their colleagues or a past \
+support agent. It is the source of the customer's own facts (their setup, dates, what they did, what they \
+asked for), but a claim in it about how the product behaves can be wrong or outdated.
+
+When a conversation and the documentation disagree about how the product behaves, the documentation is \
+right: answer from it and say the earlier claim was wrong. A documents result from a linked knowledge bank \
+counts as documentation."""
+
+
 def query_usd(usage: dict | None, model: str = LLM_MODEL) -> float | None:
     """A reflect's token usage priced at ``model``; None when the model or the usage is unknown."""
     price = MEMORY_PRICES.get(model)
@@ -163,6 +189,7 @@ class _SupportProvider(MemoryProvider):
         try:
             enable_obs = os.environ.get("AMB_ENABLE_OBSERVATIONS", "") in ("1", "true")
             await api.call("PUT", self._memory_bank, json={"enable_observations": enable_obs})
+            await api.call("PATCH", f"{self._memory_bank}/config", json={"updates": {"reflect_mission": SOURCE_MISSION}})
             memory = [d for d in documents if self._side(d) == "memory"]
             knowledge = [dataclasses.replace(d, tags=[user_tag(d.user_id)]) if d.user_id else d
                          for d in documents if self._side(d) == "knowledge"]
@@ -194,10 +221,12 @@ class _SupportProvider(MemoryProvider):
         manuals = [d for d in docs if is_manual(d)]
         if manuals:
             files = [("files", (d.filename, Path(d.path).read_bytes(), "application/pdf")) for d in manuals]
-            meta = {"files_metadata": [{"document_id": d.id, "context": d.context} for d in manuals]}
+            meta = {"files_metadata": [{"document_id": d.id, "context": d.context, "metadata": {"source": source_of(d)}}
+                                       for d in manuals]}
             await api.call("POST", f"{self._memory_bank}/files/retain", files=files, data={"request": json.dumps(meta)})
         items = [
             {"content": d.content, "document_id": d.id, "context": d.context, "tags": [user_tag(d.user_id)],
+             "metadata": {"source": source_of(d)},
              **({"timestamp": d.timestamp} if d.timestamp else {})}
             for d in docs if not is_manual(d)
         ]

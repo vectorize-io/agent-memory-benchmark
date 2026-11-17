@@ -98,3 +98,12 @@ def test_judge_prompt_carries_the_trap(dataset):
     prompt = dataset.get_judge_prompt_fn(q.meta["category"], q.meta)(q.query, q.gold_answers, "an answer")
     assert q.meta["must_not_claim"] in prompt and "TRAP:" in prompt
     assert Path(supportbench.__file__).with_name("supportbench.json").exists()
+
+
+def test_every_document_names_its_source(dataset):
+    from memory_bench.memory.hindsight_support import SOURCE_MISSION, source_of
+
+    sources = {source_of(d) for d in dataset.load_documents("nextcloud")}
+    assert sources == {"documentation", "conversation", "approved_exception"}
+    # The mission ranks exactly the sources the documents carry.
+    assert all(f"`{s}`" in SOURCE_MISSION for s in sources)
