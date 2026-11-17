@@ -79,6 +79,9 @@ class _StubDataset(KnowledgeDataset):
 def test_query_limit_is_per_group_and_oracle_keeps_judged_pages():
     ds = _StubDataset()
     assert [q.id for q in ds.load_queries("s", limit=1)] == ["en:1", "fr:1"]
+    # --category keeps one group's queries (a ViDoRe language); the corpus stays whole.
+    assert {q.meta["group"] for q in ds.load_queries("s", category="fr")} == {"fr"}
+    assert len(ds.load_documents("s", category="fr")) == len(ds.load_documents("s"))
     docs = ds.load_documents("s", ids={"p2"})  # a gold page keeps the whole PDF it is in
     assert [(d.id, d.path, d.filename) for d in docs] == [("doc", "/nowhere/doc.pdf", "doc.pdf")]
 

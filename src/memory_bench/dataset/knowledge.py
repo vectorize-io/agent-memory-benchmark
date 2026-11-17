@@ -106,6 +106,8 @@ class KnowledgeDataset(Dataset):
         taken: dict[str, int] = {}
         queries = []
         for q in self.suite(split).queries:
+            if category is not None and q.group != category:
+                continue  # the query's group (its language on ViDoRe); the corpus is never cut
             if limit is not None and taken.get(q.group, 0) >= limit:
                 continue  # the limit is per group: per query language on ViDoRe
             taken[q.group] = taken.get(q.group, 0) + 1
