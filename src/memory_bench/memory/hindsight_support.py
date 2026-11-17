@@ -101,9 +101,11 @@ class _Api:
         await self._http.aclose()
 
     async def call(self, method: str, path: str, **kwargs) -> dict:
-        for attempt in range(8):  # a rate-limited server answers bursts with 429
+        # A rate-limited server answers bursts with 429, and a deployed one's gateway times a long
+        # reflect out now and then (504 stream timeout): wait and ask again instead of failing the run.
+        for attempt in range(8):
             r = await self._http.request(method, f"{BANKS}/{path}", **kwargs)
-            if r.status_code != 429:
+            if r.status_code != 429 and not (r.status_code >= 500 and attempt < 3):
                 break
             await asyncio.sleep(float(r.headers.get("retry-after") or min(2**attempt, 30)))
         if r.status_code >= 300:
