@@ -1,0 +1,305 @@
+{
+  "product": "Nextcloud 32",
+  "agent_context": "You are the support agent of a managed Nextcloud hosting service, answering one of our customers in the support chat. The customer's instances run Nextcloud 32.",
+  "asked_at": "2026-11-17T10:00:00Z",
+  "manuals": [
+    {
+      "id": "nextcloud-32-user-manual",
+      "filename": "Nextcloud_User_Manual_32.pdf",
+      "url": "https://docs.nextcloud.com/server/32/Nextcloud_User_Manual.pdf",
+      "sha256": "88aefab002cd1224eb51d858639e4a3660f76c3c29896018a3b2f42e99a17405"
+    },
+    {
+      "id": "nextcloud-32-admin-manual",
+      "filename": "Nextcloud_Server_Administration_Manual_32.pdf",
+      "url": "https://docs.nextcloud.com/server/32/Nextcloud_Server_Administration_Manual.pdf",
+      "sha256": "d85c4f6e546ed92e9e5140a86a64c858bb9e749f660cc403399de7e144ba023f"
+    }
+  ],
+  "users": {
+    "marta": {
+      "name": "Marta Ricci",
+      "chats": [
+        {
+          "id": "marta-chat-1",
+          "at": "2026-09-03T09:12:00Z",
+          "turns": [
+            ["customer", "Hi, Marta from Ricci Architetti. We moved our project archive to your hosted Nextcloud last month."],
+            ["support", "Welcome aboard Marta! How can I help?"],
+            ["customer", "I set up a public link called 'Client drop' on the folder Clients/Incoming, with uploads allowed, so clients can send us their scans and site photos without an account."],
+            ["support", "Good choice, that is what upload-enabled public links are for. Anything not working?"],
+            ["customer", "It works. I just wanted to check the link is password protected. It is, I set the password myself."],
+            ["support", "Perfect. Ping us if anything comes up."]
+          ]
+        },
+        {
+          "id": "marta-chat-2",
+          "at": "2026-10-21T15:40:00Z",
+          "turns": [
+            ["customer", "Hello again. Quick one: a colleague told me that files in the trash bin count against my storage quota, so I've been emptying the trash every evening. Annoying but fine."],
+            ["support", "Thanks for letting us know. Is your quota OK otherwise?"],
+            ["customer", "It's at 92% of the 200 GB plan, which is weird because I hardly upload anything myself these days. Mostly I just review drawings."],
+            ["support", "Let us look into it and get back to you."]
+          ]
+        },
+        {
+          "id": "marta-chat-3",
+          "at": "2026-09-12T11:05:00Z",
+          "turns": [
+            ["customer", "We are required by our professional insurer to be able to recover deleted project files for at least three months. Can you do anything about the trash bin retention on our instance?"],
+            ["support", "I'll open a request with the platform team, ticket SUP-4411. They'll confirm in writing."]
+          ]
+        }
+      ]
+    },
+    "kenji": {
+      "name": "Kenji Watanabe",
+      "chats": [
+        {
+          "id": "kenji-chat-1",
+          "at": "2026-08-19T08:30:00Z",
+          "turns": [
+            ["customer", "Hi, Kenji from Watanabe Logistics. I keep the yearly budget spreadsheet in Nextcloud and edit it every day. Do I need to save copies myself in case I break something?"],
+            ["support", "No need. Nextcloud keeps every version of a file forever unless you delete the versions yourself, so the whole history of the spreadsheet will always be there."],
+            ["customer", "Great, thanks."]
+          ]
+        },
+        {
+          "id": "kenji-chat-2",
+          "at": "2026-10-02T17:55:00Z",
+          "turns": [
+            ["customer", "I just deleted the folder Q3-contracts by mistake while cleaning up. I'm leaving for a long business trip tonight, I'll deal with it when I'm back."],
+            ["support", "Understood. Your instance uses the standard trash bin settings, nobody has changed them. Have a good trip!"]
+          ]
+        },
+        {
+          "id": "kenji-chat-3",
+          "at": "2026-09-08T10:20:00Z",
+          "turns": [
+            ["customer", "Our IT policy enforces two-factor login for every Nextcloud account. Problem: I log in from the warehouse kiosk scanner, which can't do TOTP. Can my account be exempted?"],
+            ["support", "I'll raise it with your administrator and our security team, ticket SUP-4390."]
+          ]
+        }
+      ]
+    },
+    "sofia": {
+      "name": "Sofia Lindqvist",
+      "chats": [
+        {
+          "id": "sofia-chat-1",
+          "at": "2026-10-14T13:00:00Z",
+          "turns": [
+            ["customer", "Hi! Sofia, finance team at Lindqvist & Berg. Our administrator turned on an enforced expiration date for public share links: they default to 7 days and can't be set beyond 14 days."],
+            ["support", "Thanks Sofia, noted on your account."],
+            ["customer", "Fine by me, we mostly share invoices with clients for a few days."]
+          ]
+        },
+        {
+          "id": "sofia-chat-2",
+          "at": "2026-11-03T09:45:00Z",
+          "turns": [
+            ["customer", "The external auditors arrive next week and will need the 'Audit 2026' folder for about a month."],
+            ["support", "Okay, let us know if you need help preparing the share."],
+            ["customer", "Also, we got the storage upgrade approved, thanks for that."]
+          ]
+        }
+      ]
+    },
+    "tomas": {
+      "name": "Tomas Novak",
+      "chats": [
+        {
+          "id": "tomas-chat-1",
+          "at": "2026-05-22T16:10:00Z",
+          "turns": [
+            ["customer", "Tomas here, I run the IT for Novak Studio. We put an nginx reverse proxy in front of our Nextcloud. What body size limit do we need for big uploads?"],
+            ["support", "Nextcloud uploads big files in chunks of at most 10 MiB, so a client_max_body_size of 10 MiB on the proxy is enough."],
+            ["customer", "Perfect, set it to 10M."]
+          ]
+        },
+        {
+          "id": "tomas-chat-2",
+          "at": "2026-11-05T12:00:00Z",
+          "turns": [
+            ["customer", "We upgraded the studio instance to Nextcloud 32 last weekend, all went smoothly."],
+            ["support", "Great to hear!"],
+            ["customer", "Company policy still says two-factor login is mandatory for everyone, the admin enforces it system-wide."]
+          ]
+        },
+        {
+          "id": "tomas-chat-3",
+          "at": "2026-07-30T14:25:00Z",
+          "turns": [
+            ["customer", "Our clients sometimes ask us for an old revision of a render months later. Can we keep file versions for a whole year?"],
+            ["support", "Let me ask the platform team, ticket SUP-4302."]
+          ]
+        }
+      ]
+    }
+  },
+  "exceptions": [
+    {
+      "id": "exception-sup-4411",
+      "user": "marta",
+      "text": "# Approved exception SUP-4411: extended trash bin retention\n\nCustomer: Marta Ricci (Ricci Architetti)\nApproved by: platform team, 2026-09-14\n\nOn this customer's instance deleted files are kept in the trash bin for 90 days instead of the default 30 days (trashbin_retention_obligation set to 'auto, 90'). The trash bin space limit (50% of the available free space) still applies.\n"
+    },
+    {
+      "id": "exception-sup-4390",
+      "user": "kenji",
+      "text": "# Approved exception SUP-4390: two-factor authentication exemption\n\nCustomer: Kenji Watanabe (Watanabe Logistics)\nApproved by: security team and the customer's administrator, 2026-09-10\n\nThe account kenji.watanabe was added to the group '2fa-excluded', which is excluded from the enforced two-factor authentication. The account logs in from a warehouse kiosk scanner that cannot generate TOTP codes. Two-factor stays enforced for every other account of the organisation.\n"
+    },
+    {
+      "id": "exception-sup-4302",
+      "user": "tomas",
+      "text": "# Approved exception SUP-4302: one-year file version retention\n\nCustomer: Tomas Novak (Novak Studio)\nApproved by: platform team, 2026-08-04\n\nOn this customer's instance versions_retention_obligation is set to '365, auto': every file version is kept for at least 365 days, and only versions older than that follow the normal automatic expiration rules.\n"
+    },
+    {
+      "id": "exception-sup-4455",
+      "user": "sofia",
+      "text": "# Approved exception SUP-4455: storage upgrade\n\nCustomer: Sofia Lindqvist (Lindqvist & Berg)\nApproved by: account management, 2026-10-30\n\nThe customer's storage quota was raised from 500 GB to 1 TB at no extra cost until the end of the fiscal year. No other settings of the instance were changed.\n"
+    }
+  ],
+  "questions": [
+    {
+      "id": "docs-restore-version",
+      "category": "docs_only",
+      "user": "marta",
+      "question": "How do I go back to an older version of a drawing I overwrote?",
+      "gold": "Open the file's Details sidebar, go to the Versions tab and click the restore (circular arrow) button next to the version you want; clicking the version's timestamp downloads it instead.",
+      "must_not_claim": "restoring an older version is not possible or must be requested from support",
+      "sources": ["nextcloud-32-user-manual p.43-44 (3.11 Version control)"]
+    },
+    {
+      "id": "docs-version-pattern",
+      "category": "docs_only",
+      "user": "sofia",
+      "question": "Once a file is more than a month old, how many of its old versions does Nextcloud keep?",
+      "gold": "After the first 30 days Nextcloud keeps one version per week; versions never use more than 50% of the user's free space (the oldest are deleted beyond that), and a version you give a name to is excluded from expiration.",
+      "must_not_claim": "every version is kept forever",
+      "sources": ["nextcloud-32-user-manual p.44 (3.11 Version control)"]
+    },
+    {
+      "id": "docs-backup-codes",
+      "category": "docs_only",
+      "user": "tomas",
+      "question": "Where do I get backup codes for two-factor login, and can I use the same code more than once?",
+      "gold": "In Personal Settings, under the Second-factor Auth settings, choose 'Generate backup codes'; each backup code can be used only once (one-time-use) and they should be kept somewhere safe, away from the second-factor device.",
+      "must_not_claim": "a backup code can be used more than once",
+      "sources": ["nextcloud-32-user-manual p.252 (9.2 Recovery codes)"]
+    },
+    {
+      "id": "both-deleted-folder",
+      "category": "needs_both",
+      "user": "kenji",
+      "question": "I'm back from my trip. Can I still restore the Q3-contracts folder from the trash bin?",
+      "gold": "Probably not: the folder was deleted on 2 October 2026, about 46 days ago, and with the standard settings deleted files stay in the trash bin for 30 days before being permanently deleted, so it has most likely been removed; it can only come back from a backup.",
+      "must_not_claim": "the folder is still in the trash bin and can simply be restored",
+      "sources": ["nextcloud-32-user-manual p.30 (3.3.3 How the deleted files app manages storage space)", "kenji-chat-2"]
+    },
+    {
+      "id": "both-quota-filling",
+      "category": "needs_both",
+      "user": "marta",
+      "question": "Why is my storage almost full when I barely upload anything myself?",
+      "gold": "Files that other people upload through her upload-enabled public link ('Client drop' on Clients/Incoming) count against her own quota, so the clients' scans and photos fill her storage.",
+      "must_not_claim": "files uploaded by other people do not count against her quota",
+      "sources": ["nextcloud-32-user-manual p.42-43 (Storage quota)", "marta-chat-1", "marta-chat-2"]
+    },
+    {
+      "id": "both-auditor-link",
+      "category": "needs_both",
+      "user": "sofia",
+      "question": "Can I create a public link for the auditors that stays valid for 30 days?",
+      "gold": "No: her administrator enforces a 14-day maximum on public link expiration, and users cannot set an expiration date further than the enforced one; she can set up to 14 days and extend the date again later when it is close to expiring (the expiration is counted from the current date).",
+      "must_not_claim": "she can set the link to expire in 30 days",
+      "sources": ["nextcloud-32-admin-manual p.277-278 (13.1 File Sharing)", "sofia-chat-1", "sofia-chat-2"]
+    },
+    {
+      "id": "conflict-versions-forever",
+      "category": "conflict",
+      "user": "kenji",
+      "question": "Will Nextcloud ever delete old versions of my budget spreadsheet on its own?",
+      "gold": "Yes: the versions app expires old versions automatically (after 30 days it keeps one per week, and it never lets versions use more than 50% of the free space); naming a version excludes it from expiration.",
+      "must_not_claim": "versions are kept forever unless he deletes them himself",
+      "sources": ["nextcloud-32-user-manual p.44 (3.11 Version control)", "kenji-chat-1"]
+    },
+    {
+      "id": "conflict-trash-quota",
+      "category": "conflict",
+      "user": "marta",
+      "question": "Do the files in my trash bin count toward my quota?",
+      "gold": "No: deleted files still in the trash bin do not count against the quota, so she does not need to empty it every evening (the trash bin itself is limited to 50% of the available free space).",
+      "must_not_claim": "files in the trash bin count against her quota",
+      "sources": ["nextcloud-32-user-manual p.42 (Storage quota)", "marta-chat-2"]
+    },
+    {
+      "id": "conflict-chunk-size",
+      "category": "conflict",
+      "user": "tomas",
+      "question": "Is our reverse proxy body limit still big enough for chunked uploads?",
+      "gold": "No: since Nextcloud 32 the default maximum chunk size is 100 MiB (it used to be 10 MiB), so the 10 MiB client_max_body_size on his nginx proxy is too small and should be raised to at least 100 MiB.",
+      "must_not_claim": "the current 10 MiB proxy limit is enough because chunks are at most 10 MiB",
+      "sources": ["nextcloud-32-admin-manual p.22 (release notes: Maximum chunk size)", "tomas-chat-1", "tomas-chat-2"]
+    },
+    {
+      "id": "exception-trash-retention",
+      "category": "exception",
+      "user": "marta",
+      "pair": "trash-retention",
+      "question": "How long do my deleted files stay in the trash bin before they are gone for good?",
+      "gold": "90 days on her instance, because of her approved exception SUP-4411 (instead of the default 30 days); the trash bin space limit of 50% of the free space still applies.",
+      "must_not_claim": "her deleted files are kept for 30 days",
+      "sources": ["exception-sup-4411", "nextcloud-32-user-manual p.30"]
+    },
+    {
+      "id": "exception-trash-retention-default",
+      "category": "exception",
+      "user": "kenji",
+      "pair": "trash-retention",
+      "question": "How long do my deleted files stay in the trash bin before they are gone for good?",
+      "gold": "30 days, the default (his instance uses the standard trash bin settings); older deleted files, or the oldest ones when the trash exceeds 50% of the free space, are permanently deleted.",
+      "must_not_claim": "his deleted files are kept for 90 days",
+      "sources": ["nextcloud-32-user-manual p.30", "kenji-chat-2"]
+    },
+    {
+      "id": "exception-version-retention",
+      "category": "exception",
+      "user": "tomas",
+      "pair": "version-retention",
+      "question": "How long are old versions of my files kept?",
+      "gold": "At least 365 days on his instance, because of his approved exception SUP-4302 ('365, auto'); only versions older than a year follow the normal automatic expiration rules.",
+      "must_not_claim": "his versions follow only the default expiration pattern with no one-year minimum",
+      "sources": ["exception-sup-4302", "nextcloud-32-admin-manual p.121-122 (versions_retention_obligation)"]
+    },
+    {
+      "id": "exception-version-retention-default",
+      "category": "exception",
+      "user": "sofia",
+      "pair": "version-retention",
+      "question": "How long are old versions of my files kept?",
+      "gold": "There is no fixed retention on her instance: the default automatic expiration applies (more versions for recent changes, one per day in the first 30 days, then one per week), versions never use more than 50% of the free space, and named versions are never expired.",
+      "must_not_claim": "her versions are kept for at least 365 days",
+      "sources": ["nextcloud-32-user-manual p.44 (3.11 Version control)"]
+    },
+    {
+      "id": "exception-2fa",
+      "category": "exception",
+      "user": "kenji",
+      "pair": "2fa",
+      "question": "Do I have to set up two-factor authentication on my account?",
+      "gold": "No: his account is in the '2fa-excluded' group (approved exception SUP-4390), which is excluded from the enforced two-factor authentication.",
+      "must_not_claim": "he must set up two-factor authentication",
+      "sources": ["exception-sup-4390", "nextcloud-32-admin-manual p.430 (19.6.2 Enforcing two-factor authentication)"]
+    },
+    {
+      "id": "exception-2fa-default",
+      "category": "exception",
+      "user": "tomas",
+      "pair": "2fa",
+      "question": "Do I have to set up two-factor authentication on my account?",
+      "gold": "Yes: his administrator enforces two-factor authentication system-wide and he has no exemption, so he must set it up (and should generate one-time backup codes).",
+      "must_not_claim": "he is exempt from two-factor authentication",
+      "sources": ["nextcloud-32-admin-manual p.430 (19.6.2 Enforcing two-factor authentication)", "tomas-chat-2"]
+    }
+  ]
+}

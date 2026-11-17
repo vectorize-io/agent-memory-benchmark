@@ -202,6 +202,9 @@ class EvalRunner:
             else:
                 answer_result = await mode.async_answer(q.query, memory, task_type=task_type, user_id=q.user_id, meta=meta)
             logger.info("[query:%s] answer done in %.1fs (retrieve=%.0fms)", q.id, time.perf_counter() - t_start, answer_result.retrieve_time_ms)
+            # raw_response is not stored; a provider that measures the answer (cost, tokens) hands
+            # those numbers over under "meta", and they land in the row's meta.
+            q.meta.update((answer_result.raw_response or {}).get("meta") or {})
 
             score: float | None = None
             coding_trajectory = coding_git_history = None

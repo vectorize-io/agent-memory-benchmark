@@ -48,6 +48,28 @@ MEMORY_PRICES = {
 }
 
 
+def priced_usage(get, bank: str, filters: str = "") -> dict:
+    """The server's LLM spend on ``bank`` (``get(path)`` reads ``/v1/default/banks/<path>``), per call
+    type, priced with MEMORY_PRICES. ``filters`` narrows it, e.g. ``&operation=reflect``."""
+    out: dict = {"usd": 0.0}
+    for call_type in ("llm", "decision"):
+        stats = get(f"{bank}/llm-requests/stats?period=30d&call_type={call_type}{filters}")
+        tok = {k: sum((b.get("tokens") or {}).get(k) or 0 for b in stats.get("buckets") or [])
+               for k in ("input", "output", "cached", "thoughts")}
+        calls = sum(b.get("total") or 0 for b in stats.get("buckets") or [])
+        if not calls:
+            continue
+        items = get(f"{bank}/llm-requests?call_type={call_type}&limit=1").get("items") or []
+        model = (items[0].get("model") if items else None) or "?"
+        p = MEMORY_PRICES.get(model)
+        # cached is a subset of input; reasoning bills as output
+        usd = None if p is None else round(((tok["input"] - tok["cached"]) * p["input"] + tok["cached"] * p["cached"]
+                                            + (tok["output"] + tok["thoughts"]) * p["output"]) / 1e6, 4)
+        out[call_type] = {"model": model, "calls": calls, "tokens": tok, "usd": usd}
+        out["usd"] = None if usd is None or out["usd"] is None else round(out["usd"] + usd, 4)
+    return out
+
+
 _NO_PAGES = os.environ.get("SDE_HSCODING_NO_PAGES", "").lower() in ("1", "true")
 # the plugin's five seeded knowledge pages (hindsight-integrations/coding-agents src/core/missions.ts)
 _PAGE_NAMES = ("Component map", "Core concepts", "Conventions and patterns", "Key decisions and rationale",
@@ -277,23 +299,7 @@ class HsCodingProvider(MemoryProvider):
         return out
 
     def _priced(self, bank: str, filters: str) -> dict:
-        out: dict = {"usd": 0.0}
-        for call_type in ("llm", "decision"):
-            stats = self._api("GET", f"{bank}/llm-requests/stats?period=30d&call_type={call_type}{filters}")
-            tok = {k: sum((b.get("tokens") or {}).get(k) or 0 for b in stats.get("buckets") or [])
-                   for k in ("input", "output", "cached", "thoughts")}
-            calls = sum(b.get("total") or 0 for b in stats.get("buckets") or [])
-            if not calls:
-                continue
-            items = self._api("GET", f"{bank}/llm-requests?call_type={call_type}&limit=1").get("items") or []
-            model = (items[0].get("model") if items else None) or "?"
-            p = MEMORY_PRICES.get(model)
-            # cached is a subset of input; reasoning bills as output
-            usd = None if p is None else round(((tok["input"] - tok["cached"]) * p["input"] + tok["cached"] * p["cached"]
-                                                + (tok["output"] + tok["thoughts"]) * p["output"]) / 1e6, 4)
-            out[call_type] = {"model": model, "calls": calls, "tokens": tok, "usd": usd}
-            out["usd"] = None if usd is None or out["usd"] is None else round(out["usd"] + usd, 4)
-        return out
+        return priced_usage(lambda path: self._api("GET", path), bank, filters)
 
     def _bank_has_memories(self, bank: str) -> bool:
         import urllib.request
