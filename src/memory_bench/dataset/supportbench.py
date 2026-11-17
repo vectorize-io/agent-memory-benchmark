@@ -21,6 +21,11 @@ The documents, per kind (the memory providers decide where each goes — see mem
 - chats: ``Document.messages`` set, ``user_id`` = the customer;
 - approved exceptions: text, ``user_id`` = the customer, no messages.
 
+Every document's ``context`` ends with its id in brackets, so the evidence a memory came from can
+be traced back (memories carry their context, not their document id). An exception note's context
+never names the customer: the knowledge bank stores no context, and the memory arm must not get a
+hint the others lack.
+
 Each answer is graded twice in one judge call: does it meet the gold answer, and does it assert the
 question's ``must_not_claim`` (the trap — an outdated or wrong statement the corpus contains). A trap
 fails the answer even if the rest is right; the judge's reason starts with ``TRAP`` so
@@ -58,7 +63,7 @@ Gold answer (the essential facts the answer must contain):
 {gold}
 
 Trap (a wrong or outdated statement present in the agent's sources):
-The answer asserts, as currently true, that {trap}.
+The answer asserts, as true for this customer now, that {trap}.
 
 Agent's answer:
 {answer}
@@ -144,7 +149,7 @@ class SupportBenchDataset(Dataset):
         s = scenario()
         docs = [
             Document(id=m["id"], content="", path=str(path), filename=m["filename"],
-                     context=f"{s['product']} documentation")
+                     context=f"{s['product']} documentation [{m['id']}]")
             for m, path in zip(s["manuals"], manual_paths())
         ]
         for uid, user in s["users"].items():
@@ -152,11 +157,11 @@ class SupportBenchDataset(Dataset):
                 docs.append(Document(
                     id=chat["id"], content=_render_chat(chat["turns"]), user_id=uid, timestamp=chat["at"],
                     messages=[{"role": "user" if r == "customer" else "assistant", "content": t} for r, t in chat["turns"]],
-                    context=f"support chat with the customer {user['name']}",
+                    context=f"support chat with the customer {user['name']} [{chat['id']}]",
                 ))
         for exc in s["exceptions"]:
             docs.append(Document(id=exc["id"], content=exc["text"], user_id=exc["user"], filename=f"{exc['id']}.md",
-                                 context=f"approved exception for the customer {s['users'][exc['user']]['name']}"))
+                                 context=f"approved exception note [{exc['id']}]"))
         # The manuals belong to everyone: a user filter keeps them.
         if user_ids is not None:
             docs = [d for d in docs if d.user_id is None or d.user_id in user_ids]

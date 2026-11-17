@@ -3597,7 +3597,7 @@
             ],
             [
               "customer",
-              "Let me ask him... he says 30 days for now."
+              "Let me ask him... he says no expiration date for now, we'll revisit it next year."
             ],
             [
               "support",
@@ -6708,7 +6708,7 @@
     {
       "id": "exception-sup-5207",
       "user": "priya",
-      "text": "# Approved exception SUP-5207: larger upload limit\n\nAccount: acct-4417\nApproved by: platform team, 2026-08-19\n\nThe maximum upload file size on this instance is raised from the default 512 MB to 16 GB (php_value upload_max_filesize 16G and php_value post_max_size 16G). The requested 20 GB was not approved. Storage quotas still apply.\n"
+      "text": "# Approved exception SUP-5207: larger upload limit\n\nAccount: acct-4417\nApproved by: platform team, 2026-08-19\n\nThe maximum upload file size on this instance is raised from the default 512 MB to 14 GB (php_value upload_max_filesize 14G and php_value post_max_size 14G). The requested 20 GB was not approved. Storage quotas still apply.\n"
     },
     {
       "id": "exception-sup-5172",
@@ -7138,7 +7138,7 @@
       "user": "priya",
       "pair": "upload-limit",
       "question": "What's the biggest single file I can upload?",
-      "gold": "16 GB on her instance, because of approved exception SUP-5207 (upload_max_filesize and post_max_size set to 16G) instead of the default 512 MB; her storage quota still applies.",
+      "gold": "14 GB on her instance, because of approved exception SUP-5207 (upload_max_filesize and post_max_size set to 14G) instead of the default 512 MB; her storage quota still applies.",
       "must_not_claim": "the limit is 512 MB",
       "sources": [
         "exception-sup-5207",
@@ -7153,7 +7153,7 @@
       "pair": "upload-limit",
       "question": "What's the biggest single file I can upload?",
       "gold": "512 MB, the default maximum upload file size; her instance has no raised limit.",
-      "must_not_claim": "the limit is 16 GB",
+      "must_not_claim": "the limit is 14 GB",
       "sources": [
         "nextcloud-32-admin-manual p.285 (13.3 Uploading big files > 512MB)"
       ]

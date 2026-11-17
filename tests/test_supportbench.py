@@ -45,6 +45,12 @@ def test_documents_by_kind(dataset):
     manuals = [d for d in docs if d.path]
     assert len(manuals) == 2 and all(d.user_id is None for d in manuals)
     assert all(d.user_id for d in docs if not d.path)
+    # Every document's context ends in its id; an exception note's context never names its customer.
+    names = [u["name"] for u in supportbench.scenario()["users"].values()]
+    for d in docs:
+        assert d.context.endswith(f"[{d.id}]"), d.id
+        if not d.path and not d.messages:
+            assert not any(n in d.context or n in d.content for n in names), d.id
     # A user filter keeps the shared manuals and drops everyone else's chats.
     only = dataset.load_documents("nextcloud", user_ids={"marta"})
     assert {d.user_id for d in only} == {None, "marta"}

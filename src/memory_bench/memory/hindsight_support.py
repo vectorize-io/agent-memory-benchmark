@@ -274,6 +274,10 @@ def read_evidence(trace: dict) -> tuple[str, list[str]]:
             page = f" p.{doc['page']}" if doc.get("page") else ""
             lines.append(f"[doc {doc.get('document_id')}{page}] {(doc.get('text') or '')[:800]}")
         for mem in out.get("memories") or []:
+            # A memory carries the context it was retained with, which ends in "[<document id>]".
+            ctx = mem.get("context") or ""
+            if ctx.endswith("]") and "[" in ctx:
+                sources.add(ctx[ctx.rindex("[") + 1 : -1])
             lines.append(f"[memory] {mem.get('text', '')}")
         for obs in out.get("observations") or []:
             lines.append(f"[observation] {obs.get('text', obs) if isinstance(obs, dict) else obs}")
