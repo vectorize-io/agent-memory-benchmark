@@ -114,8 +114,9 @@ const knowledgeDatasets = computed(() =>
       .map(e => ({ label: e.memory + ' *', logo: null, value: e.accuracy }))
     const rows = [...Object.values(best), ...ext].sort((a, b) => b.value - a.value).slice(0, 8)
     const runs = manifest.value.filter(m => m.dataset === name).length
-    return { name, info: d, split, rows, runs, label: scoreLabel(d.score_type) }
-  })
+    return { name, info: d, split, rows, runs, ours: ours.length, label: scoreLabel(d.score_type) }
+  // A dataset with no run of ours on its headline split stays off the page until it has one.
+  }).filter(ds => ds.ours > 0)
 )
 
 const datasets = computed(() => {

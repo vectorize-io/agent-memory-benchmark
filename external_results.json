@@ -948,5 +948,49 @@
         "comment": "MiniLM-L6."
       }
     ]
+  },
+  "vidore-v3-pdf": {
+    "average": [
+      {
+        "memory": "Mixedbread + reranker",
+        "accuracy": 0.6945,
+        "score_type": "ndcg@10",
+        "source_url": "https://github.com/mixedbread-ai/quality-evals",
+        "source_label": "mixedbread-ai/quality-evals",
+        "comment": "Page images, mxbai-rerank-v3.1-listwise. Mean over the 8 tasks, each scored on queries in the task's own language, from the per-task result files."
+      },
+      {
+        "memory": "Cohere Embed 4 + Rerank 4 Pro",
+        "accuracy": 0.6736,
+        "score_type": "ndcg@10",
+        "source_url": "https://github.com/mixedbread-ai/quality-evals",
+        "source_label": "mixedbread-ai/quality-evals",
+        "comment": "Page images, reranks the top 50. Mean over the 8 tasks, each scored on queries in the task's own language, from the per-task result files."
+      },
+      {
+        "memory": "Mixedbread",
+        "accuracy": 0.6424,
+        "score_type": "ndcg@10",
+        "source_url": "https://github.com/mixedbread-ai/quality-evals",
+        "source_label": "mixedbread-ai/quality-evals",
+        "comment": "Page images. Mean over the 8 tasks, each scored on queries in the task's own language, from the per-task result files."
+      },
+      {
+        "memory": "Voyage Multimodal 3.5",
+        "accuracy": 0.5754,
+        "score_type": "ndcg@10",
+        "source_url": "https://github.com/mixedbread-ai/quality-evals",
+        "source_label": "mixedbread-ai/quality-evals",
+        "comment": "Page images. Mean over the 8 tasks, each scored on queries in the task's own language, from the per-task result files."
+      },
+      {
+        "memory": "Gemini Embedding 2",
+        "accuracy": 0.4854,
+        "score_type": "ndcg@10",
+        "source_url": "https://github.com/mixedbread-ai/quality-evals",
+        "source_label": "mixedbread-ai/quality-evals",
+        "comment": "Page images. Mean over the 8 tasks, each scored on queries in the task's own language, from the per-task result files."
+      }
+    ]
   }
 }
