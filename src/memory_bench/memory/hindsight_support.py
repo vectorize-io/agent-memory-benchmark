@@ -266,7 +266,15 @@ class _SupportProvider(MemoryProvider):
         body = {"query": query, "context": context, "tags": [user_tag(user_id)], "tags_match": "any",
                 "include": {"tool_calls": {}}}
         started = time.perf_counter()
-        response = await self._api().call("POST", f"{self._memory_bank}/reflect", json=body)
+        try:
+            response = await self._api().call("POST", f"{self._memory_bank}/reflect", json=body)
+        except httpx.HTTPStatusError as exc:
+            # A reflect the server keeps timing out (after the retries) is a failed answer, scored as
+            # wrong, not a reason to throw away the run's other answers.
+            if exc.response.status_code < 500:
+                raise
+            _log.warning("%s: reflect failed for %r: %s", self.name, query[:80], exc)
+            return "", "", {"meta": {"reflect_error": str(exc)[:300], "ingest_s": self._ingest.get("ingest_s")}}
         usage = response.get("usage") or {}
         answer = response.get("text") or ""
         meta = {
