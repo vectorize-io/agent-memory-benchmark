@@ -69,6 +69,14 @@
       ],
       "score_type": "accuracy"
     },
+    "supportbench": {
+      "description": "Does a support agent use the product docs and each customer's history correctly? Real Nextcloud 32 manuals (837 PDF pages) plus per-customer support chats and approved exceptions.",
+      "task": "LLM-judged",
+      "splits": [
+        "nextcloud"
+      ],
+      "score_type": "accuracy"
+    },
     "vidore-v3-markdown": {
       "description": "ViDoRe V3, 8 enterprise PDF tasks (EN + FR) as the page markdown the dataset ships, one text document per page; text-to-page search in 6 query languages.",
       "task": "Search only",
@@ -203,6 +211,21 @@
         "knowledge": {
           "key": "hindsight-knowledge",
           "description": "Hindsight knowledge banks over HTTP: files (PDF, image, video) and text written into a knowledge bank, then searched. No LLM: the server's knowledge embedder is the only model.",
+          "kind": "cloud"
+        },
+        "support-memory": {
+          "key": "hindsight-support-memory",
+          "description": "supportbench arm: manuals, chats and approved exceptions all retained into one memory bank; reflect answers.",
+          "kind": "cloud"
+        },
+        "support-knowledge": {
+          "key": "hindsight-support-knowledge",
+          "description": "supportbench arm: manuals, chats and approved exceptions all in one knowledge bank, linked to an empty memory bank; reflect answers.",
+          "kind": "cloud"
+        },
+        "support-linked": {
+          "key": "hindsight-support-linked",
+          "description": "supportbench arm: chats in a memory bank, manuals and approved exceptions in a linked knowledge bank; reflect answers.",
           "kind": "cloud"
         }
       }
