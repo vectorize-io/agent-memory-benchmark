@@ -13,7 +13,7 @@ retrieve->inject path; the `hscoding` provider instead runs the Hindsight plugin
 over the BUILT repo (its ingest is repo-native, not document-list-based) and delivery happens
 agent-side through the plugin.
 
-Tasks live in the `sde-bench` submodule at `sdebench/datasets/boltons-*`; the runner/harness is
+Tasks live in the `hindsight-datasets` submodule at `datasets/sdebench/boltons-*`; the runner/harness is
 `sdebench/harness/run.py`.
 """
 import json
@@ -25,7 +25,7 @@ from .base import Dataset
 from ..models import Document, Query
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DATASETS = _REPO_ROOT / "sdebench" / "datasets"
+_DATASETS = _REPO_ROOT / "datasets" / "sdebench"
 _HOST = Path(os.environ.get("SDEBENCH_BOLTONS_HOST", "") or (Path.home() / "dev" / "_sdebench_hosts" / "boltons"))
 _HOST_REF = "979fa9b613fa8c0a455ae16ea6f2ec91c11ecafe"
 _NOISE_COMMITS = 100  # host-history noise window (matches the plugin's default gitlog scope order)
@@ -66,7 +66,7 @@ class SdebenchDataset(Dataset):
     task_type = "coding"
     isolation_unit = "task"   # every task is an independent project: per-task banks/stores
     published = False
-    links = [{"label": "Dataset", "url": "https://github.com/vectorize-io/sde-bench"}]
+    links = [{"label": "Dataset", "url": "https://github.com/vectorize-io/hindsight-datasets/tree/main/sdebench"}]
 
     def _task_files(self) -> list[Path]:
         files = sorted(_DATASETS.glob("boltons-*/tasks/main/task.json"))

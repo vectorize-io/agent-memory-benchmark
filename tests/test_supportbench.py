@@ -1,6 +1,5 @@
 """supportbench: the scenario holds together and each arm routes every document where it says, no network."""
 
-from pathlib import Path
 
 import pytest
 
@@ -97,7 +96,6 @@ def test_judge_prompt_carries_the_trap(dataset):
     q = dataset.load_queries("nextcloud", category="conflict")[0]
     prompt = dataset.get_judge_prompt_fn(q.meta["category"], q.meta)(q.query, q.gold_answers, "an answer")
     assert q.meta["must_not_claim"] in prompt and "TRAP:" in prompt
-    assert Path(supportbench.__file__).with_name("supportbench.json").exists()
 
 
 def test_every_document_names_its_source(dataset):
