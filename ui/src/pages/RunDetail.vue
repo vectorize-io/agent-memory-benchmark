@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import { fetchRunData } from '../api.js'
 import { avg, pct50 } from '../utils.js'
+import { scoreLabel, fmtScore, isAccuracy } from '../score.js'
 import Badge from '@/components/ui/badge.vue'
 import Input from '@/components/ui/input.vue'
 import Button from '@/components/ui/button.vue'
@@ -88,6 +89,23 @@ const filtered = computed(() =>
 )
 
 const active = computed(() => activeIndex.value != null ? results.value[activeIndex.value] : null)
+
+// Ranked runs (knowledge-bank retrieval) score each query's ranking: the headline is a metric such
+// as NDCG@10, "correct" means a relevant document in the top 10, and the per-query view shows the
+// ranking against the relevant documents instead of an answer and a judge verdict.
+const scoreType = computed(() => data.value?.score_type ?? 'accuracy')
+const ranked    = computed(() => !isAccuracy(scoreType.value))
+const sLabel    = computed(() => scoreLabel(scoreType.value))
+const fmtS      = v => fmtScore(v, scoreType.value)
+const relevant  = computed(() => active.value?.meta?.relevant ?? {})
+const ranking   = computed(() => active.value?.meta?.ranking ?? [])
+const relevantRanks = computed(() =>
+  Object.entries(relevant.value).map(([id, grade]) => {
+    const i = ranking.value.indexOf(id)
+    return { id, grade, rank: i >= 0 ? i + 1 : null }
+  }).sort((a, b) => (a.rank ?? 1e9) - (b.rank ?? 1e9))
+)
+const metricLabel = k => k.replace(/^ndcg/, 'NDCG').replace(/^recall/, 'R')
 
 useHead(computed(() => {
   if (!data.value) return { title: 'Run — Agent Memory Benchmark' }
@@ -308,9 +326,10 @@ function toggleCat(axis, cat) {
 
         <div v-if="summary" class="flex items-center gap-3 mb-3">
           <span class="font-display text-2xl font-bold tracking-tight" :style="{ color: accuracyColor(summary.pct) }">
-            {{ (summary.pct * 100).toFixed(1) }}%
+            {{ fmtS(summary.pct) }}
           </span>
-          <span class="text-muted-foreground text-sm">{{ summary.hasScores ? 'avg score' : summary.pass + ' / ' + summary.total + ' correct' }}</span>
+          <span v-if="ranked" class="text-muted-foreground text-sm"><span class="text-foreground/80 font-semibold">{{ sLabel }}</span> · {{ summary.pass }} / {{ summary.total }} hit@10</span>
+          <span v-else class="text-muted-foreground text-sm">{{ summary.hasScores ? 'avg score' : summary.pass + ' / ' + summary.total + ' correct' }}</span>
           <Badge v-if="data?.oracle" variant="default" class="ml-auto">oracle</Badge>
         </div>
 
@@ -340,6 +359,16 @@ function toggleCat(axis, cat) {
             <p class="font-semibold text-foreground text-sm">{{ val }}</p>
           </div>
         </div>
+        <div v-else-if="perf && ranked" class="grid grid-cols-3 gap-1.5">
+          <div v-for="[label, val] in [
+            ['Ingest/doc', perf.ingestAvg.toFixed(1) + 'ms'],
+            ['Search p50', pct50(perf.recTimes).toFixed(0) + 'ms'],
+            ...Object.entries(data.metrics ?? {}).filter(([k]) => k !== scoreType).map(([k, v]) => [metricLabel(k), (v * 100).toFixed(2)]),
+          ]" :key="label" class="stat-box">
+            <p class="text-muted-foreground/85 text-sm mb-0.5">{{ label }}</p>
+            <p class="font-semibold text-foreground text-sm">{{ val }}</p>
+          </div>
+        </div>
         <div v-else-if="perf && data?.mode !== 'coding'" class="grid grid-cols-3 gap-1.5">
           <div v-for="[label, val] in [
             ['Ingest/doc', perf.ingestAvg.toFixed(1) + 'ms'],
@@ -355,7 +384,7 @@ function toggleCat(axis, cat) {
       <!-- Category filters -->
       <div v-if="allAxes.length" class="sidebar-section overflow-y-auto max-h-[25vh]">
         <div v-for="axis in allAxes" :key="axis" class="px-4 py-2.5 border-b border-border last:border-0">
-          <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-1.5">{{ axis }}</p>
+          <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-1.5">{{ axis }}<span v-if="ranked" class="normal-case tracking-normal font-normal"> · {{ sLabel }}</span></p>
           <table class="w-full text-sm">
             <tbody>
               <tr v-for="(stats, cat) in axisStats[axis]" :key="cat"
@@ -364,7 +393,7 @@ function toggleCat(axis, cat) {
                 <td class="py-0.5 pr-2 text-muted-foreground truncate max-w-[110px]">{{ cat }}</td>
                 <td class="py-0.5 pr-2 text-right text-muted-foreground/80 w-10">{{ stats.total }}</td>
                 <td class="py-0.5 text-right font-semibold w-10" :style="{ color: accuracyColor(stats.scoreCount ? stats.scoreSum / stats.scoreCount : stats.correct / stats.total) }">
-                  {{ ((stats.scoreCount ? stats.scoreSum / stats.scoreCount : stats.correct / stats.total) * 100).toFixed(1) }}%
+                  {{ ranked ? fmtS(stats.scoreSum / stats.total) : ((stats.scoreCount ? stats.scoreSum / stats.scoreCount : stats.correct / stats.total) * 100).toFixed(1) + '%' }}
                 </td>
               </tr>
             </tbody>
@@ -380,7 +409,7 @@ function toggleCat(axis, cat) {
         <Input v-model="search" placeholder="Search queries…" class="mb-2 h-8 text-sm" />
         <div class="flex items-center justify-between">
           <div class="flex gap-1">
-            <button v-for="[val, label, cls] in [['all','All','hover:bg-secondary'], ['correct','✓ Pass','hover:bg-cg/10 hover:text-cg'], ['wrong','✗ Fail','hover:bg-cr/10 hover:text-cr']]"
+            <button v-for="[val, label, cls] in [['all','All','hover:bg-secondary'], ['correct', ranked ? '✓ Hit@10' : '✓ Pass','hover:bg-cg/10 hover:text-cg'], ['wrong', ranked ? '✗ Miss' : '✗ Fail','hover:bg-cr/10 hover:text-cr']]"
                     :key="val" @click="filter = val"
                     :class="[
                       'px-2.5 py-1 rounded text-sm font-medium transition-colors',
@@ -402,9 +431,9 @@ function toggleCat(axis, cat) {
                 :class="i === activeIndex ? 'item-active' : 'hover:bg-secondary/30'"
                 class="w-full text-left px-4 py-2.5 border-b border-border/50 last:border-0 transition-colors">
           <div class="flex items-start gap-2">
-            <span :class="r.correct ? 'text-cg' : 'text-cr'" class="font-bold text-sm shrink-0 mt-0.5">{{ r.score != null ? r.score.toFixed(2) : (r.correct ? '✓' : '✗') }}</span>
+            <span :class="r.correct ? 'text-cg' : 'text-cr'" class="font-bold text-sm shrink-0 mt-0.5" :title="ranked ? sLabel : undefined">{{ r.score != null ? r.score.toFixed(2) : (r.correct ? '✓' : '✗') }}</span>
             <div class="min-w-0">
-              <p class="text-sm text-foreground leading-snug line-clamp-2">{{ (r.query || '').split('\n')[0].trim().slice(0, 80) }}</p>
+              <p class="text-sm text-foreground leading-snug line-clamp-2">{{ (r.query || (ranked ? '(query text not published)' : '')).split('\n')[0].trim().slice(0, 80) }}</p>
               <div class="flex items-center gap-1 mt-0.5 flex-wrap">
                 <span class="text-sm font-mono text-muted-foreground/80">{{ r.query_id.slice(0, 8) }}</span>
                 <Badge v-for="c in Object.values(r.category_axes ?? {}).flat()" :key="c" variant="default" class="text-sm">{{ c }}</Badge>
@@ -437,6 +466,9 @@ function toggleCat(axis, cat) {
                 <span class="pill" title="Tool calls (agent turns)">🔧 {{ active.meta?.turns ?? '–' }} turns</span>
                 <span class="pill" title="Output tokens">🔤 {{ active.meta?.out_tokens?.toLocaleString() ?? '–' }} tok</span>
                 <span class="pill" title="Wall time">⏱ {{ active.meta?.elapsed_s ?? '–' }}s</span>
+              </template>
+              <template v-else-if="ranked">
+                <span class="pill" title="Search latency">⏱ search {{ active.retrieve_time_ms?.toFixed(0) }}ms</span>
               </template>
               <template v-else>
                 <span class="pill" title="Memory recall latency">⏱ recall {{ active.retrieve_time_ms?.toFixed(0) }}ms</span>
@@ -537,6 +569,60 @@ function toggleCat(axis, cat) {
             <section>
               <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2">Final patch</p>
               <div class="diff-block"><div v-for="l in patch" :key="l.i" :class="'diff-line diff-' + (l.cls || 'ctx')">{{ l.text || ' ' }}</div></div>
+            </section>
+          </template>
+
+          <!-- ─────────────── Ranked retrieval view (knowledge banks) ─────────────── -->
+          <template v-else-if="ranked">
+            <section>
+              <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 flex items-center gap-2">
+                Query <span class="font-mono text-muted-foreground/70 font-normal normal-case tracking-normal">{{ active.query_id }}</span>
+              </p>
+              <Card class="p-4 text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                <span v-if="active.query">{{ active.query }}</span>
+                <em v-else class="text-muted-foreground">Query text not published (the dataset asks for that).</em>
+              </Card>
+            </section>
+
+            <section>
+              <div :class="active.correct ? 'verdict-pass' : 'verdict-fail'" class="text-sm">
+                <span class="font-semibold">{{ sLabel }} {{ fmtS(active.score) }}</span>
+                <span v-if="active.judge_reason" class="ml-2 opacity-75 font-normal">— {{ active.judge_reason }}</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                <span v-for="(v, k) in (active.meta?.metrics ?? {})" :key="k" class="pill">{{ metricLabel(k) }} {{ (v * 100).toFixed(1) }}</span>
+              </div>
+              <details v-if="catalog.datasets?.[data?.dataset]?.scoring_note" class="mt-2 text-sm text-muted-foreground">
+                <summary class="cursor-pointer hover:text-foreground/80 transition-colors">How is this scored?</summary>
+                <p class="mt-1.5 leading-relaxed pl-3 border-l-2 border-muted">{{ catalog.datasets[data.dataset].scoring_note }}</p>
+              </details>
+            </section>
+
+            <section>
+              <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                Relevant <span class="text-muted-foreground/60 font-normal normal-case tracking-normal">· {{ relevantRanks.length }} labelled, with the rank each came back at</span>
+              </p>
+              <Card class="p-3 text-sm font-mono space-y-0.5">
+                <div v-for="r in relevantRanks" :key="r.id" class="flex gap-3">
+                  <span :class="r.rank && r.rank <= 10 ? 'text-cg' : r.rank ? 'text-ca' : 'text-cr'" class="w-16 shrink-0 text-right">{{ r.rank ? '#' + r.rank : 'missing' }}</span>
+                  <span class="truncate">{{ r.id }}</span>
+                  <span v-if="r.grade > 1" class="text-muted-foreground/70">grade {{ r.grade }}</span>
+                </div>
+              </Card>
+            </section>
+
+            <section>
+              <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                Ranking <span class="text-muted-foreground/60 font-normal normal-case tracking-normal">· top {{ ranking.length }} distinct documents, best passage first</span>
+              </p>
+              <Card class="p-3 text-sm font-mono space-y-0.5 max-h-[28rem] overflow-y-auto">
+                <div v-for="(id, i) in ranking" :key="id" class="flex gap-3" :class="relevant[id] ? 'text-cg font-semibold' : 'text-muted-foreground'">
+                  <span class="w-10 shrink-0 text-right">{{ i + 1 }}</span>
+                  <span class="truncate">{{ id }}</span>
+                  <span v-if="relevant[id]">✓</span>
+                </div>
+                <p v-if="!ranking.length" class="text-muted-foreground">Nothing came back.</p>
+              </Card>
             </section>
           </template>
 

@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import { fetchManifest, fetchExternalResults } from '../api.js'
+import { scoreLabel, fmtScore, isKnowledge, withAverageSplit } from '../score.js'
 
 import Card from '@/components/ui/card.vue'
 import Badge from '@/components/ui/badge.vue'
@@ -91,9 +92,36 @@ function computeChart(items) {
   return { rows }
 }
 
+// Knowledge-bank retrieval datasets score a ranking (NDCG@10, Recall@10), not an answer: they get
+// their own section and stay out of the accuracy cards and the comparison table.
+const knowledgeName = ds => isKnowledge(catalog.value.datasets?.[ds])
+const qaManifest = computed(() => manifest.value.filter(item => !knowledgeName(item.dataset)))
+const qaExternal = computed(() => Object.fromEntries(Object.entries(externalResults.value).filter(([ds]) => !knowledgeName(ds))))
+
+// One card per knowledge dataset: on its headline split (the cross-split average where the
+// leaderboard publishes one), our best run per provider next to the published numbers.
+const knowledgeDatasets = computed(() =>
+  Object.entries(catalog.value.datasets ?? {}).filter(([, d]) => isKnowledge(d)).map(([name, d]) => {
+    const split = d.average_split ?? d.splits?.[0]
+    const ours = withAverageSplit(manifest.value.filter(m => m.dataset === name), d).filter(m => m.split === split)
+    const best = {}
+    ours.forEach(item => {
+      const info = providerByKey.value[item.memory]
+      const label = item.memory.startsWith('hindsight') ? 'hindsight' : info?.family ?? item.memory
+      if (item.accuracy != null && (!best[label] || item.accuracy > best[label].value)) best[label] = { label, logo: info?.logo ?? null, value: item.accuracy }
+    })
+    const ext = (externalResults.value[name]?.[split] ?? []).filter(e => e.accuracy != null)
+      .map(e => ({ label: e.memory + ' *', logo: null, value: e.accuracy }))
+    const rows = [...Object.values(best), ...ext].sort((a, b) => b.value - a.value).slice(0, 8)
+    const runs = manifest.value.filter(m => m.dataset === name).length
+    return { name, info: d, split, rows, runs, ours: ours.length, label: scoreLabel(d.score_type) }
+  // A dataset with no run of ours on its headline split stays off the page until it has one.
+  }).filter(ds => ds.ours > 0)
+)
+
 const datasets = computed(() => {
   const map = {}
-  manifest.value.forEach(item => {
+  qaManifest.value.forEach(item => {
     const ds = item.dataset || '(unknown)'
     if (!map[ds]) map[ds] = { name: ds, splits: new Set(), runs: 0, items: [] }
     map[ds].splits.add(item.split)
@@ -101,7 +129,7 @@ const datasets = computed(() => {
     map[ds].items.push(item)
   })
   // Include datasets that only have external results
-  Object.entries(externalResults.value).forEach(([ds, splitMap]) => {
+  Object.entries(qaExternal.value).forEach(([ds, splitMap]) => {
     if (!map[ds]) map[ds] = { name: ds, splits: new Set(), runs: 0, items: [] }
     Object.keys(splitMap).forEach(split => map[ds].splits.add(split))
   })
@@ -125,12 +153,12 @@ const comparisonTable = computed(() => {
   const colSet = new Map()
   const catalogDatasets = catalog.value.datasets ?? {}
 
-  manifest.value.forEach(item => {
+  qaManifest.value.forEach(item => {
     const key = item.dataset + '||' + item.split
     if (!colSet.has(key)) colSet.set(key, { dataset: item.dataset, split: item.split })
   })
   if (showUnverified.value) {
-    Object.entries(externalResults.value).forEach(([ds, splitMap]) => {
+    Object.entries(qaExternal.value).forEach(([ds, splitMap]) => {
       Object.keys(splitMap).forEach(split => {
         const key = ds + '||' + split
         if (!colSet.has(key)) colSet.set(key, { dataset: ds, split })
@@ -163,7 +191,7 @@ const comparisonTable = computed(() => {
     return { label, logo: info?.logo ?? null }
   }
 
-  manifest.value.forEach(item => {
+  qaManifest.value.forEach(item => {
     if (item.accuracy == null) return
     const { label, logo } = getProviderInfo(item.memory)
     if (!providerMap[label]) providerMap[label] = { label, logo, cells: {} }
@@ -175,7 +203,7 @@ const comparisonTable = computed(() => {
   })
 
   if (showUnverified.value) {
-    Object.entries(externalResults.value).forEach(([ds, splitMap]) => {
+    Object.entries(qaExternal.value).forEach(([ds, splitMap]) => {
       Object.entries(splitMap).forEach(([split, items]) => {
         const colKey = ds + '||' + split
         items.forEach(item => {
@@ -243,7 +271,7 @@ const comparisonTable = computed(() => {
     current.splits.push(c.split)
   })
 
-  const hasExternal = Object.keys(externalResults.value).length > 0
+  const hasExternal = Object.keys(qaExternal.value).length > 0
 
   return { columns, providers, bestPerCol, datasetGroups, hasExternal }
 })
@@ -359,6 +387,46 @@ const vReveal = {
             </div>
           </Card>
         </div>
+      </section>
+
+      <!-- Knowledge: search-only retrieval, scored on rankings -->
+      <section v-if="!loading && !error && knowledgeDatasets.length">
+        <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-2">Knowledge</p>
+        <p class="text-sm text-muted-foreground leading-relaxed max-w-2xl mb-8">
+          Search only: a corpus (PDFs, page text, images, video, web pages, a personal mix of photos, videos and emails)
+          goes into a knowledge bank and every query is scored on the ranking that comes back, with the dataset's own labels.
+          No answer model and no judge, so these numbers are NDCG@10 or Recall@10, not accuracy.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <Card
+            v-for="(ds, i) in knowledgeDatasets" :key="ds.name"
+            v-reveal="i * 70"
+            @click="router.push(`/dataset/${encodeURIComponent(ds.name)}`)"
+            class="p-5 flex flex-col gap-4 cursor-pointer hover:border-primary/30 hover:bg-secondary/30 transition-colors"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <h2 class="font-display font-semibold text-foreground text-base leading-tight">{{ ds.name }}</h2>
+              <Badge variant="success" class="shrink-0 mt-0.5">Search only · {{ ds.label }}</Badge>
+            </div>
+            <p class="text-sm text-muted-foreground leading-relaxed">{{ ds.info.description }}</p>
+            <div v-if="ds.rows.length" class="mt-1">
+              <p class="text-sm font-display font-semibold uppercase tracking-wider text-muted-foreground/70 mb-2">
+                {{ ds.label }} <span class="normal-case tracking-normal font-normal">· {{ ds.split }}</span>
+              </p>
+              <BarChart :rows="ds.rows" :max="1"
+                        :format="v => fmtScore(v, ds.info.score_type)"
+                        variant="accuracy" label-width="w-28" />
+            </div>
+            <div class="flex items-center justify-between mt-auto pt-2 border-t border-border/50">
+              <span class="text-sm text-muted-foreground/80">
+                {{ ds.info.splits.length }} split{{ ds.info.splits.length !== 1 ? 's' : '' }} ·
+                {{ ds.runs }} run{{ ds.runs !== 1 ? 's' : '' }}
+              </span>
+              <span class="text-primary text-sm font-medium">Explore →</span>
+            </div>
+          </Card>
+        </div>
+        <p class="text-sm text-muted-foreground/80 mt-3"><span class="text-ca">*</span> Published by the system or the leaderboard, not reproduced here.</p>
       </section>
 
       <!-- Comparison table -->

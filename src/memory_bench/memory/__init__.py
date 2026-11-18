@@ -2,6 +2,7 @@ from .base import MemoryProvider
 from .bm25 import BM25MemoryProvider
 from .cognee import CogneeMemoryProvider
 from .hindsight import HindsightCloudMemoryProvider, HindsightHTTPMemoryProvider, HindsightMemoryProvider
+from .hindsight_knowledge import HindsightKnowledgeMemoryProvider
 from .mastra import MastraMemoryProvider
 from .mastra_om import MastraOMMemoryProvider
 from .mem0 import Mem0MemoryProvider
@@ -20,6 +21,7 @@ REGISTRY: dict[str, type[MemoryProvider]] = {
     "hindsight": HindsightMemoryProvider,
     "hindsight-cloud": HindsightCloudMemoryProvider,
     "hindsight-http": HindsightHTTPMemoryProvider,
+    "hindsight-knowledge": HindsightKnowledgeMemoryProvider,
 
     "mastra": MastraMemoryProvider,
     "mastra-om": MastraOMMemoryProvider,

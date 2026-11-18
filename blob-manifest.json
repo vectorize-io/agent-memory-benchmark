@@ -239,5 +239,73 @@
   "data/locomo-fixed/locomo10/stats.json.gz": {
     "sha": "6d159dd8c43e71638ad4452c0bcf0ad2e77e148383ec1576bd83899eaa66f512",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/data/locomo-fixed/locomo10/stats.json-XVEqFRj75uPtrLpMBkv2MI4pfTTqv3.gz"
+  },
+  "outputs/atm-bench-retrieval/hindsight-jev114/retrieval/atm-bench.json.gz": {
+    "sha": "66dfa521fe957abfaf03058187896422fca12396577a2e7400893a4232a2a1eb",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/atm-bench-retrieval/hindsight-jev114/retrieval/atm-bench.json-BqYx3ceEq7v7R1MXrPxUXLndca01cw.gz"
+  },
+  "outputs/vidore-v3-markdown/hindsight-jev114/retrieval/computer_science.json.gz": {
+    "sha": "b3dd33a7c6e890a68ef544a2d89298c8d15b8085dab3b12753b58f2db6ba5fc7",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-markdown/hindsight-jev114/retrieval/computer_science.json-uw539kbI1LfwvJtf1tVKopME0sf2tr.gz"
+  },
+  "outputs/vidore-v3-markdown/hindsight-jev114/retrieval/energy.json.gz": {
+    "sha": "efe53ef9bb5048e89c7f785f138a092c2f1e0cc8ef75f86017701c79bf67e0a3",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-markdown/hindsight-jev114/retrieval/energy.json-P3wDpNqHduk7fDyWURib9UR2ZBRAH2.gz"
+  },
+  "outputs/vidore-v3-markdown/hindsight-jev114/retrieval/finance_en.json.gz": {
+    "sha": "87290a3a79d2733c5a884cc8f8e3b583f424d684a238e0c14aee81c0ca993783",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-markdown/hindsight-jev114/retrieval/finance_en.json-ceDc1QUzf0wYGGLudzOcpU2EpOzAk6.gz"
+  },
+  "outputs/vidore-v3-markdown/hindsight-jev114/retrieval/finance_fr.json.gz": {
+    "sha": "71fbb4f4f72fb034f99713de258f62221e634df6de4292a423170830714defc0",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-markdown/hindsight-jev114/retrieval/finance_fr.json-ipOs923vLPhOmZ5tSrnsTTZj4xJP4V.gz"
+  },
+  "outputs/vidore-v3-markdown/hindsight-jev114/retrieval/hr.json.gz": {
+    "sha": "0e54158c125af3ba0d60e3b2026ce7040962db48ebb39b014ce52ffbe873634c",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-markdown/hindsight-jev114/retrieval/hr.json-nLOPfIrxWS7PpIdOqS8g3WfwlMzeRx.gz"
+  },
+  "outputs/vidore-v3-markdown/hindsight-jev114/retrieval/industrial.json.gz": {
+    "sha": "9c0fee211c9e384eb1288f6be4297febc8123e0ef8fef3cb27e1bbc004555baf",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-markdown/hindsight-jev114/retrieval/industrial.json-4aIQHYf5dylfAroIhonkewZneNBBTg.gz"
+  },
+  "outputs/vidore-v3-markdown/hindsight-jev114/retrieval/pharmaceuticals.json.gz": {
+    "sha": "c949521dcf023c207f1488ff35b3f3313c7608babd9e80f8e6e82265094b25df",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-markdown/hindsight-jev114/retrieval/pharmaceuticals.json-Zbs7yqjRq0immQdq7TuTj1DkXyLXo5.gz"
+  },
+  "outputs/vidore-v3-markdown/hindsight-jev114/retrieval/physics.json.gz": {
+    "sha": "73d72a98c04658b8be8bc8b7a0a8b71ecb96b079c212be40ed1a4d8dd2fbdf70",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-markdown/hindsight-jev114/retrieval/physics.json-eLjcyFCaGqh3AqtvrZIhisAMe89ln6.gz"
+  },
+  "outputs/vidore-v3-pdf/hindsight-jev114/retrieval/computer_science.json.gz": {
+    "sha": "41e7d114cb805c7e8161bdc1e2bb0f7f3d574fede01dbd3c093313e5b561d03a",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-pdf/hindsight-jev114/retrieval/computer_science.json-4MNUWnq6ChQGCk0mE5b866mvjJPWls.gz"
+  },
+  "outputs/vidore-v3-pdf/hindsight-jev114/retrieval/energy.json.gz": {
+    "sha": "a97089c2d00232c39f394f0cc5b9698e1fc9f0b921e5eb46cdc8b31788baef4f",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-pdf/hindsight-jev114/retrieval/energy.json-zNQBSMPZDGlQzWO5mphfhqonK8QkrX.gz"
+  },
+  "outputs/vidore-v3-pdf/hindsight-jev114/retrieval/finance_en.json.gz": {
+    "sha": "0bcd3c73af7213ba721bd254e8b86ffc32fbf9fa2955eb7f4e1af2e43ed08b97",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-pdf/hindsight-jev114/retrieval/finance_en.json-3MopxftZuKt71D59t7V2dWCucz5N1Z.gz"
+  },
+  "outputs/vidore-v3-pdf/hindsight-jev114/retrieval/finance_fr.json.gz": {
+    "sha": "6e5f35fa969692b40ac46751caf45182aa6ce7aafe3d378541335f62f294f63b",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-pdf/hindsight-jev114/retrieval/finance_fr.json-oIncdhuxDwa1FeEQVE8uOHN18hbNvt.gz"
+  },
+  "outputs/vidore-v3-pdf/hindsight-jev114/retrieval/hr.json.gz": {
+    "sha": "bf3af7f6cfbfa30344b919429a9b47d7e2c486710659078f1d331ab68b941436",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-pdf/hindsight-jev114/retrieval/hr.json-ASreOsD5RD9cdvXBxyNm14B7UlxoW8.gz"
+  },
+  "outputs/vidore-v3-pdf/hindsight-jev114/retrieval/industrial.json.gz": {
+    "sha": "7f78d95a570750700296157dd08726ffffe44e93890e33688d7e1069248bf173",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-pdf/hindsight-jev114/retrieval/industrial.json-GxmAwQJwSMYOU2LeffUP4Aorf2d4ky.gz"
+  },
+  "outputs/vidore-v3-pdf/hindsight-jev114/retrieval/pharmaceuticals.json.gz": {
+    "sha": "0b781468b47deb2a1ecd88c34d133dbdc791330890de7f9a98d9aa8f2e4e06e0",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-pdf/hindsight-jev114/retrieval/pharmaceuticals.json-SVqUfxRK5Pnk67Mzu4DwVKALBTGFOy.gz"
+  },
+  "outputs/vidore-v3-pdf/hindsight-jev114/retrieval/physics.json.gz": {
+    "sha": "537745e2ac248d092496b526d18be90632f989b549805b01e56654b3ce3717fe",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-pdf/hindsight-jev114/retrieval/physics.json-GJjzEmrc1cdYG3D6pYg97WFuSUJEzy.gz"
   }
 }

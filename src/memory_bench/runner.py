@@ -39,13 +39,15 @@ def _score_mcq(answer: str, gold_answers: list[str]) -> tuple[bool, str]:
 class EvalRunner:
     def __init__(self, output_dir: Path = Path("outputs")):
         self.output_dir = output_dir
-        self._judge = GeminiJudge()
+        self._judge: GeminiJudge | None = None  # built on first use: retrieval runs need no LLM key
         self._dataset_metrics: dict = {}
 
     def _get_judge(self, dataset: Dataset) -> "GeminiJudge":
         dataset_llm = dataset.default_judge_llm() if hasattr(dataset, "default_judge_llm") else None
         if dataset_llm is not None:
             return GeminiJudge(llm=dataset_llm)
+        if self._judge is None:
+            self._judge = GeminiJudge()
         return self._judge
 
     def run(
@@ -226,8 +228,11 @@ class EvalRunner:
                 # Belief-ID-scored datasets (PrecisionMemBench): the retrieved document
                 # set IS the answer — no LLM, no judge, and an empty result can be a
                 # legitimate pass, so this must run before the empty-context guard.
+                # A ranked dataset (knowledge banks) also returns a continuous score — its
+                # nDCG@10 or recall@10 — which then becomes the headline number.
                 docs = (answer_result.raw_response or {}).get("documents") or []
-                correct, judge_reason = dataset.score_retrieval(q, docs)
+                correct, judge_reason, *ranked_score = dataset.score_retrieval(q, docs)
+                score = float(ranked_score[0]) if ranked_score else None
             elif not answer_result.context:
                 correct, judge_reason = False, "empty context — no memories retrieved"
             elif task_type == "mcq":
@@ -262,7 +267,7 @@ class EvalRunner:
 
             return QueryResult(
                 query_id=q.id,
-                query=q.query,
+                query="" if dataset.redact_query_text else q.query,
                 answer=answer_result.answer,
                 reasoning=answer_result.reasoning,
                 context=answer_result.context,
@@ -356,6 +361,7 @@ class EvalRunner:
                         correct=sum(1 for r in done if r.correct),
                         accuracy=0.0, ingestion_time_ms=round(ingestion_ms, 1),
                         ingested_docs=ingested_docs_count,
+                        score_type=dataset.score_type,
                         description=description, answer_llm=mode.llm_id,
                         judge_llm=(None if dataset.task_type in ("coding", "retrieval") else self._get_judge(dataset)._llm.model_id),
                         results=done,
@@ -459,6 +465,7 @@ class EvalRunner:
             accuracy=accuracy,
             ingestion_time_ms=round(ingestion_ms, 1),
             ingested_docs=ingested_docs_count,
+            score_type=dataset.score_type,
             description=description,
             answer_llm=mode.llm_id,
             judge_llm=(None if dataset.task_type in ("coding", "retrieval") else self._get_judge(dataset)._llm.model_id),

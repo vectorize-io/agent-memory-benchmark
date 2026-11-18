@@ -8,35 +8,40 @@
         "500k",
         "1m",
         "10m"
-      ]
+      ],
+      "score_type": "accuracy"
     },
     "lifebench": {
       "description": "Long-horizon multi-source personalized memory benchmark across 10 users.",
       "task": "LLM-judged",
       "splits": [
         "en"
-      ]
+      ],
+      "score_type": "accuracy"
     },
     "locomo": {
       "description": "Multi-session long-term conversations with 1,986 QA pairs.",
       "task": "LLM-judged",
       "splits": [
         "locomo10"
-      ]
+      ],
+      "score_type": "accuracy"
     },
     "locomo-fixed": {
       "description": "LoComo without the questions its conversations cannot answer (gold answer absent from the conversation, gold contradicting it, or the question naming the wrong person).",
       "task": "LLM-judged",
       "splits": [
         "locomo10"
-      ]
+      ],
+      "score_type": "accuracy"
     },
     "longmemeval": {
       "description": "Long-term memory evaluation in LLM-based chat assistants.",
       "task": "LLM-judged",
       "splits": [
         "s"
-      ]
+      ],
+      "score_type": "accuracy"
     },
     "personamem": {
       "description": "Long-horizon personal preference tracking across conversation sessions.",
@@ -45,21 +50,122 @@
         "32k",
         "128k",
         "1M"
-      ]
+      ],
+      "score_type": "accuracy"
     },
     "precisionmembench": {
       "description": "Belief-level retrieval precision: 77 cases asserting exactly which memories must and must not surface.",
       "task": "ID-set scored",
       "splits": [
         "single-turn"
-      ]
+      ],
+      "score_type": "accuracy"
     },
     "sdebench": {
       "description": "Does memory help a coding agent? Bug-fix tasks whose obvious fix fails a hidden test.",
       "task": "LLM-judged",
       "splits": [
         "boltons"
-      ]
+      ],
+      "score_type": "accuracy"
+    },
+    "vidore-v3-markdown": {
+      "description": "ViDoRe V3, 8 enterprise PDF tasks (EN + FR) as the page markdown the dataset ships, one text document per page; text-to-page search in 6 query languages.",
+      "task": "Search only",
+      "splits": [
+        "hr",
+        "computer_science",
+        "pharmaceuticals",
+        "finance_en",
+        "finance_fr",
+        "energy",
+        "physics",
+        "industrial"
+      ],
+      "score_type": "ndcg@10",
+      "section": "knowledge",
+      "average_split": "average",
+      "scoring_note": "nDCG@10 (trec_eval linear gain) over every query of all 6 query languages, against ViDoRe's page-level qrels. The average split is the mean over the 8 tasks, the number Mixedbread's table reports. Search only: no LLM, no reranker, no query rewriting."
+    },
+    "vidore-v3-pdf": {
+      "description": "ViDoRe V3, 8 enterprise PDF tasks as the raw source PDFs: the server reads and splits each file itself, and a hit on page n stands for that page.",
+      "task": "Search only",
+      "splits": [
+        "hr",
+        "computer_science",
+        "pharmaceuticals",
+        "finance_en",
+        "finance_fr",
+        "energy",
+        "physics",
+        "industrial"
+      ],
+      "score_type": "ndcg@10",
+      "section": "knowledge",
+      "average_split": "average",
+      "scoring_note": "nDCG@10 (trec_eval linear gain) over every query of all 6 query languages, against ViDoRe's page-level qrels. The average split is the mean over the 8 tasks, the number Mixedbread's table reports. Search only: no LLM, no reranker, no query rewriting. Harder than the markdown version: nobody parses the pages for the server."
+    },
+    "miracl-vision": {
+      "description": "MIRACL-Vision: Wikipedia page images in 18 languages (338,734 images, 7,898 queries), each language searched on its own corpus. Images stored at up to 896 px.",
+      "task": "Search only",
+      "splits": [
+        "ar",
+        "bn",
+        "de",
+        "en",
+        "es",
+        "fa",
+        "fi",
+        "fr",
+        "hi",
+        "id",
+        "ja",
+        "ko",
+        "ru",
+        "sw",
+        "te",
+        "th",
+        "yo",
+        "zh"
+      ],
+      "score_type": "ndcg@10",
+      "section": "knowledge",
+      "average_split": "average",
+      "scoring_note": "nDCG@10 per language against MIRACL's qrels; the average split is the mean over the 18 languages. Each image is written under its article title."
+    },
+    "video-retrieval": {
+      "description": "Text to video on MSR-VTT 1k-A test (1,000 clips), DiDeMo test (1,004 videos, paragraph queries) and YouCook2 val (3,179 recipe-step clips).",
+      "task": "Search only",
+      "splits": [
+        "msrvtt",
+        "didemo",
+        "youcook2"
+      ],
+      "score_type": "ndcg@10",
+      "section": "knowledge",
+      "average_split": "average",
+      "scoring_note": "nDCG@10 with one relevant clip per caption; the average split is the mean over the three sets, the number Mixedbread publishes."
+    },
+    "browsecomp-plus": {
+      "description": "BrowseComp-Plus retriever track: a fixed corpus of 100,195 web pages and 830 research questions, scored on the official evidence or gold judgments.",
+      "task": "Search only",
+      "splits": [
+        "evidence",
+        "gold"
+      ],
+      "score_type": "ndcg@10",
+      "section": "knowledge",
+      "scoring_note": "nDCG@10 over the official qrels (qrel_evidence.txt: pages needed to answer; qrel_golds.txt: pages that hold the answer). Query text is kept out of result files."
+    },
+    "atm-bench-retrieval": {
+      "description": "ATM-Bench as search: 3,759 photos, 533 videos and 6,742 emails (four years of one person's data), 1,013 questions scored on their human-labelled evidence items.",
+      "task": "Search only",
+      "splits": [
+        "atm-bench"
+      ],
+      "score_type": "recall@10",
+      "section": "knowledge",
+      "scoring_note": "R@10: the share of a question's evidence items in the top 10 results. Each photo and video goes in as the raw file and as the benchmark's own text record (time, place, caption, OCR, tags); a hit on either counts as the item."
     }
   },
   "providers": {
@@ -92,6 +198,11 @@
         "http": {
           "key": "hindsight-http",
           "description": "Hindsight via a self-hosted HTTP endpoint. Recall uses all memory types (world + experience + observation) with no type filter applied.",
+          "kind": "cloud"
+        },
+        "knowledge": {
+          "key": "hindsight-knowledge",
+          "description": "Hindsight knowledge banks over HTTP: files (PDF, image, video) and text written into a knowledge bank, then searched. No LLM: the server's knowledge embedder is the only model.",
           "kind": "cloud"
         }
       }

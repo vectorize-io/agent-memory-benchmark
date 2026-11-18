@@ -54,7 +54,9 @@ def run(
     description: str = typer.Option(None, "--description", "-d", help="Optional description for this run (stored in the result JSON)"),
 ) -> None:
     """Run an evaluation on a single split (optionally filtered to a category)."""
-    _resolve_gemini_key()
+    no_llm = mode == "retrieval"  # search only: no answer model, no judge, no LLM key needed
+    if not no_llm:
+        _resolve_gemini_key()
 
     ds = get_dataset(dataset)
 
@@ -66,7 +68,7 @@ def run(
         dataset=ds,
         split=split,
         memory=get_memory_provider(memory),
-        mode=get_mode(mode, llm=get_answer_llm()),
+        mode=get_mode(mode, llm=None if no_llm else get_answer_llm()),
         category=category,
         query_limit=query_limit,
         query_id=query_id,
@@ -89,7 +91,10 @@ def run(
     table.add_column("Value", justify="right")
     table.add_row("Total queries", str(summary.total_queries))
     table.add_row("Correct", str(summary.correct))
-    table.add_row("Accuracy", f"{summary.accuracy:.1%}")
+    if summary.score_type == "accuracy":
+        table.add_row("Accuracy", f"{summary.accuracy:.1%}")
+    else:
+        table.add_row(summary.score_type.upper().replace("RECALL", "Recall"), f"{summary.accuracy * 100:.2f}")
     console.print(table)
     ds.summarize_run(summary.results, console)
 

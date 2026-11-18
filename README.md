@@ -31,6 +31,13 @@ One dataset breaks this shape on purpose. **PrecisionMemBench** ([upstream](http
 uv run amb run --dataset precisionmembench --split single-turn --memory hindsight-cloud --mode retrieval
 ```
 
+**Knowledge** datasets (ViDoRe V3 as markdown or PDFs, MIRACL-Vision, video, BrowseComp-Plus, ATM-Bench) are search only too: a corpus goes into a Hindsight knowledge bank and each query's ranking is scored with the leaderboard's own metric, NDCG@10 or Recall@10 (the dataset's `score_type`, which the viewer shows instead of "accuracy"). Corpora are cached in `~/.cache/hindsight/knowledge-evals`; `--query-limit` cuts queries, never the corpus.
+
+```bash
+HINDSIGHT_KNOWLEDGE_URL=http://localhost:8888 HINDSIGHT_KNOWLEDGE_KEY=... \
+  uv run amb run --dataset vidore-v3-markdown --split hr --memory hindsight-knowledge --mode retrieval
+```
+
 ## Setup
 
 ```bash

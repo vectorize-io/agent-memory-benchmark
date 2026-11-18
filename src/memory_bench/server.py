@@ -135,6 +135,7 @@ def _list_results(published_only: bool = False) -> list[dict]:
             avg_retrieve_time_ms = _extract("avg_retrieve_time_ms")
             avg_context_tokens = _extract("avg_context_tokens")
             category = _extract("category")
+            score_type = _extract("score_type")
             # Dataset-specific headline metrics (see Dataset.summary_metrics). Absent for
             # most datasets; the viewer only shows the columns it finds.
             mean_precision = _extract("mean_precision")
@@ -143,7 +144,7 @@ def _list_results(published_only: bool = False) -> list[dict]:
             active_total = _extract("active_total")
         except Exception:
             memory_provider = run_name
-            total_queries = correct = accuracy = ingestion_time_ms = ingested_docs = category = None
+            total_queries = correct = accuracy = ingestion_time_ms = ingested_docs = category = score_type = None
             mean_precision = mean_recall = active_passes = active_total = None
         split_name = parts[3].removesuffix(".json.gz").removesuffix(".json")
         # Path exposed to the viewer always uses .json (server serves .gz transparently)
@@ -158,6 +159,8 @@ def _list_results(published_only: bool = False) -> list[dict]:
             "total_queries": int(total_queries) if total_queries and total_queries != "null" else None,
             "correct": int(correct) if correct and correct != "null" else None,
             "accuracy": float(accuracy) if accuracy and accuracy != "null" else None,
+            # What `accuracy` holds: "accuracy" unless the dataset scores a ranking (e.g. "ndcg@10").
+            "score_type": score_type if score_type and score_type != "null" else "accuracy",
             "ingestion_time_ms": float(ingestion_time_ms) if ingestion_time_ms and ingestion_time_ms != "null" else None,
             "ingested_docs": int(ingested_docs) if ingested_docs and ingested_docs != "null" else None,
             "avg_retrieve_time_ms": float(avg_retrieve_time_ms) if avg_retrieve_time_ms and avg_retrieve_time_ms != "null" else None,
@@ -317,7 +320,7 @@ def _generate_catalog() -> dict:
     from .modes import REGISTRY as MODE_REGISTRY
 
     def _task_label(task_type: str) -> str:
-        return {"mcq": "MCQ", "retrieval": "ID-set scored"}.get(task_type, "LLM-judged")
+        return {"mcq": "MCQ", "retrieval": "ID-set scored", "ranked": "Search only"}.get(task_type, "LLM-judged")
 
     import json as _json
     ext_path = _root / "external_results.json"
@@ -328,14 +331,28 @@ def _generate_catalog() -> dict:
         except Exception:
             pass
 
-    datasets = {
-        name: {
+    def _entry(cls) -> dict:
+        ranked = cls.score_type != "accuracy"
+        entry = {
             "description": cls.description,
-            "task": _task_label(cls.task_type),
+            "task": _task_label("ranked" if ranked else cls.task_type),
             "splits": cls.splits,
+            "score_type": cls.score_type,
         }
+        if ranked:  # knowledge-bank retrieval: its own section of the viewer
+            entry["section"] = "knowledge"
+            if getattr(cls, "average_split", None):
+                entry["average_split"] = cls.average_split
+            if getattr(cls, "scoring_note", None):
+                entry["scoring_note"] = cls.scoring_note
+        return entry
+
+    datasets = {
+        name: _entry(cls)
         for name, cls in DS_REGISTRY.items()
-        if (_data_dir / name).exists() or name in _ext_datasets
+        # Ranked datasets are listed even with no exported data: their corpora are
+        # gigabytes (and BrowseComp-Plus may not be published), so data/ never holds them.
+        if (_data_dir / name).exists() or name in _ext_datasets or cls.score_type != "accuracy"
     }
     providers: dict = {}
     for key, cls in MEM_REGISTRY.items():
@@ -446,8 +463,9 @@ def split_category_breakdown(dataset: str, split: str):
                     if v is None:
                         continue
                     v = str(v)
-                    axes.setdefault(axis, {}).setdefault(v, {"correct": 0, "total": 0})
+                    axes.setdefault(axis, {}).setdefault(v, {"correct": 0, "total": 0, "score": 0.0})
                     axes[axis][v]["total"] += 1
+                    axes[axis][v]["score"] += r.get("score") or 0.0
                     if r.get("correct"):
                         axes[axis][v]["correct"] += 1
 
@@ -461,8 +479,10 @@ def split_category_breakdown(dataset: str, split: str):
         if not chosen_axis:
             continue
 
+        # A ranked dataset's number is its mean metric (nDCG@10, recall@10), not a pass rate.
+        key = "correct" if entry.get("score_type", "accuracy") == "accuracy" else "score"
         categories = {
-            v: round(s["correct"] / s["total"], 4) if s["total"] else None
+            v: round(s[key] / s["total"], 4) if s["total"] else None
             for v, s in axes[chosen_axis].items()
         }
         out.append({
