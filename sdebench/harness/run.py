@@ -24,7 +24,7 @@ IMAGE = "sdebench-base"
 
 def _codebase_dir(task):
     """Dir holding build.py for this task's shared codebase."""
-    return SDEBENCH / "datasets" / (task.get("codebase") or task["repo"])
+    return REPO_ROOT / "datasets" / "sdebench" / (task.get("codebase") or task["repo"])
 
 
 def _task_dir(task):
@@ -937,7 +937,7 @@ def build_feedback(grade_result: dict) -> str:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--task", required=True, help="path to a task.json (sdebench/datasets/boltons-*/tasks/main/task.json)")
+    ap.add_argument("--task", required=True, help="path to a task.json (datasets/sdebench/boltons-*/tasks/main/task.json)")
     ap.add_argument("--history", choices=["full", "squashed", "hindsight", "hscoding", "memtool", "inject", "oracle", "hybrid", "index", "provided", "conversations", "skill"], default="full")
     ap.add_argument("--agent", choices=["opencode", "claude-code", "codex", "pi", "hermes"], default="opencode")
     ap.add_argument("--model", default=None, help="agent model; defaults per --agent")

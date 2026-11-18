@@ -31,8 +31,8 @@ question's ``must_not_claim`` (the trap — an outdated or wrong statement the c
 fails the answer even if the rest is right; the judge's reason starts with ``TRAP`` so
 ``summary_metrics`` can count them.
 
-The scenario (users, chats, exceptions, questions) is ``supportbench.json`` next to this file; the
-manuals are downloaded once into the knowledge cache. The manuals are © Nextcloud GmbH and
+The scenario (users, chats, exceptions, questions) and the two manuals live in the
+``hindsight-datasets`` submodule at ``datasets/supportbench/`` (``git submodule update --init``). The manuals are © Nextcloud GmbH and
 contributors, licensed CC BY 3.0 (https://github.com/nextcloud/documentation).
 """
 
@@ -40,17 +40,14 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
 from functools import cache
 from pathlib import Path
 
 from ..models import Document, Query
 from .base import Dataset
-from .knowledge_data import CACHE, _download
 
-_log = logging.getLogger(__name__)
-
-_SCENARIO = Path(__file__).with_name("supportbench.json")
+_ROOT = Path(__file__).resolve().parents[3] / "datasets" / "supportbench"
+_SCENARIO = _ROOT / "supportbench.json"
 CATEGORIES = ("docs_only", "needs_both", "conflict", "exception")
 
 _JUDGE_PROMPT = """\
@@ -79,20 +76,19 @@ outdated, is not asserting it.
 
 @cache
 def scenario() -> dict:
+    if not _SCENARIO.exists():
+        raise FileNotFoundError(f"{_SCENARIO} is missing: run `git submodule update --init datasets`")
     return json.loads(_SCENARIO.read_text())
 
 
 def manual_paths() -> list[Path]:
-    """The manuals, downloaded once. A changed upstream file (Nextcloud republishes the 32 manuals
-    on point releases) is used anyway, with a warning: the page numbers in ``sources`` may drift."""
-    out = CACHE / "supportbench"
-    out.mkdir(parents=True, exist_ok=True)
+    """The manuals, from the dataset repo; each is checked against the sha256 its page references
+    were written for."""
     paths = []
     for m in scenario()["manuals"]:
-        path = _download(m["url"], out / m["filename"])
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        if digest != m["sha256"]:
-            _log.warning("supportbench: %s changed upstream (sha256 %s); page references may be off", m["filename"], digest)
+        path = _ROOT / m["filename"]
+        if hashlib.sha256(path.read_bytes()).hexdigest() != m["sha256"]:
+            raise ValueError(f"supportbench: {path} does not match its pinned sha256")
         paths.append(path)
     return paths
 
