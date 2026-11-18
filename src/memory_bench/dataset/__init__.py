@@ -8,6 +8,7 @@ from .longmemeval import LongMemEvalDataset
 from .personamem import PersonaMemDataset
 from .precisionmembench import PrecisionMemBenchDataset
 from .sdebench import SdebenchDataset
+from .supportbench import SupportBenchDataset
 
 REGISTRY: dict[str, type[Dataset]] = {
     "beam":         BEAMDataset,
@@ -17,6 +18,7 @@ REGISTRY: dict[str, type[Dataset]] = {
     "longmemeval":  LongMemEvalDataset,    "personamem":   PersonaMemDataset,
     "precisionmembench": PrecisionMemBenchDataset,
     "sdebench":     SdebenchDataset,
+    "supportbench": SupportBenchDataset,
     # Knowledge-bank retrieval (search only, ranked scores): see dataset/knowledge.py
     **{cls.name: cls for cls in KNOWLEDGE_DATASETS},
 }
