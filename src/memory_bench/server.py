@@ -430,11 +430,13 @@ def split_category_breakdown(dataset: str, split: str):
         # Try .gz variant if plain .json not found
         if not path.exists():
             path = path.with_suffix(".json.gz")
-        if not path.exists():
-            continue
         try:
-            raw = path.read_bytes()
-            data = _json.loads(_gzip.decompress(raw) if path.name.endswith(".gz") else raw)
+            if path.exists():
+                raw = path.read_bytes()
+                data = _json.loads(_gzip.decompress(raw) if path.name.endswith(".gz") else raw)
+            else:  # deploys ship no outputs/: the result lives in Blob
+                gz = entry["path"] if entry["path"].endswith(".gz") else entry["path"] + ".gz"
+                data = _json.loads(_gzip.decompress(_fetch_blob(gz)))
         except Exception:
             continue
 
