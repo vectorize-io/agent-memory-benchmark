@@ -732,6 +732,454 @@
         "source_url": "https://www.mixedbread.com/evals/vidore-v3-text",
         "source_label": "Mixedbread ViDoRe V3 text evals",
         "comment": "Mean over the 8 tasks over every query language, the setting AMB's run scores."
+      },
+      {
+        "memory": "Qwen3-Embedding-8B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.5108,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.5048,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "LFM2-350M (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.4423,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "Qwen3-Embedding-0.6B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.4368,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "BGE-M3 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.4145,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "BM25S (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.1909,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      }
+    ],
+    "computer_science": [
+      {
+        "memory": "Qwen3-Embedding-8B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.717,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.643,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "LFM2-350M (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.635,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Qwen3-Embedding-0.6B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.664,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BGE-M3 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.58,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BM25S (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.287,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "finance_en": [
+      {
+        "memory": "Qwen3-Embedding-8B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.494,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.484,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "LFM2-350M (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.39,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Qwen3-Embedding-0.6B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.427,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BGE-M3 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.398,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BM25S (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.176,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "pharmaceuticals": [
+      {
+        "memory": "Qwen3-Embedding-8B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.592,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.549,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "LFM2-350M (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.564,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Qwen3-Embedding-0.6B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.506,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BGE-M3 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.52,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BM25S (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.273,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "hr": [
+      {
+        "memory": "Qwen3-Embedding-8B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.476,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.528,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "LFM2-350M (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.435,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Qwen3-Embedding-0.6B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.377,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BGE-M3 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.424,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BM25S (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.128,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "industrial": [
+      {
+        "memory": "Qwen3-Embedding-8B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.404,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.384,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "LFM2-350M (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.344,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Qwen3-Embedding-0.6B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.316,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BGE-M3 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.285,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BM25S (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.156,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "physics": [
+      {
+        "memory": "Qwen3-Embedding-8B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.456,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.436,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "LFM2-350M (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.418,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Qwen3-Embedding-0.6B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.433,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BGE-M3 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.359,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BM25S (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.148,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "energy": [
+      {
+        "memory": "Qwen3-Embedding-8B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.589,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.601,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "LFM2-350M (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.47,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Qwen3-Embedding-0.6B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.513,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BGE-M3 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.498,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BM25S (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.219,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "finance_fr": [
+      {
+        "memory": "Qwen3-Embedding-8B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.358,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.413,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "LFM2-350M (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.282,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Qwen3-Embedding-0.6B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.258,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BGE-M3 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.252,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "BM25S (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.14,
+        "comment": "Page markdown from NVIDIA NeMo Retriever extraction, which may differ from the markdown the dataset ships. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
       }
     ]
   },
@@ -990,6 +1438,814 @@
         "source_url": "https://github.com/mixedbread-ai/quality-evals",
         "source_label": "mixedbread-ai/quality-evals",
         "comment": "Page images. Mean over the 8 tasks, each scored on queries in the task's own language, from the per-task result files."
+      },
+      {
+        "memory": "ColEmbed-3B-v2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.597,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.576,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "ColNomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.5771,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "ColEmbed-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.5708,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "ColNomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.5645,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "ColEmbed-1B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.5547,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "ColQwen2.5 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.5246,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "Nomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.4951,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "ColQwen2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.442,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "Nomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.446,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      },
+      {
+        "memory": "ColPali (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.4298,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker. The paper averages 10 tasks; this is the mean over the 8 public ones AMB runs."
+      }
+    ],
+    "computer_science": [
+      {
+        "memory": "ColEmbed-3B-v2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.771,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.718,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.762,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.752,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.727,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-1B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.713,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2.5 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.723,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.666,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.686,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.585,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColPali (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.653,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "finance_en": [
+      {
+        "memory": "ColEmbed-3B-v2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.642,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.593,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.566,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.609,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.563,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-1B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.589,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2.5 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.523,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.488,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.39,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.442,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColPali (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.344,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "pharmaceuticals": [
+      {
+        "memory": "ColEmbed-3B-v2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.66,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.631,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.623,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.637,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.611,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-1B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.626,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2.5 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.579,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.589,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.522,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.553,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColPali (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.531,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "hr": [
+      {
+        "memory": "ColEmbed-3B-v2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.623,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.595,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.587,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.587,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.573,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-1B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.57,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2.5 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.512,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.462,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.451,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.433,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColPali (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.448,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "industrial": [
+      {
+        "memory": "ColEmbed-3B-v2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.517,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.504,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.501,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.471,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.474,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-1B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.466,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2.5 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.413,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.379,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.383,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.332,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColPali (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.356,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "physics": [
+      {
+        "memory": "ColEmbed-3B-v2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.47,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.466,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.483,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.451,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.475,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-1B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.441,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2.5 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.459,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.442,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.416,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.42,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColPali (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.417,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "energy": [
+      {
+        "memory": "ColEmbed-3B-v2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.649,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.64,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.64,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.621,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.65,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-1B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.609,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2.5 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.597,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.575,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.488,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.514,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColPali (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.471,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      }
+    ],
+    "finance_fr": [
+      {
+        "memory": "ColEmbed-3B-v2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.444,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Jina-v4 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.461,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.455,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.438,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColNomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.443,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColEmbed-1B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.424,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2.5 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.391,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-7B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.36,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColQwen2 (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.2,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "Nomic-3B (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.289,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
+      },
+      {
+        "memory": "ColPali (all 6 query languages)",
+        "score_type": "ndcg@10",
+        "source_url": "https://arxiv.org/abs/2601.08620",
+        "source_label": "ViDoRe V3 Paper (arXiv:2601.08620)",
+        "accuracy": 0.218,
+        "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
       }
     ]
   }
