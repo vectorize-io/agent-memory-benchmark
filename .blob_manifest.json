@@ -339,5 +339,13 @@
   "outputs/supportbench/support-linked-local-1/agent/nextcloud.json.gz": {
     "sha": "834042c7640c474298ab673972cf0424970c08c9c5035a5dea53758a2f835aaf",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/supportbench/support-linked-local-1/agent/nextcloud.json-VNQUUv5tAaR2oANs9idkFk54JnRfnx.gz"
+  },
+  "outputs/legalbench-rag/hindsight-pr6704/retrieval/mini.json.gz": {
+    "sha": "61ef00c823034b7a32b262df6432fb2dea5cbaf2c4975a7878f79bfc51c9a468",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/legalbench-rag/hindsight-pr6704/retrieval/mini.json-iH5HPAmY00LZaAlPZ5Q4RvEajjCuz6.gz"
+  },
+  "outputs/legalbench-rag/hindsight-pr6704-filenames/retrieval/mini.json.gz": {
+    "sha": "b07b3e87e59b6502da62f59b494f25ac0e224ea2273acc4bc073b2a60ad773c0",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/legalbench-rag/hindsight-pr6704-filenames/retrieval/mini.json-Hpsgta2uXFM7lvJxTvxTXe6glxznhI.gz"
   }
 }

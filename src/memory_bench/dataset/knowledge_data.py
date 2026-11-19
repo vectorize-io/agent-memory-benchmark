@@ -585,10 +585,8 @@ def legalbench_rag(*, queries: int | None) -> RankedSuite:
     """LegalBench-RAG mini: the 776 questions the repository's benchmark.py picks (194 per set, its
     seeded order), over the whole 714-contract corpus of the four sets, as Conare's table runs it.
 
-    Documents go in under neutral ids (``lb-0001``) and their corpus file names
-    (``Acacia_Communications_Cisco_Systems.txt``), as a user would upload them: the questions were
-    written from those names, and some name their contract no other way ("the Agreement between IPTK and
-    CO"). Scoring only reads the ids.
+    Documents go in under neutral ids and file names (``lb-0001.txt``), as Conare ran it ("no file
+    names"): the corpus paths name the parties, which the questions were written from.
     """
     import random
     import zipfile
@@ -603,10 +601,17 @@ def legalbench_rag(*, queries: int | None) -> RankedSuite:
     corpus = out / "corpus"
     paths = sorted(str(f.relative_to(corpus)) for f in corpus.rglob("*.txt"))
     ids = {path: f"lb-{n:04d}" for n, path in enumerate(paths, 1)}
+    # AMB_LEGALBENCH_NAMES=original uploads each contract under its corpus file name instead, as a user
+    # would ("Acacia_Communications_Cisco_Systems.txt"); ids stay neutral, so the scoring is the same.
     from urllib.parse import unquote
 
+    original = os.getenv("AMB_LEGALBENCH_NAMES") == "original"
     items = tuple(
-        TextItem(id=ids[p], text=(corpus / p).read_text(encoding="utf-8"), filename=unquote(Path(p).name))
+        TextItem(
+            id=ids[p],
+            text=(corpus / p).read_text(encoding="utf-8"),
+            filename=unquote(Path(p).name) if original else f"{ids[p]}.txt",
+        )
         for p in paths
     )
     tests: list[tuple[str, dict]] = []
