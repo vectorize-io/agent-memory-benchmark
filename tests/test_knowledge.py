@@ -9,6 +9,8 @@ import pytest
 from memory_bench.dataset import REGISTRY
 from memory_bench.dataset import knowledge_data as data
 from memory_bench.dataset.knowledge import (
+    LegalBenchRagDataset,
+    text_spans,
     AtmBenchRetrievalDataset,
     KnowledgeDataset,
     VidorePdfDataset,
@@ -106,6 +108,26 @@ def test_atm_bench_scores_recall_at_10():
     q = ds.load_queries("atm-bench")[0]
     _, _, score = ds.score_retrieval(q, [Document(id="a~text", content="")] + [Document(id=f"x{i}", content="") for i in range(20)])
     assert score == 0.5  # one of the two evidence items in the top 10, via its text record
+
+
+def test_legalbench_scores_marked_characters_in_the_top_5_hits():
+    doc = "Intro.\n\nClause A says x.\n\nClause B says y.\n\nClause A says x."
+    ds = LegalBenchRagDataset()
+    gold_b = (doc.index("Clause B"), doc.index("Clause B") + len("Clause B says y."))
+    ds.__dict__["_suites"] = {"mini": data.RankedSuite(
+        name="lb", items=(data.TextItem(id="c", text=doc, filename="c.txt"),),
+        queries=(data.RankedQuery(id="q", text="t", group="cuad", relevant={"c": 1}),),
+        spans={"q": (("c", *gold_b),)},
+    )}
+    q = ds.load_queries("mini")[0]
+    assert q.meta["retrieval_limit"] == 5 and q.meta["retrieval_filter"] == {"max_tokens": 4096}
+    # A run of passages joined by a blank line lands on one place, the second "Clause A" after B.
+    assert text_spans(doc, "Clause B says y.\n\nClause A says x.") == [gold_b, (doc.rindex("Clause A"), len(doc))]
+    hit, _, recall = ds.score_retrieval(q, [Document(id="c", content="Clause B says y.\n\nClause A says x.")])
+    assert hit and recall == 1.0
+    assert q.meta["metrics"]["precision@5"] == 0.5 and q.meta["unplaced_chars"] == 0
+    _, _, recall = ds.score_retrieval(q, [Document(id="c", content="Intro.")] * 5 + [Document(id="c", content="Clause B says y.")])
+    assert recall == 0.0  # the 6th hit is not scored
 
 
 class _StubSearch(MemoryProvider):

@@ -2248,5 +2248,73 @@
         "comment": "Page images. Table 1, all 6 query languages (the setting AMB's own run scores), no reranker."
       }
     ]
+  },
+  "legalbench-rag": {
+    "mini": [
+      {
+        "memory": "Conare",
+        "accuracy": 0.854,
+        "score_type": "recall@5",
+        "source_url": "https://conare.ai/benchmarks",
+        "source_label": "Conare benchmarks",
+        "comment": "Character recall@5 on the official LegalBench-RAG mini set (776 questions, 714 contracts, no file names), as published in Conare's table (data as of 9 November 2026). Conare's hosted search API, default settings. Self-reported."
+      },
+      {
+        "memory": "Voyage context-3",
+        "accuracy": 0.637,
+        "score_type": "recall@5",
+        "source_url": "https://conare.ai/benchmarks",
+        "source_label": "Conare benchmarks",
+        "comment": "Character recall@5 on the official LegalBench-RAG mini set (776 questions, 714 contracts, no file names), as published in Conare's table (data as of 9 November 2026). voyage-context-3. Run and published by Conare."
+      },
+      {
+        "memory": "Cohere Embed v5 + Rerank v5 Pro",
+        "accuracy": 0.494,
+        "score_type": "recall@5",
+        "source_url": "https://conare.ai/benchmarks",
+        "source_label": "Conare benchmarks",
+        "comment": "Character recall@5 on the official LegalBench-RAG mini set (776 questions, 714 contracts, no file names), as published in Conare's table (data as of 9 November 2026). embed-v5 + rerank-v5.0-pro. Run and published by Conare."
+      },
+      {
+        "memory": "OpenAI file search",
+        "accuracy": 0.478,
+        "score_type": "recall@5",
+        "source_url": "https://conare.ai/benchmarks",
+        "source_label": "Conare benchmarks",
+        "comment": "Character recall@5 on the official LegalBench-RAG mini set (776 questions, 714 contracts, no file names), as published in Conare's table (data as of 9 November 2026). OpenAI's hosted file search, default settings. Run and published by Conare."
+      },
+      {
+        "memory": "NVIDIA Nemotron 3.5 Embed 8B",
+        "accuracy": 0.445,
+        "score_type": "recall@5",
+        "source_url": "https://conare.ai/benchmarks",
+        "source_label": "Conare benchmarks",
+        "comment": "Character recall@5 on the official LegalBench-RAG mini set (776 questions, 714 contracts, no file names), as published in Conare's table (data as of 9 November 2026). Nemotron-3.5-Embed-8B. Run and published by Conare."
+      },
+      {
+        "memory": "Qwen3 Embedding 8B",
+        "accuracy": 0.425,
+        "score_type": "recall@5",
+        "source_url": "https://conare.ai/benchmarks",
+        "source_label": "Conare benchmarks",
+        "comment": "Character recall@5 on the official LegalBench-RAG mini set (776 questions, 714 contracts, no file names), as published in Conare's table (data as of 9 November 2026). Run and published by Conare."
+      },
+      {
+        "memory": "ZeroEntropy zembed-1",
+        "accuracy": 0.416,
+        "score_type": "recall@5",
+        "source_url": "https://conare.ai/benchmarks",
+        "source_label": "Conare benchmarks",
+        "comment": "Character recall@5 on the official LegalBench-RAG mini set (776 questions, 714 contracts, no file names), as published in Conare's table (data as of 9 November 2026). Run and published by Conare."
+      },
+      {
+        "memory": "Jina Embeddings v5 Text Small",
+        "accuracy": 0.399,
+        "score_type": "recall@5",
+        "source_url": "https://conare.ai/benchmarks",
+        "source_label": "Conare benchmarks",
+        "comment": "Character recall@5 on the official LegalBench-RAG mini set (776 questions, 714 contracts, no file names), as published in Conare's table (data as of 9 November 2026). Run and published by Conare."
+      }
+    ]
   }
 }

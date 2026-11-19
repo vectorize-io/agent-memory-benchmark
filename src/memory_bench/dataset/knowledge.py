@@ -12,6 +12,7 @@ bank (``hindsight-knowledge``):
 | ``video-retrieval``    | MSR-VTT 1k-A, DiDeMo, YouCook2 | nDCG@10                        |
 | ``browsecomp-plus``    | evidence / gold judgments      | nDCG@10                        |
 | ``atm-bench-retrieval``| photos + videos + emails       | recall@10 (the board's R@10)   |
+| ``legalbench-rag``     | mini: 776 questions, 714 contracts | character recall@5         |
 
 A split is one corpus (one bank). The corpus is always whole — a smaller pool makes every
 query easier — and ``--query-limit`` only cuts queries: per query language on ViDoRe (the
@@ -272,6 +273,96 @@ class AtmBenchRetrievalDataset(KnowledgeDataset):
         return data.atm_bench(queries=None)
 
 
+def text_spans(document: str, text: str) -> list[tuple[int, int]]:
+    """Where a hit's text sits in its document. The search returns a run of passages joined by a
+    blank line, each an exact slice of the document, without offsets; each one is looked up after
+    the previous one, so a run lands on one place even in a contract that repeats itself."""
+    spans: list[tuple[int, int]] = []
+    cursor = 0
+    for piece in (p.strip() for p in text.split("\n\n")):
+        if not piece:
+            continue
+        at = document.find(piece, cursor)
+        if at < 0:
+            at = document.find(piece)
+        if at < 0:
+            continue  # not a slice of the document: counted as unplaced in the query's meta
+        spans.append((at, at + len(piece)))
+        cursor = at + len(piece)
+    return spans
+
+
+def _merged(spans: Sequence[tuple[int, int]]) -> list[tuple[int, int]]:
+    out: list[tuple[int, int]] = []
+    for start, end in sorted(spans):
+        if out and start <= out[-1][1]:
+            out[-1] = (out[-1][0], max(out[-1][1], end))
+        else:
+            out.append((start, end))
+    return out
+
+
+def _overlap(a: Sequence[tuple[int, int]], b: Sequence[tuple[int, int]]) -> int:
+    return sum(max(0, min(e1, e2) - max(s1, s2)) for s1, e1 in a for s2, e2 in b)
+
+
+class LegalBenchRagDataset(KnowledgeDataset):
+    name = "legalbench-rag"
+    description = "LegalBench-RAG mini: 776 questions over 714 contracts (NDAs, M&A agreements, commercial contracts, privacy policies), scored on the exact characters lawyers marked."
+    splits = ["mini"]
+    score_type = "recall@5"
+    group_axis = "Set"
+    #: The hits scored, and the text they may weigh in all: the search API's default budget.
+    TOP = 5
+    MAX_TOKENS = 4096
+    scoring_note = (
+        "Character recall@5, as legalbenchrag/run_benchmark.py computes it: the share of the marked "
+        "characters that the top 5 results' text covers. The 4 sets weigh the same (194 questions each). "
+        "The search runs at the API's default budget of 4,096 tokens, so the 5 results carry about as much "
+        "text as 5 chunks of a typical RAG setup. Precision (the share of returned text that is marked) is "
+        "in each query's metrics. Documents go in with neutral names. Search only: no LLM."
+    )
+    links = [
+        {"label": "Dataset", "url": "https://github.com/zeroentropy-ai/legalbenchrag"},
+        {"label": "Conare table", "url": "https://conare.ai/benchmarks"},
+    ]
+
+    def _load(self, split: str) -> data.RankedSuite:
+        return data.legalbench_rag(queries=None)
+
+    def load_queries(self, split: str, category: str | None = None, limit: int | None = None) -> list[Query]:
+        queries = super().load_queries(split, category, limit)
+        for q in queries:
+            q.meta["retrieval_limit"] = self.TOP
+            q.meta["retrieval_filter"] = {"max_tokens": self.MAX_TOKENS}
+        return queries
+
+    def score_retrieval(self, query: Query, retrieved: list[Document]) -> tuple[bool, str, float]:
+        suite = self.suite(query.meta["split"])
+        texts = self.__dict__.setdefault("_texts", {i.id: i.text for i in suite.items})
+        gold: dict[str, list[tuple[int, int]]] = {}
+        for doc_id, start, end in suite.spans[query.id]:
+            gold.setdefault(doc_id, []).append((start, end))
+        found: dict[str, list[tuple[int, int]]] = {}
+        returned = unplaced = 0
+        for hit in retrieved[: self.TOP]:
+            spans = text_spans(texts.get(hit.id, ""), hit.content or "")
+            returned += sum(e - s for s, e in spans)
+            unplaced += max(0, len((hit.content or "").replace("\n\n", "")) - sum(e - s for s, e in spans))
+            found.setdefault(hit.id, []).extend(spans)
+        found = {d: _merged(s) for d, s in found.items()}
+        marked = sum(e - s for spans in gold.values() for s, e in spans)
+        covered = sum(_overlap(gold[d], found.get(d, [])) for d in gold)
+        recall = covered / marked if marked else 0.0
+        precision = covered / sum(e - s for spans in found.values() for s, e in spans) if found else 0.0
+        query.meta["metrics"] = {"recall@5": round(recall, 4), "precision@5": round(precision, 4)}
+        query.meta["ranking"] = [h.id for h in retrieved[: self.TOP]]
+        query.meta["returned_chars"] = returned
+        query.meta["unplaced_chars"] = unplaced
+        reason = f"{covered}/{marked} marked characters in the top {self.TOP} ({returned} characters returned)"
+        return covered > 0, reason, recall
+
+
 KNOWLEDGE_DATASETS: list[type[KnowledgeDataset]] = [
     VidoreMarkdownDataset,
     VidorePdfDataset,
@@ -279,4 +370,5 @@ KNOWLEDGE_DATASETS: list[type[KnowledgeDataset]] = [
     VideoRetrievalDataset,
     BrowseCompPlusDataset,
     AtmBenchRetrievalDataset,
+    LegalBenchRagDataset,
 ]
