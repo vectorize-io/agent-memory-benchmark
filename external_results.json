@@ -202,6 +202,13 @@
         "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system \u2014 potential for biased setup or prompt choices."
       },
       {
+        "memory": "WARM (gpt-4o-mini)",
+        "accuracy": 0.7365,
+        "source_url": "https://github.com/writerslogic/warm/blob/12611a9f9c2c5527a63999f7eb44d7c6bb4691a5/docs/benchmarks/LOCOMO.md",
+        "source_label": "WARM LoCoMo report (WritersLogic, Oct 2026)",
+        "comment": "Self-reported by WritersLogic (WARM maintainers); not run through AMB. Follows the Mem0-paper protocol (mem0ai/mem0 evaluation/ at 393a4fd5): Mem0's answer prompt and J judge prompt, gpt-4o-mini-2024-07-18 as both reader and judge at temperature 0, so it is not comparable to the locomo-fixed / gpt-5 rows in this repository. Adversarial questions (cat. 5) excluded; 1,540 questions over all 10 conversations; mean J over 5 independent reader+judge passes (std 0.39 points). Recall: hybrid lexical plus text-embedding-3-small, top_k=30 per speaker, capped at 1,764 tokens (mean context 1,749 tokens); one fact per raw turn, no LLM extraction, summaries or captions. The recall configuration was frozen on 3 tuning conversations (conv-26, 30, 41), which are included in this score; the 7 held-out conversations alone score 71.97. Run 2026-10-23 on an Apple M-series laptop at WARM commit c80aa52a. Scores by category with the Mem0 paper's column labels, so they line up with the other rows: Single-Hop 63.9%, Multi-Hop 49.0%, Temporal 71.6%, Open-Domain 80.5% (LoCoMo category ids 1, 3, 2, 4; the report explains why the paper's labels differ from the dataset's own names for these ids). Source data: benchmarks/results/locomo_v1.json in github.com/writerslogic/warm."
+      },
+      {
         "memory": "Mem0",
         "accuracy": 0.6688,
         "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
