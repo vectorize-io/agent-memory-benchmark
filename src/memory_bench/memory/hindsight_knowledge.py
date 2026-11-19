@@ -9,6 +9,8 @@ Configuration:
   HINDSIGHT_KNOWLEDGE_BANK  with --skip-ingestion: search this existing bank instead of the
                             one the previous run of this split recorded
   AMB_KNOWLEDGE_SEARCH_CONCURRENCY / AMB_KNOWLEDGE_UPLOAD_CONCURRENCY   requests in flight (4 / 4)
+  AMB_KNOWLEDGE_BANK_CONFIG  JSON of ingest overrides set on each new bank before its first upload,
+                            e.g. {"text_passage_tokens": 2048}
 
 A run creates one bank per split and keeps it (its id is in the run's _store directory), so
 ``--skip-ingestion`` can search it again. Delete old banks on a shared server yourself.
@@ -84,11 +86,11 @@ class KnowledgeApi:
         await self._http.aclose()
 
     async def _call(self, method: str, path: str, **kwargs) -> bytes:
-        # A deployed server sits behind a rate limiter (nginx answers 429 with no Retry-After):
-        # wait and ask again instead of failing the run.
+        # A deployed server sits behind a rate limiter (nginx answers 429 with no Retry-After), and a
+        # search answers 503 when its embedder was rate limited: wait and ask again instead of failing the run.
         for attempt in range(RATE_LIMIT_RETRIES):
             r = await self._http.request(method, f"{PREFIX}{path}", **kwargs)
-            if r.status_code != 429:
+            if r.status_code not in (429, 503):
                 break
             await asyncio.sleep(float(r.headers.get("retry-after") or min(2**attempt, 30)))
         if r.status_code >= 300:
@@ -97,6 +99,9 @@ class KnowledgeApi:
 
     async def create_bank(self, bank_id: str) -> None:
         await self._call("POST", "", json={"bank_id": bank_id})
+        overrides = os.getenv("AMB_KNOWLEDGE_BANK_CONFIG")
+        if overrides:  # before any upload: a bank splits its files with the settings it had then
+            await self._call("PATCH", f"/{bank_id}/config", json={"updates": json.loads(overrides)})
 
     async def delete_bank(self, bank_id: str) -> None:
         await self._call("DELETE", f"/{bank_id}")
@@ -137,12 +142,17 @@ class KnowledgeApi:
                 break
         return docs
 
-    async def search(self, bank_id: str, query: str, top_k: int) -> list[Document]:
+    async def search(self, bank_id: str, query: str, top_k: int, max_tokens: int | None = None) -> list[Document]:
         """The ``top_k`` best passages, as (document id, page). The API takes a token budget, not
-        a count: ask for the deepest one and keep the ranks that are scored."""
-        raw = await self._call("POST", f"/{bank_id}/search", json={"query": query, "max_tokens": SCORING_BUDGET})
+        a count: by default ask for the deepest one and keep the ranks that are scored. With
+        ``max_tokens`` (a dataset scored on the returned text), search at that budget and keep the text."""
+        budget = max_tokens or SCORING_BUDGET
+        raw = await self._call("POST", f"/{bank_id}/search", json={"query": query, "max_tokens": budget})
         results = json.loads(raw)["results"][:top_k]
-        return [Document(id=r["document_id"], content="", page=r.get("page")) for r in results]
+        return [
+            Document(id=r["document_id"], content=(r.get("text") or "") if max_tokens else "", page=r.get("page"))
+            for r in results
+        ]
 
 
 async def _upload(api: KnowledgeApi, bank_id: str, documents: Sequence[Document]) -> None:
@@ -204,6 +214,8 @@ class HindsightKnowledgeMemoryProvider(MemoryProvider):
     variant = "knowledge"
     link = "https://github.com/vectorize-io/hindsight"
     concurrency = SEARCH_CONCURRENCY
+    #: Takes ``retrieval_filter``, only for ``max_tokens``: a dataset scored on the returned text.
+    supports_filters = True
 
     def __init__(self) -> None:
         self._url = os.environ.get("HINDSIGHT_KNOWLEDGE_URL", "http://localhost:8888")
@@ -257,7 +269,7 @@ class HindsightKnowledgeMemoryProvider(MemoryProvider):
         # 503): a few retries keep one blip from failing a run; anything else still raises.
         for attempt in range(SEARCH_RETRIES + 1):
             try:
-                return await self._api().search(self._bank_id, query, k), None
+                return await self._api().search(self._bank_id, query, k, (filters or {}).get("max_tokens")), None
             except (httpx.HTTPStatusError, httpx.TransportError) as exc:
                 status = getattr(getattr(exc, "response", None), "status_code", 503)
                 if attempt == SEARCH_RETRIES or status < 500:
