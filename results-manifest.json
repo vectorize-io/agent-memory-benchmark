@@ -1431,9 +1431,9 @@
     "tokens_out": 1049086
   },
   {
-    "path": "outputs/supportbench/support-knowledge-local-1/agent/nextcloud.json",
+    "path": "outputs/supportbench/support-knowledge/agent/nextcloud.json",
     "dataset": "supportbench",
-    "run_name": "support-knowledge-local-1",
+    "run_name": "support-knowledge",
     "memory": "hindsight-support-knowledge",
     "mode": "agent",
     "split": "nextcloud",
@@ -1452,9 +1452,9 @@
     "active_total": null
   },
   {
-    "path": "outputs/supportbench/support-linked-local-1/agent/nextcloud.json",
+    "path": "outputs/supportbench/support-linked/agent/nextcloud.json",
     "dataset": "supportbench",
-    "run_name": "support-linked-local-1",
+    "run_name": "support-linked",
     "memory": "hindsight-support-linked",
     "mode": "agent",
     "split": "nextcloud",
@@ -1473,9 +1473,9 @@
     "active_total": null
   },
   {
-    "path": "outputs/supportbench/support-memory-local-1/agent/nextcloud.json",
+    "path": "outputs/supportbench/support-memory/agent/nextcloud.json",
     "dataset": "supportbench",
-    "run_name": "support-memory-local-1",
+    "run_name": "support-memory",
     "memory": "hindsight-support-memory",
     "mode": "agent",
     "split": "nextcloud",

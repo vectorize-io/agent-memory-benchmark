@@ -260,18 +260,6 @@
     "sha": "7ae4336b990be7e5707c9749b2b478e08d8eed8ab27d62c4f2cf94d5ab8d566f",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/data/supportbench/nextcloud/stats.json-t1zebLQ0ZH4oMMvqLg7iCyg0IroWyv.gz"
   },
-  "outputs/supportbench/support-memory-local-1/agent/nextcloud.json.gz": {
-    "sha": "f53cc07c8932723e7b273a4817a75be34547c7bee300693f79a8d4816b281dca",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/supportbench/support-memory-local-1/agent/nextcloud.json-85dnipsslGKShScDLbLvanw7Byk6GZ.gz"
-  },
-  "outputs/supportbench/support-knowledge-local-1/agent/nextcloud.json.gz": {
-    "sha": "ea1133454f7290124782df22610ca1f6e1f722fc0135c0bf9a5af34b52e09726",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/supportbench/support-knowledge-local-1/agent/nextcloud.json-YSZ50DhbOHFMsgvv7DTIOjZc0kxWsJ.gz"
-  },
-  "outputs/supportbench/support-linked-local-1/agent/nextcloud.json.gz": {
-    "sha": "834042c7640c474298ab673972cf0424970c08c9c5035a5dea53758a2f835aaf",
-    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/supportbench/support-linked-local-1/agent/nextcloud.json-VNQUUv5tAaR2oANs9idkFk54JnRfnx.gz"
-  },
   "outputs/legalbench-rag/hindsight-no-filenames/retrieval/mini.json.gz": {
     "sha": "dd7309c5c0bb4264f8f54da3bbc4169a69de3bafdccca8ac6d28338a094b20f3",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/legalbench-rag/hindsight-no-filenames/retrieval/mini.json-iHOXwsJYpYSa9D7wPd7Hr1LPsGVUI6.gz"
@@ -343,5 +331,17 @@
   "outputs/vidore-v3-pdf/hindsight-kb/retrieval/physics.json.gz": {
     "sha": "2682a97629ad6eadc1aa9591b37873c3a33f43881038b972b2f916d9d43244a4",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/vidore-v3-pdf/hindsight-kb/retrieval/physics.json-2ow5opchGBu2CC3adKY9CuDzvNeSat.gz"
+  },
+  "outputs/supportbench/support-knowledge/agent/nextcloud.json.gz": {
+    "sha": "b8aa952ba6b75818c600bb68398190b0710c5d2ac12b60f7ab548c673ff8e3ff",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/supportbench/support-knowledge/agent/nextcloud.json-bAplt4ltTwVqzWeR3H9dTIFmXGWNwk.gz"
+  },
+  "outputs/supportbench/support-linked/agent/nextcloud.json.gz": {
+    "sha": "a93f61eb5c6cda7acf5874321680ba15b23e0c441dd7c368b2e58f41b182e4c0",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/supportbench/support-linked/agent/nextcloud.json-qTDmWSzMMuOz7p7hVdLcTbr4RboTnN.gz"
+  },
+  "outputs/supportbench/support-memory/agent/nextcloud.json.gz": {
+    "sha": "ee49387b3a0c9daa2a11f93fe8c97e7b65709a1ecfb08168aabd51d064841adf",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/supportbench/support-memory/agent/nextcloud.json-jwxbNJqrjo3HESNR8ymT7EqgRv75U8.gz"
   }
 }
