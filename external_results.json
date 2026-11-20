@@ -371,14 +371,7 @@
         "accuracy": 0.904,
         "source_url": "https://blog.plasticlabs.ai/research/Benchmarking-Honcho",
         "source_label": "Honcho Benchmarking Blog (Plastic Labs)",
-        "comment": "Self-reported by Plastic Labs. LongMemEval S split. LLM-as-a-judge with GPT-4o as judge (following the LongMemEval paper's methodology). Uses Claude Haiku 4.5 as backbone. Score on LongMem M (500 questions): 88.8%. Also reported in the Chronos paper (arXiv:2603.16862)."
-      },
-      {
-        "memory": "Mastra",
-        "accuracy": 0.928,
-        "source_url": "https://arxiv.org/abs/2603.16862",
-        "source_label": "Chronos Paper (arXiv:2603.16862)",
-        "comment": "Reported by the Chronos paper, not self-reported. Best of two configurations tested; the GPT-4o configuration achieved 84.8%. The backbone for this configuration is not specified."
+        "comment": "Self-reported by Plastic Labs. LongMemEval S split. LLM-as-a-judge with GPT-4o as judge (following the LongMemEval paper's methodology). Uses Claude Haiku 4.5 as backbone. Score on LongMem M (500 questions): 88.8%."
       }
     ]
   },
