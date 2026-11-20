@@ -304,11 +304,21 @@ def unpublish_results(
         raise typer.Exit(1)
 
     rel = str(abs_result.relative_to(root))
-    url = f"https://blob.vercel-storage.com/{rel}"
-    req = urllib.request.Request(url, method="DELETE", headers={
-        "Authorization": f"Bearer {token}",
-        "x-api-version": "7",
-    })
+    blob_manifest_paths = [root / ".blob_manifest.json", root / "blob-manifest.json"]
+    existing_blob_manifest = next((p for p in blob_manifest_paths if p.exists()), None)
+    blob_manifest = json.loads(existing_blob_manifest.read_text()) if existing_blob_manifest else {}
+    entry = blob_manifest.get(rel)
+    if not entry:
+        console.print(f"  [red]✗[/red] {rel} is not in the blob manifest")
+        raise typer.Exit(1)
+    # Blobs are stored under a random suffix (hr.json-<id>.gz), so a DELETE on the path 404s: Blob's
+    # delete endpoint takes the stored URLs instead.
+    req = urllib.request.Request(
+        "https://blob.vercel-storage.com/delete",
+        method="POST",
+        data=json.dumps({"urls": [entry["url"]]}).encode(),
+        headers={"Authorization": f"Bearer {token}", "x-api-version": "7", "Content-Type": "application/json"},
+    )
     try:
         with urllib.request.urlopen(req):
             pass
@@ -318,10 +328,7 @@ def unpublish_results(
         raise typer.Exit(1)
 
     # Remove from local blob manifest
-    blob_manifest_paths = [root / ".blob_manifest.json", root / "blob-manifest.json"]
-    existing_blob_manifest = next((p for p in blob_manifest_paths if p.exists()), None)
     if existing_blob_manifest:
-        blob_manifest = json.loads(existing_blob_manifest.read_text())
         blob_manifest.pop(rel, None)
         blob_manifest_json = json.dumps(blob_manifest, indent=2)
         for blob_manifest_path in blob_manifest_paths:
