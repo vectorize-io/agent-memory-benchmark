@@ -110,9 +110,8 @@ const knowledgeDatasets = computed(() =>
       const label = item.memory.startsWith('hindsight') ? 'hindsight' : info?.family ?? item.memory
       if (item.accuracy != null && (!best[label] || item.accuracy > best[label].value)) best[label] = { label, logo: info?.logo ?? null, value: item.accuracy }
     })
-    const ext = (externalResults.value[name]?.[split] ?? []).filter(e => e.accuracy != null)
-      .map(e => ({ label: e.memory + ' *', logo: null, value: e.accuracy }))
-    const rows = [...Object.values(best), ...ext].sort((a, b) => b.value - a.value).slice(0, 8)
+    // Only runs AMB reproduced: published numbers stay in the dataset page's table.
+    const rows = Object.values(best).sort((a, b) => b.value - a.value).slice(0, 8)
     const runs = manifest.value.filter(m => m.dataset === name).length
     return { name, info: d, split, rows, runs, ours: ours.length, label: scoreLabel(d.score_type) }
   // A dataset with no run of ours on its headline split stays off the page until it has one.
@@ -406,7 +405,6 @@ const vReveal = {
           >
             <div class="flex items-start justify-between gap-2">
               <h2 class="font-display font-semibold text-foreground text-base leading-tight">{{ ds.name }}</h2>
-              <Badge variant="success" class="shrink-0 mt-0.5">Search only · {{ ds.label }}</Badge>
             </div>
             <p class="text-sm text-muted-foreground leading-relaxed">{{ ds.info.description }}</p>
             <div v-if="ds.rows.length" class="mt-1">
@@ -426,7 +424,6 @@ const vReveal = {
             </div>
           </Card>
         </div>
-        <p class="text-sm text-muted-foreground/80 mt-3"><span class="text-ca">*</span> Published by the system or the leaderboard, not reproduced here.</p>
       </section>
 
       <!-- Comparison table -->
