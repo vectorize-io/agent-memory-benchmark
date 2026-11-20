@@ -17,27 +17,28 @@ A run creates one bank per split and keeps it (its id is in the run's _store dir
 
 Published runs (one run each, not averaged over repeats):
 
-``hindsight-jev114`` (ViDoRe V3 PDF and markdown, 8 subsets, own-language queries; ATM-Bench)
-  Server: hindsight commit ec266e1e7, the head of hindsight PR #6604, merged as 0e9c72c86
-  (the merge only adds review fixes that do not change these numbers). Settings, as named at
-  ec266e1e7 (main now spells KNOWLEDGE_ as KB_ and ENABLE_KNOWLEDGE_BANKS as ENABLE_KB):
-    HINDSIGHT_API_ENABLE_KNOWLEDGE_BANKS=true
+``hindsight-kb`` (ViDoRe V3 PDF and markdown, 8 subsets, own-language queries)
+  Server: hindsight commit 5f9960d78 (branch fix/kb-rerank-document-share: hindsight PR #6704 at
+  b3649d9d2, plus one change to how much the document order counts in the rerank), stock
+  knowledge-bank settings. Only the providers are set:
+    HINDSIGHT_API_ENABLE_KB=true
     HINDSIGHT_API_LLM_PROVIDER=none
-    HINDSIGHT_API_KNOWLEDGE_EMBEDDINGS_PROVIDER=openai
-    HINDSIGHT_API_KNOWLEDGE_EMBEDDINGS_MODEL=embeddinggemma-2
-    HINDSIGHT_API_KNOWLEDGE_EMBEDDINGS_BASE_URL=https://inference.hindsight.vectorize.io/v1
-    HINDSIGHT_API_KNOWLEDGE_EMBEDDINGS_MODALITIES=text,image,audio,video
-    HINDSIGHT_API_KNOWLEDGE_DECISION_MODEL_PROVIDER=typesafe
-    HINDSIGHT_API_KNOWLEDGE_DECISION_MODEL_MODEL=jev-1.14.0
-    HINDSIGHT_API_DECISION_MODEL_MAX_CONCURRENT=16
-    reranker candidates: the default, 100
-  Banks: markdown and ATM-Bench were ingested by PR #6604 (its window vectors, same chunking);
-  the PDF banks were ingested by hindsight main fa4840fa6 and only searched by ec266e1e7.
-  Each split was then searched with
+    HINDSIGHT_API_KB_EMBEDDINGS_PROVIDER=openai          (embeddinggemma-2, the local default's model,
+    HINDSIGHT_API_KB_EMBEDDINGS_MODEL=embeddinggemma-2    served by Hindsight Inference)
+    HINDSIGHT_API_KB_EMBEDDINGS_BASE_URL=<Hindsight Inference>/v1
+    HINDSIGHT_API_KB_EMBEDDINGS_MODALITIES=text,image,audio,video
+    HINDSIGHT_API_KB_RERANKER_URL=<Hindsight Inference>/v1/rerank
+    HINDSIGHT_API_KB_RERANKER_MODEL=hs-decide-1-flash-mm
+  Everything else is the server's default: 512-token text passages, search, one rerank request with
+  page pictures, search budget mid. Each split ran in its own fresh server, which ingested every
+  document (checked: all ready, none failed), then searched. Markdown hr and finance_fr and PDF
+  industrial, energy and physics had a fresh Postgres too; the other 11 shared one Postgres with
+  the banks of earlier runs (markdown hr: 69.96 shared, 70.27 fresh). AMB commit bcc9dcd.
     uv run amb run --dataset <ds> --split <split> --memory hindsight-knowledge --mode retrieval \
-      --skip-ingestion --category <english|french>     (no --category for ATM-Bench)
+      --skip-answer                                         (ingest)
+    uv run amb run ... --skip-ingestion --category <english|french>   (search)
   french for finance_fr, energy and physics, english for the other ViDoRe subsets.
-  Video is not published yet: its reranking skips videos, and DiDeMo and YouCook2 trail.
+  ATM-Bench and video are not published for this version yet.
 """
 
 from __future__ import annotations

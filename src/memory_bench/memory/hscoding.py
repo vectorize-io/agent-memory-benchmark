@@ -44,7 +44,6 @@ MEMORY_PRICES = {
     "gemma-4-26b-a4b": {"input": 0.024, "cached": 0.024, "output": 0.10},
     "gemini-3.1-flash-lite": {"input": 0.25, "cached": 0.025, "output": 1.50},
     "hs-decide-1-flash": {"input": 0.02, "cached": 0.02, "output": 0.0},
-    "systemone-jev-latest": {"input": 0.02, "cached": 0.02, "output": 0.0},
 }
 
 
