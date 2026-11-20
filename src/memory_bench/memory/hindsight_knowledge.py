@@ -17,7 +17,7 @@ A run creates one bank per split and keeps it (its id is in the run's _store dir
 
 Published runs (one run each, not averaged over repeats):
 
-``hindsight-kb`` (ViDoRe V3 PDF and markdown, 8 subsets, own-language queries)
+``hindsight-kb`` (ViDoRe V3 PDF and markdown, 8 subsets, own-language queries; ATM-Bench)
   Server: hindsight commit 5f9960d78 (branch fix/kb-rerank-document-share: hindsight PR #6704 at
   b3649d9d2, plus one change to how much the document order counts in the rerank), stock
   knowledge-bank settings. Only the providers are set:
@@ -38,7 +38,10 @@ Published runs (one run each, not averaged over repeats):
       --skip-answer                                         (ingest)
     uv run amb run ... --skip-ingestion --category <english|french>   (search)
   french for finance_fr, energy and physics, english for the other ViDoRe subsets.
-  ATM-Bench and video are not published for this version yet.
+  ATM-Bench ran later, on hindsight main fdae5ed70 (with #6704 merged; on markdown finance_fr and PDF
+  physics it scores as the commit above: 52.95 and 47.83) with AMB e6052ca, the same settings, in its
+  own server and Postgres; no --category.
+  Video is not published for this version yet.
 """
 
 from __future__ import annotations
