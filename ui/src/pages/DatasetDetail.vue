@@ -240,11 +240,7 @@ const sortExt   = items => sortItems(items, extSortCol.value, extSortDir.value)
 const toggleLocalSort = col => toggleSort(col, localSortCol, localSortDir)
 const toggleExtSort   = col => toggleSort(col, extSortCol, extSortDir)
 // Knowledge datasets chart the published numbers next to ours, starred as on the home page.
-const chartAccuracy = (local, external = []) => {
-  const { rows } = _chartData(local, 'accuracy')
-  const ext = external.filter(e => e.accuracy != null).map(e => ({ label: e.memory + ' *', logo: null, value: e.accuracy }))
-  return { rows: [...rows, ...ext].sort((a, b) => b.value - a.value) }
-}
+const chartAccuracy = local => _chartData(local, 'accuracy')
 const chartRecall   = local => _chartData(local, 'avg_retrieve_time_ms', true)
 const chartTokens   = local => _chartData(local, 'avg_context_tokens', true)
 // coding datasets (sdebench) report agent metrics (interventions/cost/turns/tokens), not QA metrics
@@ -411,8 +407,7 @@ function hasCategoryData(local, split) {
       <div class="mb-10">
         <div class="flex items-center gap-3 flex-wrap mb-2">
           <h1 class="font-display text-2xl font-bold text-foreground tracking-tight">{{ dataset }}</h1>
-          <Badge v-if="knowledge" variant="success">Search only · {{ sLabel }}</Badge>
-          <Badge v-else-if="catalog.datasets?.[dataset]?.task"
+          <Badge v-if="!knowledge && catalog.datasets?.[dataset]?.task"
                  :variant="catalog.datasets[dataset].task === 'MCQ' ? 'mcq' : 'open'">
             {{ catalog.datasets[dataset].task === 'MCQ' ? 'Multiple Choice' : 'Open-ended' }}
           </Badge>
@@ -542,13 +537,12 @@ function hasCategoryData(local, split) {
             </template>
 
             <!-- Charts (QA datasets only) -->
-            <div v-if="(local.length || (knowledge && external.length)) && !isCoding(local)" class="grid grid-cols-1 gap-3 mb-4" :class="allAgent(local) || knowledge ? 'md:grid-cols-2' : 'md:grid-cols-3'">
+            <div v-if="local.length && !isCoding(local)" class="grid grid-cols-1 gap-3 mb-4" :class="allAgent(local) || knowledge ? 'md:grid-cols-2' : 'md:grid-cols-3'">
               <Card class="p-4">
                 <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-4">{{ sLabel }}</p>
-                <BarChart :rows="chartAccuracy(local, knowledge ? external : []).rows" :max="1" label-width="w-48"
+                <BarChart :rows="chartAccuracy(local).rows" :max="1" label-width="w-48"
                           :format="v => fmtS(v)"
                           variant="accuracy" />
-                <p v-if="knowledge && external.length" class="text-muted-foreground/70 text-xs mt-3">* published by the system or the leaderboard, not reproduced here</p>
               </Card>
               <Card v-if="local.length" class="p-4">
                 <p class="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/85 mb-1">{{ allAgent(local) ? 'Answer time' : knowledge ? 'Search time' : 'Recall speed' }}</p>
