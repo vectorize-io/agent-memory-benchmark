@@ -18,9 +18,8 @@ A run creates one bank per split and keeps it (its id is in the run's _store dir
 Published runs (one run each, not averaged over repeats):
 
 ``hindsight-kb`` (ViDoRe V3 PDF and markdown, 8 subsets, own-language queries; ATM-Bench)
-  Server: hindsight commit 5f9960d78 (branch fix/kb-rerank-document-share: hindsight PR #6704 at
-  b3649d9d2, plus one change to how much the document order counts in the rerank), stock
-  knowledge-bank settings. Only the providers are set:
+  Server: hindsight main 80bd005fc (with #6704 and #6746: a PDF page counts as its own document in
+  the rerank, and no regex rules on page text), stock knowledge-bank settings. Only the providers are set:
     HINDSIGHT_API_ENABLE_KB=true
     HINDSIGHT_API_LLM_PROVIDER=none
     HINDSIGHT_API_KB_EMBEDDINGS_PROVIDER=openai          (embeddinggemma-2, the local default's model,
@@ -30,17 +29,16 @@ Published runs (one run each, not averaged over repeats):
     HINDSIGHT_API_KB_RERANKER_URL=<Hindsight Inference>/v1/rerank
     HINDSIGHT_API_KB_RERANKER_MODEL=hs-decide-1-flash-mm
   Everything else is the server's default: 512-token text passages, search, one rerank request with
-  page pictures, search budget mid. Each split ran in its own fresh server, which ingested every
-  document (checked: all ready, none failed), then searched. Markdown hr and finance_fr and PDF
-  industrial, energy and physics had a fresh Postgres too; the other 11 shared one Postgres with
-  the banks of earlier runs (markdown hr: 69.96 shared, 70.27 fresh). AMB commit bcc9dcd.
+  page pictures, search budget mid. AMB commit 9738aa0. Each split has a Postgres of its own and ran
+  in a fresh server. The markdown banks were ingested by this commit; the PDF and ATM-Bench banks by
+  hindsight main fdae5ed70, whose ingest is the same (the commits between change no PDF, image or
+  video ingest), and searched here. Every bank was checked complete (all ready, none failed):
     uv run amb run --dataset <ds> --split <split> --memory hindsight-knowledge --mode retrieval \
       --skip-answer                                         (ingest)
-    uv run amb run ... --skip-ingestion --category <english|french>   (search)
+    uv run amb run ... --skip-ingestion --category <english|french>   (search; none for ATM-Bench)
   french for finance_fr, energy and physics, english for the other ViDoRe subsets.
-  ATM-Bench ran later, on hindsight main fdae5ed70 (with #6704 merged; on markdown finance_fr and PDF
-  physics it scores as the commit above: 52.95 and 47.83) with AMB e6052ca, the same settings, in its
-  own server and Postgres; no --category.
+  One run each: the reranker varies between runs (the same LegalBench-RAG bank and code: 90.6 and
+  93.4 recall@5), so a difference of a point or two on one subset is within that.
   Video is not published for this version yet.
 """
 
