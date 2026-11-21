@@ -18,8 +18,9 @@ A run creates one bank per split and keeps it (its id is in the run's _store dir
 Published runs (one run each, not averaged over repeats):
 
 ``hindsight-kb`` (ViDoRe V3 PDF and markdown, 8 subsets, own-language queries; ATM-Bench)
-  Server: hindsight main 80bd005fc (with #6704 and #6746: a PDF page counts as its own document in
-  the rerank, and no regex rules on page text), stock knowledge-bank settings. Only the providers are set:
+  Server: hindsight main 80bd005fc for ViDoRe V3; ATM-Bench ran fully (ingest and search) on hindsight
+  main fdae5ed70 (#6704), with the same settings. 80bd005fc has #6704 and #6746 ( a PDF page counts as its own document in
+  the rerank, and no regex rules on page text). Stock knowledge-bank settings. Only the providers are set:
     HINDSIGHT_API_ENABLE_KB=true
     HINDSIGHT_API_LLM_PROVIDER=none
     HINDSIGHT_API_KB_EMBEDDINGS_PROVIDER=openai          (embeddinggemma-2, the local default's model,
@@ -30,9 +31,9 @@ Published runs (one run each, not averaged over repeats):
     HINDSIGHT_API_KB_RERANKER_MODEL=hs-decide-1-flash-mm
   Everything else is the server's default: 512-token text passages, search, one rerank request with
   page pictures, search budget mid. AMB commit 9738aa0. Each split has a Postgres of its own and ran
-  in a fresh server. The markdown banks were ingested by this commit; the PDF and ATM-Bench banks by
+  in a fresh server. The markdown banks were ingested by 80bd005fc; the PDF banks by
   hindsight main fdae5ed70, whose ingest is the same (the commits between change no PDF, image or
-  video ingest), and searched here. Every bank was checked complete (all ready, none failed):
+  video ingest), and searched on 80bd005fc. Every bank was checked complete (all ready, none failed):
     uv run amb run --dataset <ds> --split <split> --memory hindsight-knowledge --mode retrieval \
       --skip-answer                                         (ingest)
     uv run amb run ... --skip-ingestion --category <english|french>   (search; none for ATM-Bench)
