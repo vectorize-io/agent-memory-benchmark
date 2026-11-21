@@ -19,7 +19,7 @@ Published runs (one run each, not averaged over repeats):
 
 ``hindsight-kb`` (ViDoRe V3 PDF and markdown, 8 subsets, own-language queries; ATM-Bench)
   Server: hindsight main 80bd005fc for ViDoRe V3; ATM-Bench ran fully (ingest and search) on hindsight
-  main fdae5ed70 (#6704), with the same settings. 80bd005fc has #6704 and #6746 ( a PDF page counts as its own document in
+  main fdae5ed70 (#6704), with the same settings. 80bd005fc has #6704 and #6746 (a PDF page counts as its own document in
   the rerank, and no regex rules on page text). Stock knowledge-bank settings. Only the providers are set:
     HINDSIGHT_API_ENABLE_KB=true
     HINDSIGHT_API_LLM_PROVIDER=none
