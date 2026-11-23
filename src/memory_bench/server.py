@@ -347,12 +347,18 @@ def _generate_catalog() -> dict:
                 entry["scoring_note"] = cls.scoring_note
         return entry
 
+    # Ranked (knowledge) datasets are listed only once AMB has published a run on them: their corpora
+    # are gigabytes, so data/ never holds them, and a page of other systems' scores alone has nothing
+    # AMB reproduced. Their runners stay; a published result lists the dataset again.
+    manifest_path = _root / "results-manifest.json"
+    _published: set[str] = set()
+    if manifest_path.exists():
+        _published = {r["dataset"] for r in _json.loads(manifest_path.read_text(encoding="utf-8"))}
+
     datasets = {
         name: _entry(cls)
         for name, cls in DS_REGISTRY.items()
-        # Ranked datasets are listed even with no exported data: their corpora are
-        # gigabytes (and BrowseComp-Plus may not be published), so data/ never holds them.
-        if (_data_dir / name).exists() or name in _ext_datasets or cls.score_type != "accuracy"
+        if (name in _published if cls.score_type != "accuracy" else (_data_dir / name).exists() or name in _ext_datasets)
     }
     providers: dict = {}
     for key, cls in MEM_REGISTRY.items():
