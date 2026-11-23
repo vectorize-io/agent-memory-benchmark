@@ -159,7 +159,10 @@ class KnowledgeApi:
         a count: by default ask for the deepest one and keep the ranks that are scored. With
         ``max_tokens`` (a dataset scored on the returned text), search at that budget and keep the text."""
         budget = max_tokens or SCORING_BUDGET
-        raw = await self._call("POST", f"/{bank_id}/search", json={"query": query, "max_tokens": budget})
+        # enable_reranking always on: a run measures the reranked search, so it asks for it rather than
+        # leaving it to the server's default.
+        body = {"query": query, "max_tokens": budget, "enable_reranking": True}
+        raw = await self._call("POST", f"/{bank_id}/search", json=body)
         results = json.loads(raw)["results"][:top_k]
         return [
             Document(id=r["document_id"], content=(r.get("text") or "") if max_tokens else "", page=r.get("page"))
