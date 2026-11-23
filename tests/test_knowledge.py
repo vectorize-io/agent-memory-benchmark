@@ -182,8 +182,13 @@ def test_every_external_row_names_its_dataset_score_type():
 
 def test_catalog_labels_knowledge_datasets_with_their_score_type():
     catalog = json.loads((ROOT / "catalog.json").read_text())["datasets"]
+    published = {r["dataset"] for r in json.loads((ROOT / "results-manifest.json").read_text())}
     for name, cls in REGISTRY.items():
         if issubclass(cls, KnowledgeDataset):
+            # Listed only once AMB has published a run on it; the runner exists either way.
+            assert (name in catalog) == (name in published), name
+            if name not in catalog:
+                continue
             entry = catalog[name]
             assert entry["score_type"] == cls.score_type and entry["section"] == "knowledge", name
             assert entry["task"] == "Search only"
