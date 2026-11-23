@@ -38,6 +38,15 @@ Published runs (one run each, not averaged over repeats):
       --skip-answer                                         (ingest)
     uv run amb run ... --skip-ingestion --category <english|french>   (search; none for ATM-Bench)
   french for finance_fr, energy and physics, english for the other ViDoRe subsets.
+
+``hindsight-no-filenames`` / ``hindsight-filenames`` (LegalBench-RAG mini)
+  Server: hindsight main fdae5ed70 (#6704), the same settings as above. This set is plain text;
+  #6746 (in 80bd005fc) changes nothing in how text passages are scored.
+  ``hindsight-no-filenames`` uploads each contract under a neutral name, the default;
+  ``hindsight-filenames`` sets AMB_LEGALBENCH_NAMES=original to keep the corpus file names, as a
+  user would upload them. Each run ingests in a fresh server, then searches:
+    uv run amb run --dataset legalbench-rag --split mini --memory hindsight-knowledge --mode retrieval
+
   One run each: the reranker varies between runs (the same LegalBench-RAG bank and code: 90.6 and
   93.4 recall@5), so a difference of a point or two on one subset is within that.
   Video is not published for this version yet.
