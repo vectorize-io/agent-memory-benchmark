@@ -184,7 +184,8 @@ class KnowledgeDataset(Dataset):
 _VIDORE_NOTE = (
     "nDCG@10 (trec_eval linear gain) over every query of all 6 query languages, against ViDoRe's "
     "page-level qrels. The average split is the mean over the 8 tasks, the number Mixedbread's "
-    "table reports. Search only: no LLM, no reranker, no query rewriting."
+    "table reports. Search only: no LLM writes or grades anything, and the harness rewrites no query. "
+    "What is scored is the system's own search, its reranker included when it has one."
 )
 
 
