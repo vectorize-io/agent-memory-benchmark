@@ -221,6 +221,20 @@
         "source_url": "https://memmachine.ai/blog/2025/09/memmachine-reaches-new-heights-on-locomo/",
         "source_label": "MemMachine Blog (Sep 2025)",
         "comment": "Evaluated by a competitor (MemMachine). LLM-as-a-judge with GPT-4o-mini. Adversarial questions excluded. Results reported by a competing system \u2014 potential for biased setup or prompt choices."
+      },
+      {
+        "memory": "Mem++ (gpt-4o-mini)",
+        "accuracy": 0.774,
+        "comment": "Self-reported in the Mem++ repository (re-run dated 2026-10-06, engine commit ffed8c5); not independently verified by AMB. Answerer gpt-4o-mini; judge gpt-4o-mini using Mem0's LoCoMo judge prompt. The same answers scored 64.0% under the repository's in-house judge prompt. Adversarial category 5 was excluded outside the then-current harness, leaving 1,540 questions. text-embedding-3-small, k=50, lexical/tag/vector RRF weights 1/1/2, 200 candidates per index, disjunctive lexical matching. Scores by category: Single-Hop 84.3%, Multi-Hop 68.4%, Temporal 75.4%, Open-Domain 50.0%. Raw run artifacts and historical sample-isolation settings are not provided in the linked report.",
+        "source_url": "https://github.com/AIDAChip-Inc/mem-plus-plus/blob/26ae8787542e1b1024dae37dc2c388bbf2411d05/README.md#independent-reproduction",
+        "source_label": "Mem++ repository README, reported reproduction (2026-10-06)"
+      },
+      {
+        "memory": "Mem++ (gpt-4.1-mini)",
+        "accuracy": 0.822,
+        "comment": "Self-reported in the Mem++ repository (re-run dated 2026-10-06, engine commit ffed8c5); not independently verified by AMB. Answerer gpt-4.1-mini; judge gpt-4o-mini using Mem0's LoCoMo judge prompt. The same answers scored 70.1% under the repository's in-house judge prompt. Adversarial category 5 was excluded outside the then-current harness, leaving 1,540 questions. text-embedding-3-small, k=50, lexical/tag/vector RRF weights 1/1/2, 200 candidates per index, disjunctive lexical matching. Scores by category: Single-Hop 87.6%, Multi-Hop 75.2%, Temporal 81.3%, Open-Domain 58.3%. Raw run artifacts and historical sample-isolation settings are not provided in the linked report. Uses a different answer model from gpt-4o-mini entries; the paper reports 81.5% for this answerer.",
+        "source_url": "https://github.com/AIDAChip-Inc/mem-plus-plus/blob/26ae8787542e1b1024dae37dc2c388bbf2411d05/README.md#independent-reproduction",
+        "source_label": "Mem++ repository README, reported reproduction (2026-10-06)"
       }
     ]
   },
