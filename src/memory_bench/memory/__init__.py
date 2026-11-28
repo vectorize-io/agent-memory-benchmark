@@ -1,6 +1,7 @@
 from .base import MemoryProvider
 from .bm25 import BM25MemoryProvider
 from .cognee import CogneeMemoryProvider
+from .evolving_profile import EvolvingProfileMemoryProvider
 from .hindsight import HindsightCloudMemoryProvider, HindsightHTTPMemoryProvider, HindsightMemoryProvider
 from .hindsight_knowledge import HindsightKnowledgeMemoryProvider
 from .hindsight_support import HindsightSupportKnowledgeProvider, HindsightSupportLinkedProvider, HindsightSupportMemoryProvider
@@ -19,6 +20,7 @@ REGISTRY: dict[str, type[MemoryProvider]] = {
     "hindsight-coding": HsCodingProvider,
     "bm25": BM25MemoryProvider,
     "cognee": CogneeMemoryProvider,
+    "evolving-profile": EvolvingProfileMemoryProvider,
     "hindsight": HindsightMemoryProvider,
     "hindsight-cloud": HindsightCloudMemoryProvider,
     "hindsight-http": HindsightHTTPMemoryProvider,
